@@ -8,6 +8,7 @@ object per line:
 
   {"op": "draw", "shapes": [...], "replace": true}   -> {"ok": true, "ids": [...]}
   {"op": "clear"}  {"op": "ping"}  {"op": "stats"}  {"op": "peek"}  {"op": "quit"}
+  {"op": "tags"}   -> {"ok": true, "tags": {tag: "shown" | "away" | "lost" | "docked"}} for what's still drawn
   {"op": "wait", "tag": t, "timeout": s}   -> a panel's result once the user answers it (panel.py)
   {"op": "focus"}  {"op": "copy", "n": 1}   (Super+; and Super+Ctrl+C)
 
@@ -941,6 +942,13 @@ class Overlay:
                 "boxes": [[round(v) for v in b] for s in self.shapes if s.kind in ("panel", "toast") for b in self.footprint(s)],
                 "keys": self.keys_for is not None,
                 "waiting": [s.spec.get("tag") for s in live if s.panel and s.panel.pending]}
+
+    def tags(self):
+        """Where each tagged shape is now; a tag missing here was closed, faded or cleared (the hotkey's follow-ups
+        check this, so they don't answer as if something the user closed were still on screen)."""
+        with self.lock:
+            return {s.spec["tag"]: "docked" if s.docked else "away" if s.away else "lost" if s.lost else "shown"
+                    for s in self.shapes if s.fading_at is None and s.spec.get("tag")}
 
     def peek(self):
         """Super+.: bring docked panels back (where they fit best now), or tuck all of them away."""
@@ -2417,6 +2425,8 @@ def serve(ov):
                     elif op == "stats":
                         box["r"] = {"ok": True, **ov.stats, "shapes": len(ov.shapes), "screen": ov.screen(),
                                     "animating": ov.ticking, **ov.counts()}
+                    elif op == "tags":
+                        box["r"] = {"ok": True, "tags": ov.tags()}
                     elif op == "peek":
                         box["r"] = {"ok": True, **ov.peek()}
                     elif op == "focus":

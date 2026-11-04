@@ -43,6 +43,8 @@ SCENE_SCHEMA = {
         "box": {"type": "array", "items": {"type": "number"}},
         "at": {"type": "array", "items": {"type": "number"}},
         "scene": {"type": "object"},
+        "restore": {"type": "array", "items": {"type": "string"},
+                    "description": "follow-ups: tags of earlier boards that are off the screen now, to put back as they were"},
     },
     "required": ["draw"],
 }
@@ -241,12 +243,15 @@ def short(say, sentences=3):
 
 TTL = 0  # answers stay up until Super+Shift+/ (`chalk clear`): follow-up questions build on them
 IDLE_RESET = 30 * 60  # ...or until a new question comes after this long: then it starts over
+KEEP_CLOSED = 4  # closed boards a follow-up can put back (their whole scene is kept in convo.json)
+OFF_SCREEN = {"away": "on a window that isn't showing now", "lost": "scrolled out of view",
+              "docked": "tucked away as a tab at the screen's right edge", "closed": "the user closed it"}
 
 
 class Convo:
     """The conversation the hotkey is in: what was asked and answered, and the tagged marks and
-    boards still on screen, so a follow-up can build on them or erase some.
-    Lives in STATE/convo.json; `chalk clear` deletes it."""
+    boards still on screen, so a follow-up can build on them, erase some, or put back a board the
+    user closed. Lives in STATE/convo.json; `chalk clear` deletes it."""
 
     def __init__(self, state, send):
         self.path = os.path.join(state, "convo.json")
@@ -258,6 +263,27 @@ class Convo:
             send({"op": "clear"}, start=False)  # an old conversation: start over on a clean screen
             d = None
         self.d = d or {"turns": [], "marks": {}, "boards": {}, "n": 0}
+        for k in ("closed", "specs"):  # boards off the screen now, and every board's whole spec to put it back
+            self.d.setdefault(k, {})
+        self.where, self.gone = {}, []  # what the overlay says each tag is doing now; marks it no longer has
+        if self.active:  # what of the earlier answers is still in front of them (they may have closed it)
+            self.sync((send({"op": "tags"}, start=False) or {}).get("tags"))
+
+    def sync(self, live):
+        """Check the bookkeeping against what the overlay still has ({tag: "shown"|"away"|"lost"|"docked"};
+        None when it couldn't say). The user closes boards, marks fade when what they marked changes, a
+        restarted overlay has nothing: a follow-up must not answer as if those were still in front of them."""
+        if not isinstance(live, dict):
+            return
+        self.where = live
+        for tag in [t for t in self.d["marks"] if t not in live]:
+            self.gone.append((tag, self.d["marks"].pop(tag)))
+        for tag in [t for t in self.d["boards"] if t not in live]:
+            self.d["closed"][tag] = self.d["boards"].pop(tag)
+        while len(self.d["closed"]) > KEEP_CLOSED:
+            old = next(iter(self.d["closed"]))
+            self.d["closed"].pop(old)
+            self.d["specs"].pop(old, None)
 
     @property
     def active(self):
@@ -274,11 +300,14 @@ class Convo:
         sc = sk.get("scene") or {}
         self.d["boards"][tag] = {"title": sc.get("title"), "box": sk.get("box"),
                                  "steps": [st.get("say") for st in sc.get("steps") or [] if isinstance(st, dict)]}
+        spec = sketch_shape(sk)
+        if spec:  # (a streaming board's header has no objects yet: its whole scene comes when it's done)
+            self.d["specs"][tag] = spec
 
     def remove(self, tags):
         for t in tags:
-            self.d["marks"].pop(t, None)
-            self.d["boards"].pop(t, None)
+            for k in ("marks", "boards", "closed", "specs"):
+                self.d[k].pop(t, None)
 
     def end_turn(self, question, say):
         self.d["turns"].append({"q": question, "say": short(say)})
@@ -291,21 +320,38 @@ class Convo:
         out = ["This is a follow-up question. Earlier in this conversation:"]
         for i, t in enumerate(self.d["turns"][-6:], 1):
             out.append(f'{i}. The user asked "{t["q"]}" and you answered: "{t["say"]}"')
-        if self.d["marks"] or self.d["boards"]:
-            out.append("Still drawn on the screen from earlier (the screenshot shows the screen without them):")
-        for tag, m in self.d["marks"].items():
+        def mark(tag, m):
             where = m.get("box") or m.get("at")
-            out.append(f"- {tag}: {m.get('kind', 'mark')} at {where}" + (f' labelled "{m["label"]}"' if m.get("label") else ""))
-        for tag, b in self.d["boards"].items():
-            out.append(f'- {tag}: board "{b.get("title") or ""}" with steps {json.dumps(b.get("steps") or [])}')
+            return f"- {tag}: {m.get('kind', 'mark')} at {where}" + (f' labelled "{m["label"]}"' if m.get("label") else "")
+
+        def board(tag, b):
+            return f'- {tag}: board "{b.get("title") or ""}" with steps {json.dumps(b.get("steps") or [])}'
+        drawn = [(t, mark(t, m)) for t, m in self.d["marks"].items()] + [(t, board(t, b)) for t, b in self.d["boards"].items()]
+        on = [line for t, line in drawn if self.where.get(t, "shown") == "shown"]
+        off = ([f"{line} ({OFF_SCREEN.get(self.where[t], 'hidden')})" for t, line in drawn if self.where.get(t, "shown") != "shown"]
+               + [f"{board(t, b)} ({OFF_SCREEN['closed']})" for t, b in self.d["closed"].items()]
+               + [f"{mark(t, m)} (gone: the user cleared it, or what it marked changed)" for t, m in self.gone])
+        if on:
+            out.append("Still drawn on the screen from earlier (the screenshot shows the screen without them):")
+            out += on
+        if off:
+            out.append("Drawn earlier but NOT in front of the user now (don't answer as if they can see these):")
+            out += off
         if for_sketch:
-            out.append('Build on what is there: draw a new board only for what the earlier one doesn\'t show, or set '
-                       '"draw": false if the existing drawing already answers it.')
+            out.append('Build on what is there: draw a new board only for what the boards still drawn don\'t show, or set '
+                       '"draw": false if one of them already answers it.')
+            if any(t in self.d["specs"] for t in self.restorable()):
+                out.append('If a board that is not in front of them now answers this, set "draw": false and list its tag '
+                           'in "restore" to put it back as it was, instead of drawing it again.')
         else:
             out.append('Build on what is there: add only what this question needs, don\'t redraw marks that are '
-                       'already there, and list in "remove" the tags of earlier marks or boards that would now '
-                       'mislead or clutter the screen.')
+                       'still drawn, draw again whatever it needs from what is no longer in front of them, and list in '
+                       '"remove" the tags of earlier marks or boards that would now mislead or clutter the screen.')
         return "\n".join(out)
+
+    def restorable(self):
+        """Boards a follow-up can put back: closed, tucked away, or on a window that isn't showing."""
+        return list(self.d["closed"]) + [t for t in self.d["boards"] if self.where.get(t, "shown") != "shown"]
 
 
 def as_mark(shape):
@@ -402,6 +448,7 @@ class Turn:
         tag = self.convo.tag("b")
         ok = self.pen.put(shape, keep=True, tag=tag)
         if ok:
+            self.drew = tag
             self.convo.add_board(tag, sk)
             # the board's step captions say it: no note beside it (the bench: less text scored better)
             self.send({"op": "remove", "tags": ["note"]}, start=False)
@@ -416,7 +463,7 @@ class Turn:
         if not self.pen.put(shape, keep=True, tag=tag):
             return None
         self.convo.add_board(tag, header)
-        self.scene_tag = tag
+        self.scene_tag = self.drew = tag
         self.send({"op": "remove", "tags": ["note", "busy"]}, start=False)   # the board's captions say it
         return tag
 
@@ -426,11 +473,26 @@ class Turn:
     def resketch(self, sk, say=""):
         """Swap a corrected scene into the board this turn drew (the newest one), where it stands: same step,
         the user's slider values kept, only the changed parts draw in again."""
-        tag = list(self.convo.d["boards"])[-1] if self.convo.d["boards"] else None
+        tag = getattr(self, "drew", None)
         if not tag:
             return self.sketch(sk, say)
         self.convo.add_board(tag, sk)
         return self.pen.put({"kind": "scene_replace", "scene": sk["scene"]}, keep=True, tag=tag)
+
+    def restore(self, tags):
+        """Put back boards that aren't in front of the user any more (closed, tucked away, on another window), as
+        they were: a follow-up asking the same thing again gets the board it already had, not a slower new one."""
+        back = []
+        for tag in tags or []:
+            spec = self.convo.d["specs"].get(tag)
+            if not spec or tag not in self.convo.restorable():
+                continue
+            if self.pen.put(dict(spec), keep=True, tag=tag):  # (a copy still tucked away fades: same tag)
+                if tag in self.convo.d["closed"]:
+                    self.convo.d["boards"][tag] = self.convo.d["closed"].pop(tag)
+                self.convo.where[tag] = "shown"
+                back.append(tag)
+        return back
 
 
 def replay(paths, look, draw, ground, send, state):
@@ -445,7 +507,7 @@ def replay(paths, look, draw, ground, send, state):
         for s in ans.get("shapes", []):
             turn.mark(s)
         turn.finish(ans, lk["size"])
-        turn.sketch(log.get("sketch"), ans.get("say") or "")
+        turn.sketch(log.get("sketch"), ans.get("say") or "") or turn.restore((log.get("sketch") or {}).get("restore"))
         convo.end_turn(log.get("q", ""), ans.get("say") or "")
 
 
@@ -563,13 +625,17 @@ def run(args, env, send, look, draw, ground, state, die, route=None):
     t_marks = time.monotonic()
 
     t_sketch = t_check = None
-    check = {}
+    check, restored = {}, []
     if sketch_thread:
         sketch_thread.join(60)
         if turn_box.get("tag"):  # streamed: it's up already
             t_sketch = sketch.get("t_open")
+            if sketch.get("answer"):  # its whole scene, to put it back if they close it
+                convo.add_board(turn_box["tag"], sketch["answer"])
         elif turn.sketch(sketch.get("answer"), say):
             t_sketch = time.monotonic()
+        else:
+            restored = turn.restore((sketch.get("answer") or {}).get("restore"))
         sk = sketch.get("answer") or {}
         if t_sketch:
             if os.environ.get("CHALK_SCENE_CHECK", "1") != "0" and isinstance(sk.get("scene"), dict):
@@ -586,7 +652,7 @@ def run(args, env, send, look, draw, ground, state, die, route=None):
     convo.end_turn(question, say)
     ms = lambda t: round((t - t0) * 1000) if t else None
     log = {"at": round(time.time()), "q": question, "model": model, "effort": effort, "look_ms": ms(t_look), "first_shape_ms": ms(t_first),
-           "model_done_ms": ms(t_model), "marks_done_ms": ms(t_marks), "sketch_ms": ms(t_sketch), "check_ms": ms(t_check), "check": check or None,
+           "model_done_ms": ms(t_model), "marks_done_ms": ms(t_marks), "sketch_ms": ms(t_sketch), "check_ms": ms(t_check), "check": check or None, "restored": restored or None,
            "total_ms": ms(time.monotonic()), "cost_usd": round(sum(SPEND), 4), "answer": ans, "sketch": sketch.get("answer"),
            "sketch_error": sketch.get("error")}
     with open(os.path.join(state, "ask.log"), "a") as f:

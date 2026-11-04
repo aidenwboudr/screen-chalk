@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ardour 8.10 - lab4_synth_bass - Preferences</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1280px; overflow: hidden; }
+  body { font-family: Inter, 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 12px; color: #d4d4d4; background: #1d1f21; }
+  .titlebar { height: 30px; background: #141516; display: flex; align-items: center; padding: 0 12px; color: #9a9a9a; font-size: 12px; border-bottom: 1px solid #000; }
+  .titlebar .t { flex: 1; text-align: center; }
+  .wc { display: flex; gap: 14px; }
+  .wc span { width: 12px; height: 12px; border-radius: 50%; background: #3a3c3e; display: inline-block; }
+  .menubar { height: 26px; background: #232527; display: flex; align-items: center; gap: 2px; padding: 0 6px; border-bottom: 1px solid #111; }
+  .menubar span { padding: 3px 9px; color: #c8c8c8; }
+  .transport { height: 58px; background: #2a2c2f; display: flex; align-items: center; padding: 0 10px; gap: 6px; border-bottom: 1px solid #111; }
+  .tbtn { width: 34px; height: 34px; border-radius: 4px; background: #3a3d41; border: 1px solid #1a1a1a; display: flex; align-items: center; justify-content: center; }
+  .tbtn svg { width: 18px; height: 18px; }
+  .tbtn.on { background: #4a5d3a; }
+  .tbtn.rec svg { fill: #e05050; }
+  .sep { width: 1px; height: 34px; background: #45484c; margin: 0 6px; }
+  .clock { font-family: 'JetBrains Mono','DejaVu Sans Mono',monospace; background: #0d0f10; color: #7ee07e; font-size: 22px; padding: 6px 12px; border-radius: 3px; border: 1px solid #000; letter-spacing: 1px; }
+  .clock.b { color: #e3c06b; font-size: 18px; }
+  .mini { display: flex; flex-direction: column; font-size: 10px; color: #8c8c8c; gap: 2px; }
+  .mini b { color: #ddd; font-weight: 500; font-size: 12px; }
+  .dsp { margin-left: auto; display: flex; gap: 14px; font-size: 11px; color: #9a9a9a; align-items: center; }
+  .dsp .bar { width: 70px; height: 8px; background: #111; border: 1px solid #000; position: relative; }
+  .dsp .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: #6fb05a; }
+  .main { position: absolute; top: 114px; left: 0; right: 0; bottom: 24px; display: flex; }
+  .editor { flex: 1; position: relative; background: #26282a; }
+  .ruler { height: 46px; background: #2d3033; border-bottom: 1px solid #111; position: relative; margin-left: 230px; font-size: 10px; color: #999; }
+  .tracks { position: absolute; top: 46px; left: 0; right: 0; bottom: 0; }
+  .track { height: 96px; display: flex; border-bottom: 1px solid #151617; }
+  .thead { width: 230px; background: #303336; padding: 6px 8px; border-right: 1px solid #111; display: flex; flex-direction: column; gap: 6px; }
+  .thead .nm { background: #1c1e20; padding: 3px 6px; border-radius: 2px; color: #e5e5e5; }
+  .thead .btns { display: flex; gap: 4px; }
+  .thead .btns span { width: 22px; height: 18px; border-radius: 2px; background: #45494d; font-size: 10px; text-align: center; line-height: 18px; color: #ccc; }
+  .thead .btns span.r { background: #6a2a2a; }
+  .thead .btns span.s { background: #5a5326; }
+  .lane { flex: 1; position: relative; overflow: hidden; }
+  .region { position: absolute; top: 4px; bottom: 4px; border-radius: 3px; border: 1px solid rgba(0,0,0,.6); overflow: hidden; }
+  .region .lbl { font-size: 10px; padding: 1px 4px; background: rgba(0,0,0,.35); color: #eee; }
+  .mixer { width: 430px; background: #232527; border-left: 1px solid #000; display: flex; padding: 8px; gap: 6px; }
+  .strip { width: 66px; background: #2e3134; border-radius: 3px; display: flex; flex-direction: column; align-items: center; padding: 6px 0; gap: 6px; font-size: 10px; }
+  .strip .fader { width: 8px; flex: 1; background: #121314; border-radius: 3px; position: relative; }
+  .strip .fader i { position: absolute; left: -9px; width: 26px; height: 14px; background: #8d9196; border-radius: 2px; }
+  .strip .meter { position: absolute; }
+  .statusbar { position: absolute; left: 0; right: 0; bottom: 0; height: 24px; background: #17181a; border-top: 1px solid #000; display: flex; align-items: center; gap: 22px; padding: 0 10px; font-size: 11px; color: #8f8f8f; }
+
+  /* preferences window */
+  .prefs { position: absolute; left: 560px; top: 160px; width: 980px; height: 930px; background: #eceae6; color: #2b2b2b; border-radius: 6px; box-shadow: 0 18px 60px rgba(0,0,0,.65), 0 0 0 1px #000; display: flex; flex-direction: column; font-size: 13px; }
+  .prefs .ptitle { height: 34px; background: #d9d6d0; border-radius: 6px 6px 0 0; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #333; position: relative; border-bottom: 1px solid #b9b5ae; }
+  .prefs .ptitle .x { position: absolute; right: 10px; top: 8px; width: 18px; height: 18px; border-radius: 50%; background: #c7c3bc; }
+  .pbody { flex: 1; display: flex; min-height: 0; }
+  .cats { width: 190px; background: #e2dfda; border-right: 1px solid #c4c0b9; padding: 8px 0; }
+  .cats div { padding: 6px 16px; color: #3c3c3c; }
+  .cats div.sel { background: #3d6db5; color: #fff; }
+  .cats div.sub { padding-left: 30px; font-size: 12px; }
+  .pane { flex: 1; padding: 18px 26px; overflow: hidden; }
+  .pane h2 { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: #1f1f1f; }
+  .pane .hint { color: #6b6b6b; font-size: 12px; margin-bottom: 14px; }
+  .grid { display: grid; grid-template-columns: 170px 300px 1fr; row-gap: 9px; column-gap: 12px; align-items: center; margin-bottom: 16px; }
+  .grid label { text-align: right; color: #333; }
+  .sel { position: relative; }
+  .dd { height: 28px; border: 1px solid #a9a59e; border-radius: 4px; background: linear-gradient(#fbfaf8,#ebe8e3); display: flex; align-items: center; padding: 0 30px 0 9px; position: relative; color: #222; white-space: nowrap; overflow: hidden; }
+  .dd::after { content: ''; position: absolute; right: 10px; top: 11px; border: 5px solid transparent; border-top-color: #555; }
+  .note { font-size: 11px; color: #777; }
+  .group { border: 1px solid #c8c4bd; border-radius: 5px; padding: 12px 14px 10px; margin-bottom: 14px; position: relative; background: #f3f1ed; }
+  .group > .gt { position: absolute; top: -9px; left: 10px; background: #eceae6; padding: 0 6px; font-weight: 600; font-size: 12px; color: #444; }
+  table.midi { width: 100%; border-collapse: collapse; font-size: 12px; background: #fff; border: 1px solid #c3bfb8; }
+  table.midi th { text-align: left; background: #e4e1dc; padding: 5px 8px; font-weight: 600; border-bottom: 1px solid #c3bfb8; color: #444; }
+  table.midi td { padding: 5px 8px; border-bottom: 1px solid #ebe8e3; }
+  table.midi tr.alt td { background: #f7f6f3; }
+  .cb { display: inline-block; width: 14px; height: 14px; border: 1px solid #8f8b84; border-radius: 2px; background: #fff; vertical-align: -2px; position: relative; }
+  .cb.on { background: #3d6db5; border-color: #2c5596; }
+  .cb.on::after { content: ''; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .tg { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
+  .sw { width: 34px; height: 18px; border-radius: 9px; background: #b8b4ad; position: relative; flex: none; }
+  .sw::after { content: ''; position: absolute; left: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+  .sw.on { background: #3d6db5; }
+  .sw.on::after { left: 18px; }
+  .pfoot { height: 56px; border-top: 1px solid #c4c0b9; display: flex; align-items: center; padding: 0 18px; gap: 10px; background: #e4e1dc; border-radius: 0 0 6px 6px; }
+  .btn { height: 30px; padding: 0 18px; border-radius: 4px; border: 1px solid #9f9b94; background: linear-gradient(#fdfcfa,#e6e3de); display: inline-flex; align-items: center; color: #222; font-size: 13px; }
+  .btn.primary { background: linear-gradient(#4b7cc6,#3563a8); border-color: #2b5292; color: #fff; }
+  .lat { font-family: 'JetBrains Mono','DejaVu Sans Mono',monospace; font-size: 12px; color: #2d6a2d; }
+</style>
+</head>
+<body>
+<div class="titlebar"><div class="wc"><span></span><span></span><span></span></div><div class="t">Ardour 8.10 — lab4_synth_bass (48 kHz) — Editor</div><div style="width:62px"></div></div>
+<div class="menubar"><span>Session</span><span>Transport</span><span>Edit</span><span>Region</span><span>Track</span><span>View</span><span>Window</span><span>Help</span></div>
+<div class="transport">
+  <div class="tbtn" title="Go to start"><svg viewBox="0 0 24 24" fill="#ddd"><rect x="4" y="5" width="2.5" height="14"/><path d="M20 5v14L8 12z"/></svg></div>
+  <div class="tbtn" title="Rewind"><svg viewBox="0 0 24 24" fill="#ddd"><path d="M12 6v12L3 12zM21 6v12l-9-6z"/></svg></div>
+  <div class="tbtn" title="Stop"><svg viewBox="0 0 24 24" fill="#ddd"><rect x="6" y="6" width="12" height="12"/></svg></div>
+  <div class="tbtn" title="Play"><svg viewBox="0 0 24 24" fill="#8fd18f"><path d="M7 5v14l12-7z"/></svg></div>
+  <div class="tbtn" title="Fast forward"><svg viewBox="0 0 24 24" fill="#ddd"><path d="M3 6v12l9-6zM12 6v12l9-6z"/></svg></div>
+  <div class="tbtn rec" title="Record"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/></svg></div>
+  <div class="sep"></div>
+  <div class="tbtn on" title="Loop"><svg viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="2"><path d="M4 12a6 6 0 0 1 6-6h8M16 3l3 3-3 3M20 12a6 6 0 0 1-6 6H6M8 21l-3-3 3-3"/></svg></div>
+  <div class="tbtn" title="Punch in/out"><svg viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="2"><path d="M5 5v14M19 5v14M5 12h14"/></svg></div>
+  <div class="tbtn" data-gt="settings-metronome-btn" title="Metronome"><svg viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.8" stroke-linejoin="round"><path d="M9 3h6l4 18H5z"/><path d="M12 16l6-10"/><circle cx="12" cy="16" r="1.4" fill="#ddd"/></svg></div>
+  <div class="tbtn" title="Follow playhead"><svg viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="2"><path d="M12 3v18M7 8l5-5 5 5"/></svg></div>
+  <div class="sep"></div>
+  <div class="clock">00:01:42:17</div>
+  <div class="clock b">043|02|0912</div>
+  <div class="mini"><span>Tempo</span><b>♩ = 124.00</b></div>
+  <div class="mini"><span>Meter</span><b>4/4</b></div>
+  <div class="mini"><span>Punch</span><b>Off</b></div>
+  <div class="mini"><span>Sync</span><b>Internal</b></div>
+  <div class="dsp">
+    <span>DSP</span><span class="bar"><i style="width:34%"></i></span><span>34%</span>
+    <span>Xruns: 3</span>
+    <span>Disk: 100%</span>
+    <span>PipeWire 1.4.2 · 48 kHz · 5.3 ms</span>
+  </div>
+</div>
+<div class="main">
+  <div class="editor">
+    <div class="ruler" id="ruler"></div>
+    <div class="tracks" id="tracks"></div>
+  </div>
+  <div class="mixer" id="mixer"></div>
+</div>
+<div class="statusbar"><span>Session: ~/Music/ece/lab4_synth_bass</span><span>Disk: 41h 12m remaining</span><span>Buffers: p:100% c:100%</span><span>File: FLAC 24-bit</span><span style="margin-left:auto">Snap: Bar · Grid: 1/16</span></div>
+
+<div class="prefs">
+  <div class="ptitle">Preferences<span class="x"></span></div>
+  <div class="pbody">
+    <div class="cats">
+      <div>General</div>
+      <div>Appearance</div>
+      <div class="sub">Colors</div>
+      <div class="sub">Theme</div>
+      <div>Editor</div>
+      <div>Mixer</div>
+      <div>Signal Flow</div>
+      <div class="sel">Audio / MIDI Setup</div>
+      <div>MIDI</div>
+      <div class="sub">MIDI Port Config</div>
+      <div>Transport</div>
+      <div>Metronome</div>
+      <div>Plugins</div>
+      <div class="sub">VST3 Paths</div>
+      <div class="sub">LV2 Paths</div>
+      <div>Control Surfaces</div>
+      <div>Monitoring</div>
+      <div>Video</div>
+      <div>Performance</div>
+    </div>
+    <div class="pane">
+      <h2>Audio / MIDI Setup</h2>
+      <div class="hint">Changes to the audio engine take effect after you press Apply. The engine will restart and briefly drop audio.</div>
+      <div class="grid">
+        <label>Audio System</label><div class="dd">PipeWire (JACK API)</div><span class="note">Running</span>
+        <label>Driver</label><div class="dd">ALSA</div><span></span>
+        <label>Input Device</label><div class="dd">Scarlett Solo 4th Gen — USB Audio</div><span class="note">2 in</span>
+        <label>Output Device</label><div class="dd">Scarlett Solo 4th Gen — USB Audio</div><span class="note">2 out</span>
+        <label>Sample Rate</label><div class="dd">48000 Hz</div><span class="note">Session rate: 48 kHz</span>
+        <label>Buffer Size</label><div class="dd" data-gt="settings-buffer-size">256 samples (5.3 ms)</div><span class="note">Lower = less latency, more CPU</span>
+        <label>Periods</label><div class="dd">2</div><span></span>
+        <label>Hardware Input Latency</label><div class="dd">0 samples</div><span></span>
+        <label>Hardware Output Latency</label><div class="dd">0 samples</div><span></span>
+        <label>Round-trip latency</label><div><span class="lat">10.7 ms (512 samples)</span></div><span><span class="btn" style="height:26px;padding:0 12px;font-size:12px">Calibrate Audio…</span></span>
+      </div>
+      <div class="group">
+        <span class="gt">MIDI Inputs</span>
+        <table class="midi">
+          <tr><th style="width:44px">Use</th><th>Device</th><th>Port</th><th>Input latency</th><th>Output latency</th></tr>
+          <tr><td><span class="cb on"></span></td><td>Midi Through</td><td>Midi Through Port-0</td><td>0</td><td>0</td></tr>
+          <tr class="alt" data-gt="settings-midi-mpk"><td><span class="cb"></span></td><td>MPK mini 3</td><td>MPK mini 3 MIDI 1</td><td>0</td><td>0</td></tr>
+          <tr><td><span class="cb"></span></td><td>Scarlett Solo 4th Gen</td><td>Scarlett Solo MIDI 1</td><td>0</td><td>0</td></tr>
+          <tr class="alt"><td><span class="cb on"></span></td><td>Arturia MiniLab mkII</td><td>MiniLab mkII MIDI 1</td><td>0</td><td>0</td></tr>
+          <tr><td><span class="cb"></span></td><td>Virtual Keyboard</td><td>x-virtual-keyboard</td><td>0</td><td>0</td></tr>
+        </table>
+      </div>
+      <div class="group">
+        <span class="gt">Engine</span>
+        <div class="tg"><span class="sw on"></span>Stop the audio engine when the session is closed</div>
+        <div class="tg"><span class="sw"></span>Use buffered I/O for disk streams (reduces xruns on slow drives)</div>
+        <div class="tg"><span class="sw on"></span>Run plugins in parallel on 6 processor threads</div>
+        <div class="tg"><span class="sw"></span>Allow the engine to run at a rate different from the session</div>
+        <div class="tg"><span class="sw on"></span>Show a warning after each xrun</div>
+      </div>
+    </div>
+  </div>
+  <div class="pfoot">
+    <span class="btn">Help</span>
+    <span style="margin-left:auto"></span>
+    <span class="btn">Cancel</span>
+    <span class="btn" data-gt="settings-apply">Apply</span>
+    <span class="btn primary">OK</span>
+  </div>
+</div>
+
+<script>
+  // ruler
+  const ruler = document.getElementById('ruler');
+  for (let i = 0; i < 26; i++) {
+    const d = document.createElement('div');
+    d.style.cssText = `position:absolute;left:${i*48}px;top:0;bottom:0;border-left:1px solid #555;padding:3px 4px`;
+    d.textContent = 37 + i;
+    ruler.appendChild(d);
+  }
+  const tracks = [
+    ['Kick', '#b5543b', 'audio'], ['Snare', '#b5873b', 'audio'], ['Hats', '#9aa83a', 'audio'], ['Bass (Vital)', '#3b8bb5', 'midi'],
+    ['Pad (Surge XT)', '#6e5bb5', 'midi'], ['Lead Vox', '#b53b7a', 'audio'], ['Guitar DI', '#3bb58b', 'audio'], ['Bus: Drums', '#777', 'audio'], ['Reverb Return', '#555f6a', 'audio']
+  ];
+  const tc = document.getElementById('tracks');
+  let seed = 7; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  tracks.forEach(([n, c, k], ti) => {
+    const t = document.createElement('div'); t.className = 'track';
+    t.innerHTML = `<div class="thead"><div class="nm">${n}</div><div class="btns"><span class="r">●</span><span>M</span><span class="s"${ti===3?' data-gt="settings-solo-bass"':''}>S</span><span>P</span><span>A</span><span style="width:60px">${k==='midi'?'MIDI':'In 1'}</span></div><div style="font-size:10px;color:#888">${k==='midi'?'Vital · ch 1':'Mono · -6.0 dB'}</div></div><div class="lane"></div>`;
+    const lane = t.querySelector('.lane');
+    let x = 10 + ti * 12;
+    while (x < 1100) {
+      const w = 120 + Math.floor(rnd() * 260);
+      const r = document.createElement('div'); r.className = 'region';
+      r.style.left = x + 'px'; r.style.width = w + 'px'; r.style.background = c + '55';
+      let svg = `<svg width="${w}" height="70" style="position:absolute;top:16px;left:0">`;
+      if (k === 'midi') {
+        for (let j = 0; j < w / 14; j++) svg += `<rect x="${j*14+2}" y="${8 + Math.floor(rnd()*48)}" width="${8 + rnd()*10}" height="4" fill="${c}"/>`;
+      } else {
+        let p = 'M0 35';
+        for (let j = 0; j < w; j += 2) { const a = (rnd() * 30) * (0.3 + 0.7 * Math.abs(Math.sin(j / 18))); p += ` L${j} ${35 - a} L${j+1} ${35 + a}`; }
+        svg += `<path d="${p}" stroke="${c}" stroke-width="1" fill="none"/>`;
+      }
+      svg += '</svg>';
+      r.innerHTML = `<div class="lbl">${n.split(' ')[0].toLowerCase()}-${ti}${Math.floor(rnd()*9)}.1</div>` + svg;
+      lane.appendChild(r);
+      x += w + 20 + Math.floor(rnd() * 60);
+    }
+    tc.appendChild(t);
+  });
+  const ph = document.createElement('div');
+  ph.style.cssText = 'position:absolute;left:640px;top:0;bottom:0;width:1px;background:#e04545';
+  tc.appendChild(ph);
+  const mx = document.getElementById('mixer');
+  ['Kick','Snare','Bass','Pad','Vox','Gtr'].forEach((n, i) => {
+    const s = document.createElement('div'); s.className = 'strip';
+    s.innerHTML = `<span style="color:#ddd">${n}</span><span style="width:44px;height:44px;border-radius:50%;background:#1a1b1c;border:2px solid #555;display:block"></span><span style="color:#888">pan ${['C','L12','C','R20','C','R8'][i]}</span><div class="fader"><i style="top:${18+i*11}%"${n==='Gtr'?' data-gt="settings-gtr-fader"':''}></i></div><span style="font-family:monospace;color:#7ee07e"${n==='Gtr'?' data-gt="settings-gtr-level"':''}>${(-4.5 - i*1.3).toFixed(1)}</span>`;
+    mx.appendChild(s);
+  });
+</script>
+</body>
+</html>

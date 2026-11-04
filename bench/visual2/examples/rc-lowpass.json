@@ -1,0 +1,306 @@
+{
+ "scene": {
+  "title": "Why the RC filter lets low notes through",
+  "size": [
+   520,
+   330
+  ],
+  "params": [
+   {
+    "name": "f",
+    "label": "input frequency",
+    "min": 50,
+    "max": 20000,
+    "value": 300,
+    "log": true,
+    "unit": "Hz"
+   }
+  ],
+  "let": {
+   "R": 1600,
+   "C": 1e-07,
+   "fc": "1/(2*pi*R*C)",
+   "g": "1/sqrt(1+(f/fc)^2)"
+  },
+  "objects": [
+   {
+    "id": "src",
+    "source": [
+     40,
+     150,
+     40,
+     70
+    ],
+    "color": "white"
+   },
+   {
+    "id": "w1",
+    "wire": [
+     [
+      40,
+      70
+     ],
+     [
+      40,
+      40
+     ],
+     [
+      80,
+      40
+     ]
+    ]
+   },
+   {
+    "id": "r",
+    "resistor": [
+     80,
+     40,
+     170,
+     40
+    ],
+    "label": "R = 1.6 k\u03a9"
+   },
+   {
+    "id": "w2",
+    "wire": [
+     [
+      170,
+      40
+     ],
+     [
+      210,
+      40
+     ]
+    ],
+    "dots": [
+     [
+      210,
+      40
+     ]
+    ]
+   },
+   {
+    "id": "c",
+    "capacitor": [
+     210,
+     40,
+     210,
+     150
+    ],
+    "label": "C"
+   },
+   {
+    "id": "w3",
+    "wire": [
+     [
+      40,
+      150
+     ],
+     [
+      40,
+      170
+     ],
+     [
+      210,
+      170
+     ],
+     [
+      210,
+      150
+     ]
+    ]
+   },
+   {
+    "id": "gnd",
+    "ground": [
+     125,
+     172
+    ]
+   },
+   {
+    "id": "in",
+    "flow": [
+     [
+      40,
+      70
+     ],
+     [
+      40,
+      40
+     ],
+     [
+      210,
+      40
+     ],
+     [
+      210,
+      150
+     ],
+     [
+      210,
+      170
+     ],
+     [
+      40,
+      170
+     ],
+     [
+      40,
+      150
+     ]
+    ],
+    "speed": "40*sqrt(f/300)",
+    "n": 7,
+    "color": "yellow",
+    "r": 3.5
+   },
+   {
+    "id": "ax",
+    "axes": [
+     270,
+     20,
+     230,
+     150
+    ],
+    "x": [
+     50,
+     20000
+    ],
+    "y": [
+     0,
+     1.1
+    ],
+    "xlog": true,
+    "xlabel": "f",
+    "ylabel": "$V_{out}/V_{in}$",
+    "yticks": [
+     0,
+     0.5,
+     1
+    ]
+   },
+   {
+    "id": "curve",
+    "plot": "1/sqrt(1+(x/fc)^2)",
+    "on": "ax",
+    "color": "blue",
+    "fill": true
+   },
+   {
+    "id": "fcl",
+    "line": [
+     "fc",
+     0,
+     "fc",
+     1.1
+    ],
+    "on": "ax",
+    "color": "grey",
+    "dash": true,
+    "label": "$f_c$"
+   },
+   {
+    "id": "pt",
+    "dot": [
+     "f",
+     "g"
+    ],
+    "on": "ax",
+    "color": "yellow",
+    "label": "{g:.2f}\u00d7"
+   },
+   {
+    "id": "inw",
+    "plot": "sin(2*pi*(3*x - t*f/300))",
+    "on": "wv",
+    "color": "white",
+    "width": 2
+   },
+   {
+    "id": "wv",
+    "axes": [
+     40,
+     215,
+     460,
+     90
+    ],
+    "x": [
+     0,
+     1
+    ],
+    "y": [
+     -1.2,
+     1.2
+    ],
+    "xticks": [],
+    "yticks": [],
+    "grid": false
+   },
+   {
+    "id": "outw",
+    "plot": "g*sin(2*pi*(3*x - t*f/300) - atan(f/fc))",
+    "on": "wv",
+    "color": "yellow",
+    "width": 3
+   },
+   {
+    "id": "eq",
+    "tex": "\\frac{V_{out}}{V_{in}} = \\frac{1}{\\sqrt{1+(f/f_c)^2}}",
+    "at": [
+     130,
+     125
+    ],
+    "size": 0.1,
+    "show": 0
+   },
+   {
+    "id": "eq2",
+    "tex": "\\color{#FFFF00}{V_{out}} = {g:.2f}\\,V_{in}",
+    "at": [
+     385,
+     205
+    ],
+    "size": 20
+   }
+  ],
+  "steps": [
+   {
+    "show": [
+     "src",
+     "w1",
+     "r",
+     "w2",
+     "c",
+     "w3",
+     "gnd",
+     "in"
+    ],
+    "say": "The resistor and capacitor split the input voltage between them."
+   },
+   {
+    "show": [
+     "ax",
+     "curve",
+     "fcl"
+    ],
+    "say": "Above f_c the capacitor's impedance falls, so it shorts the output toward ground."
+   },
+   {
+    "show": [
+     "wv",
+     "inw",
+     "outw",
+     "pt",
+     "eq2"
+    ],
+    "say": "Watch the frequency rise: the yellow output shrinks and lags past f_c. Then drag it yourself.",
+    "set": {
+     "f": [
+      20000,
+      300
+     ]
+    }
+   }
+  ]
+ }
+}

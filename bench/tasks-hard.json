@@ -1,0 +1,413 @@
+[
+ {
+  "id": "kicad-r7",
+  "page": "kicad.html",
+  "dir": "pages-hard",
+  "q": "where's R7 on this board?",
+  "gt": [
+   "kicad-r7",
+   "kicad-r7-ref"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "kicad-via-tool",
+  "page": "kicad.html",
+  "dir": "pages-hard",
+  "q": "which tool do I use to drop a via down by hand?",
+  "gt": [
+   "kicad-via-tool"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "kicad-drc",
+  "page": "kicad.html",
+  "dir": "pages-hard",
+  "q": "how do I check the board for clearance errors before I send it off to get made?",
+  "gt": [
+   "kicad-drc-btn"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "kicad-hide-bcu",
+  "page": "kicad.html",
+  "dir": "pages-hard",
+  "q": "how do I hide the bottom copper so I'm only looking at the top traces?",
+  "gt": [
+   "kicad-bcu-eye"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "kicad-u1-pin1",
+  "page": "kicad.html",
+  "dir": "pages-hard",
+  "q": "which pad on the microcontroller is pin 1?",
+  "gt": [
+   "kicad-u1-pin1"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "kicad-unrouted",
+  "page": "kicad.html",
+  "dir": "pages-hard",
+  "q": "it says there's still one connection I haven't routed, where is it on the board?",
+  "gt": [
+   "kicad-unrouted"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "ms-wrap",
+  "page": "modelsim.html",
+  "dir": "pages-hard",
+  "q": "where does the counter roll over back to zero?",
+  "gt": [
+   "ms-wrap-edge",
+   "ms-ovf-pulse"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "ms-glitch",
+  "page": "modelsim.html",
+  "dir": "pages-hard",
+  "q": "one of these signals has a weird little spike in it, where is it?",
+  "gt": [
+   "ms-glitch"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "ms-before-load",
+  "page": "modelsim.html",
+  "dir": "pages-hard",
+  "q": "what was the count right before it got loaded with the new value?",
+  "gt": [
+   "ms-count-before-load"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "ms-error-line",
+  "page": "modelsim.html",
+  "dir": "pages-hard",
+  "q": "which line of my testbench is the error pointing at?",
+  "gt": [
+   "ms-error-line"
+  ],
+  "kind": "underline"
+ },
+ {
+  "id": "ms-zoom-full",
+  "page": "modelsim.html",
+  "dir": "pages-hard",
+  "q": "how do I zoom out so I can see the whole simulation at once?",
+  "gt": [
+   "ms-zoom-full"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "fl-mute-vox",
+  "page": "flstudio.html",
+  "dir": "pages-hard",
+  "q": "how do I mute the vocal chops in the mixer?",
+  "gt": [
+   "fl-mute-11"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "fl-pan-bass",
+  "page": "flstudio.html",
+  "dir": "pages-hard",
+  "q": "my bass is only coming out of the left speaker, which knob is doing that?",
+  "gt": [
+   "fl-pan-7"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "fl-clap-missing",
+  "page": "flstudio.html",
+  "dir": "pages-hard",
+  "q": "the clap is supposed to land on beats 2 and 4, which step am I missing?",
+  "gt": [
+   "fl-clap-13"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "fl-clipping",
+  "page": "flstudio.html",
+  "dir": "pages-hard",
+  "q": "which track is clipping?",
+  "gt": [
+   "fl-meter-6",
+   "fl-name-6"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "fl-swing",
+  "page": "flstudio.html",
+  "dir": "pages-hard",
+  "q": "where can I add some swing to this beat?",
+  "gt": [
+   "fl-swing"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "dc-most-pings",
+  "page": "discord.html",
+  "dir": "pages-hard",
+  "q": "which of my servers has the most pings waiting for me?",
+  "gt": [
+   "dc-srv-lab",
+   "dc-badge-21"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "dc-top-reaction",
+  "page": "discord.html",
+  "dir": "pages-hard",
+  "q": "on the professor's announcement, which reaction did the most people click?",
+  "gt": [
+   "dc-react-top"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "dc-pinned",
+  "page": "discord.html",
+  "dir": "pages-hard",
+  "q": "Maya says it's in the pinned message, where do I find that?",
+  "gt": [
+   "dc-pin-btn"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "dc-mute-mic",
+  "page": "discord.html",
+  "dir": "pages-hard",
+  "q": "how do I mute my mic in this call?",
+  "gt": [
+   "dc-mic-btn"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "dc-baud-time",
+  "page": "discord.html",
+  "dir": "pages-hard",
+  "q": "what time did the TA post the fix for the garbage characters?",
+  "gt": [
+   "dc-ts-baud"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "ds-vos-temp",
+  "page": "datasheet.html",
+  "dir": "pages-hard",
+  "q": "what's the worst the offset voltage can get over the full temperature range?",
+  "gt": [
+   "ds-vos-max-temp"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "ds-slew",
+  "page": "datasheet.html",
+  "dir": "pages-hard",
+  "q": "how fast can the output change, like in volts per microsecond?",
+  "gt": [
+   "ds-sr-typ"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "ds-iq-max",
+  "page": "datasheet.html",
+  "dir": "pages-hard",
+  "q": "what's the most current one amp can pull at room temperature?",
+  "gt": [
+   "ds-iq-max"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "ds-pin-vneg",
+  "page": "datasheet.html",
+  "dir": "pages-hard",
+  "q": "on the pin drawing, which pin goes to the negative supply?",
+  "gt": [
+   "ds-pin4",
+   "ds-pin4-label"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "ds-bypass",
+  "page": "datasheet.html",
+  "dir": "pages-hard",
+  "q": "where's the decoupling cap in the example circuit?",
+  "gt": [
+   "ds-c1"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "code-bad-index",
+  "page": "code.html",
+  "dir": "pages",
+  "q": "ok I see the crash line, but which part of it is actually wrong?",
+  "gt": [
+   "code-index-n1",
+   "code-samples-n1",
+   "code-tb-samples-n1"
+  ],
+  "kind": "highlight"
+ },
+ {
+  "id": "code-kill-terminal",
+  "page": "code.html",
+  "dir": "pages",
+  "q": "how do I close this terminal down completely, not just hide the panel?",
+  "gt": [
+   "code-kill-terminal"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "sheet-worst-hw",
+  "page": "spreadsheet.html",
+  "dir": "pages",
+  "q": "which homework did I do the worst on?",
+  "gt": [
+   "sheet-hw5-pct",
+   "sheet-hw5-item"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "sheet-sort-desc",
+  "page": "spreadsheet.html",
+  "dir": "pages",
+  "q": "which button sorts it so the biggest values end up on top?",
+  "gt": [
+   "sheet-sort-desc"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "dash-second-mem",
+  "page": "dashboard.html",
+  "dir": "pages",
+  "q": "besides the machine learning thing that's struggling, which service is hogging the most RAM?",
+  "gt": [
+   "dash-gitea-mem",
+   "dash-gitea-name"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "dash-mem-peak",
+  "page": "dashboard.html",
+  "dir": "pages",
+  "q": "on the big graph, where did memory usage hit its highest point?",
+  "gt": [
+   "dash-mem-peak"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "shop-biggest-cap",
+  "page": "shop.html",
+  "dir": "pages",
+  "q": "which of these can measure the biggest capacitors?",
+  "gt": [
+   "shop-cap-astro"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "settings-solo-bass",
+  "page": "settings.html",
+  "dir": "pages",
+  "q": "I want to hear just the bass track by itself for a sec, what do I click?",
+  "gt": [
+   "settings-solo-bass"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "settings-quietest",
+  "page": "settings.html",
+  "dir": "pages",
+  "q": "which channel on the mixer is turned down the furthest?",
+  "gt": [
+   "settings-gtr-level",
+   "settings-gtr-fader"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "canvas-dismiss-math",
+  "page": "canvas.html",
+  "dir": "pages",
+  "q": "I already finished my math homework, how do I clear it off my to-do list?",
+  "gt": [
+   "canvas-dismiss-math"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "article-minus20",
+  "page": "article.html",
+  "dir": "pages",
+  "q": "on the gain plot, where has the signal actually dropped by 20 dB?",
+  "gt": [
+   "article-minus20-point"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "term-fix-parse",
+  "page": "terminal.html",
+  "dir": "pages",
+  "q": "what exactly am I supposed to add to that line to make it compile?",
+  "gt": [
+   "term-fix-parse"
+  ],
+  "kind": "underline"
+ },
+ {
+  "id": "inbox-move-folder",
+  "page": "inbox.html",
+  "dir": "pages",
+  "q": "which button moves this email into one of my folders?",
+  "gt": [
+   "inbox-move-btn",
+   "inbox-move-btn-list"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "circuit-vout-max",
+  "page": "circuit.html",
+  "dir": "pages",
+  "q": "where is the output wave at its very highest?",
+  "gt": [
+   "circuit-vout-max"
+  ],
+  "kind": "circle"
+ }
+]

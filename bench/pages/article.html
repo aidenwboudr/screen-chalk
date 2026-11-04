@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Low-pass filter - Wikipedia</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1280px; overflow: hidden; }
+  body { font-family: Inter, 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 14px; color: #202122; background: #fff; }
+  a, .a { color: #3366cc; text-decoration: none; }
+  .red { color: #d73333; }
+  .header { height: 64px; display: flex; align-items: center; padding: 0 0 0 172px; gap: 16px; }
+  .hamb { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; }
+  .logo { display: flex; align-items: center; gap: 10px; width: 210px; }
+  .logo .wm { font-family: 'DejaVu Serif', serif; font-size: 20px; letter-spacing: 1px; line-height: 1; }
+  .logo .tg { font-family: 'DejaVu Serif', serif; font-size: 11px; color: #54595d; }
+  .search { display: flex; width: 520px; }
+  .search .in { flex: 1; height: 32px; border: 1px solid #a2a9b1; border-radius: 2px 0 0 2px; display: flex; align-items: center; padding-left: 34px; color: #72777d; position: relative; }
+  .search .in svg { position: absolute; left: 9px; top: 7px; }
+  .search .bt { height: 32px; padding: 0 12px; border: 1px solid #a2a9b1; border-left: 0; background: #f8f9fa; font-weight: 700; display: flex; align-items: center; border-radius: 0 2px 2px 0; }
+  .user { margin-left: auto; display: flex; gap: 18px; padding-right: 180px; align-items: center; font-size: 14px; }
+  .wrap { position: absolute; top: 64px; left: 172px; width: 1576px; bottom: 0; display: flex; gap: 0; }
+  .toc { width: 232px; padding: 20px 14px 0 0; font-size: 14px; }
+  .toc .h { display: flex; justify-content: space-between; border-bottom: 1px solid #c8ccd1; padding-bottom: 6px; margin-bottom: 8px; font-weight: 700; }
+  .toc .h span:last-child { font-weight: 400; font-size: 12px; color: #3366cc; border: 1px solid #c8ccd1; padding: 0 6px; border-radius: 2px; }
+  .toc div.i { padding: 5px 0; line-height: 1.3; }
+  .toc div.s { padding: 3px 0 3px 14px; font-size: 13px; }
+  .toc .cur { color: #202122; font-weight: 700; }
+  .content { flex: 1; padding: 18px 24px 0 24px; min-width: 0; overflow: hidden; }
+  h1 { font-family: 'DejaVu Serif', 'Linux Libertine', Georgia, serif; font-weight: 400; font-size: 28px; line-height: 1.3; padding-bottom: 2px; display: flex; align-items: baseline; }
+  h1 .lang { margin-left: auto; font-family: Inter, 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 14px; color: #3366cc; border: 1px solid #a2a9b1; border-radius: 2px; padding: 4px 10px; display: flex; gap: 6px; align-items: center; }
+  .tabs { display: flex; border-bottom: 1px solid #a2a9b1; font-size: 14px; margin-top: 4px; }
+  .tabs span { padding: 8px 10px 7px; }
+  .tabs span.on { border-bottom: 2px solid #202122; color: #202122; font-weight: 400; }
+  .tabs .sp { flex: 1; }
+  .from { font-size: 12.5px; color: #54595d; margin: 8px 0 6px; }
+  .hat { font-style: italic; padding-left: 26px; margin-bottom: 10px; font-size: 14px; }
+  .body p { line-height: 1.6; margin-bottom: 9px; }
+  .body h2 { font-family: 'DejaVu Serif', Georgia, serif; font-weight: 400; font-size: 22px; border-bottom: 1px solid #a2a9b1; margin: 14px 0 8px; padding-bottom: 2px; display: flex; align-items: baseline; }
+  .body h2 .e, .body h3 .e { margin-left: 10px; font-family: Inter, 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 13px; color: #54595d; }
+  .body h3 { font-size: 16px; font-weight: 700; margin: 10px 0 4px; }
+  sup { font-size: 10px; color: #3366cc; }
+  .infobox { float: right; width: 300px; margin: 4px 0 12px 20px; border: 1px solid #a2a9b1; background: #f8f9fa; font-size: 12.5px; line-height: 1.45; padding: 4px; }
+  .infobox caption, .infobox .cap { font-weight: 700; font-size: 15px; text-align: center; padding: 4px; }
+  .infobox table { width: 100%; border-collapse: collapse; }
+  .infobox th { text-align: left; vertical-align: top; padding: 3px 6px; width: 40%; }
+  .infobox td { padding: 3px 6px; vertical-align: top; }
+  .infobox .img { background: #fff; border: 1px solid #eaecf0; margin: 4px; padding: 6px; text-align: center; font-size: 11.5px; color: #202122; }
+  .thumb { float: left; width: 470px; margin: 4px 20px 10px 0; border: 1px solid #c8ccd1; background: #f8f9fa; padding: 4px; font-size: 12.5px; line-height: 1.45; }
+  .thumb .cap { padding: 4px 3px 2px; }
+  .mono { font-family: 'JetBrains Mono','DejaVu Sans Mono',monospace; }
+  .math { font-family: 'DejaVu Serif', serif; font-style: italic; white-space: nowrap; }
+  .side { width: 196px; padding: 20px 0 0 16px; font-size: 13px; }
+  .side .h { font-weight: 700; border-bottom: 1px solid #c8ccd1; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .side .h span:last-child { font-weight: 400; font-size: 12px; color: #3366cc; border: 1px solid #c8ccd1; padding: 0 6px; border-radius: 2px; }
+  .side .grp { font-weight: 700; margin: 12px 0 6px; }
+  .rad { display: flex; gap: 8px; align-items: center; padding: 3px 0; }
+  .rad i { width: 14px; height: 14px; border-radius: 50%; border: 1px solid #72777d; display: inline-block; }
+  .rad i.on { border: 4px solid #3366cc; }
+  .tools { margin-top: 18px; }
+  .tools div { padding: 3px 0; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="hamb"><svg width="20" height="20" viewBox="0 0 20 20" fill="#202122"><rect x="1" y="4" width="18" height="2"/><rect x="1" y="9" width="18" height="2"/><rect x="1" y="14" width="18" height="2"/></svg></div>
+  <div class="logo">
+    <svg width="50" height="50" viewBox="0 0 50 50"><circle cx="25" cy="25" r="22" fill="#f4f4f4" stroke="#9a9a9a"/><path d="M8 18h34M5 27h40M9 36h32M25 3c-8 8-8 36 0 44M25 3c8 8 8 36 0 44M17 5c-4 10-4 30 0 40M33 5c4 10 4 30 0 40" stroke="#777" fill="none" stroke-width="1"/><text x="14" y="23" font-size="8" font-family="DejaVu Serif" fill="#333">W</text><text x="27" y="32" font-size="7" font-family="DejaVu Serif" fill="#333">Ω</text></svg>
+    <div><div class="wm">WIKIPEDIA</div><div class="tg">The Free Encyclopedia</div></div>
+  </div>
+  <div class="search"><div class="in"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#202122" stroke-width="2"><circle cx="8" cy="8" r="6"/><path d="M13 13l5 5"/></svg>Search Wikipedia</div><div class="bt">Search</div></div>
+  <div class="user"><a>Donate</a><a>Create account</a><a>Log in</a><svg width="20" height="20" viewBox="0 0 20 20" fill="#202122"><circle cx="4" cy="10" r="1.8"/><circle cx="10" cy="10" r="1.8"/><circle cx="16" cy="10" r="1.8"/></svg></div>
+</div>
+<div class="wrap">
+  <div class="toc">
+    <div class="h"><span>Contents</span><span>hide</span></div>
+    <div class="i a">(Top)</div>
+    <div class="i a">Examples</div>
+    <div class="s a">Acoustics</div>
+    <div class="s a">Electronics</div>
+    <div class="i a">Ideal and real filters</div>
+    <div class="i a">Time response</div>
+    <div class="s a">Discrete-time realization</div>
+    <div class="i a cur">Continuous-time low-pass filters</div>
+    <div class="s a">Laplace notation</div>
+    <div class="s a">Electronic low-pass filters</div>
+    <div class="s a" style="padding-left:28px">RC filter</div>
+    <div class="s a" style="padding-left:28px">RL filter</div>
+    <div class="s a" style="padding-left:28px">RLC filter</div>
+    <div class="s a" style="padding-left:28px">Higher-order passive filters</div>
+    <div class="s a" style="padding-left:28px">Active electronic realization</div>
+    <div class="i a">Applications</div>
+    <div class="i a">See also</div>
+    <div class="i a">References</div>
+    <div class="i a">External links</div>
+  </div>
+  <div class="content">
+    <h1>Low-pass filter<span class="lang"><svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="#3366cc" stroke-width="1.6"><path d="M2 4h10M7 2v2M4 4c1 4 4 7 7 8M10 4c-1 4-4 7-7 8M11 18l4-9 4 9M12.5 15h5"/></svg>41 languages ⌄</span></h1>
+    <div class="tabs"><span class="on">Article</span><span class="a">Talk</span><span class="sp"></span><span class="on">Read</span><span class="a">Edit</span><span class="a">View history</span><span class="a">Tools ⌄</span></div>
+    <div class="from">From Wikipedia, the free encyclopedia</div>
+    <div class="hat">"Low-pass" redirects here. For the bird call, see <a>Low pass (ornithology)</a>. Not to be confused with <a>Long-pass filter</a>.</div>
+    <div class="body">
+      <div class="infobox">
+        <div class="cap">Low-pass filter</div>
+        <div class="img">
+          <svg width="250" height="118" viewBox="0 0 250 118">
+            <g stroke="#202122" stroke-width="1.6" fill="none">
+              <circle cx="22" cy="60" r="4"/><circle cx="228" cy="34" r="4"/><circle cx="22" cy="100" r="4"/><circle cx="228" cy="100" r="4"/>
+              <path d="M26 34H22v22M22 34h36l5-9 9 18 9-18 9 18 9-18 9 18 5-9h50v28M150 62h24M150 70h24M162 70v30M26 100h198M162 34h62"/>
+              <path d="M22 64v32" stroke-dasharray="3 3"/>
+            </g>
+            <text x="80" y="18" font-size="13" font-style="italic" font-family="DejaVu Serif">R</text>
+            <text x="180" y="70" font-size="13" font-style="italic" font-family="DejaVu Serif">C</text>
+            <text x="2" y="84" font-size="12" font-style="italic" font-family="DejaVu Serif">V</text><text x="10" y="88" font-size="9" font-family="DejaVu Serif">in</text>
+            <text x="218" y="72" font-size="12" font-style="italic" font-family="DejaVu Serif">V</text><text x="226" y="76" font-size="9" font-family="DejaVu Serif">out</text>
+          </svg>
+          <div>A passive, first-order RC low-pass filter</div>
+        </div>
+        <table>
+          <tr><th>Type</th><td><a>Linear</a>, <a>time-invariant</a> filter</td></tr>
+          <tr><th>Passband</th><td>0 to <span class="math">f<sub>c</sub></span></td></tr>
+          <tr><th>Stopband</th><td>Above <span class="math">f<sub>c</sub></span></td></tr>
+          <tr><th>Order</th><td>First (RC, RL); second (RLC, Sallen–Key)</td></tr>
+          <tr><th>Roll-off</th><td data-gt="article-infobox-rolloff">−20 dB/decade per order (−6 dB/octave)</td></tr>
+          <tr><th>Phase at <span class="math">f<sub>c</sub></span></th><td>−45° (first order)</td></tr>
+          <tr><th>Realizations</th><td><a>Passive</a>, <a>active</a> (op-amp), <a>digital</a> (FIR, IIR)</td></tr>
+          <tr><th>Related</th><td><a>High-pass filter</a>, <a>Band-pass filter</a>, <a>Butterworth filter</a></td></tr>
+        </table>
+      </div>
+      <p>A <b>low-pass filter</b> is a <a>filter</a> that passes <a>signals</a> with a <a>frequency</a> lower than a selected <a>cutoff frequency</a> and <a>attenuates</a> signals with frequencies higher than the cutoff frequency. The exact <a>frequency response</a> of the filter depends on the <a>filter design</a>. The filter is sometimes called a <b>high-cut filter</b>, or <b>treble-cut filter</b> in audio applications. A low-pass filter is the complement of a <a>high-pass filter</a>.</p>
+      <p>In optics, high-pass and low-pass may have different meanings, depending on whether referring to the frequency or <a>wavelength</a> of light, since these variables are inversely related. High-pass frequency filters would act as low-pass wavelength filters, and vice versa. For this reason, it is a good practice to refer to wavelength filters as <i>short-pass</i> and <i>long-pass</i> to avoid confusion.<sup>[1]</sup></p>
+      <p>Low-pass filters exist in many different forms, including electronic circuits such as a <a>hiss filter</a> used in <a>audio</a>, <a>anti-aliasing filters</a> for conditioning signals before <a>analog-to-digital conversion</a>, <a>digital filters</a> for smoothing sets of data, acoustic barriers, <a>blurring</a> of images, and so on. The <a>moving average</a> operation used in fields such as finance is a particular kind of low-pass filter, and can be analyzed with the same <a>signal processing</a> techniques as are used for other low-pass filters. Low-pass filters provide a smoother form of a signal, removing the short-term fluctuations and leaving the longer-term trend.<sup>[2]</sup></p>
+      <p><span data-gt="article-cutoff-def">The cutoff frequency is the frequency at which the output power has fallen to half of its passband value, which corresponds to the output amplitude dropping to about 70.7% of the input, or −3 dB.</span> Below this frequency the filter's gain is approximately flat; above it, the gain decreases steadily at a rate set by the filter's <a>order</a>.<sup>[3]</sup></p>
+      <h2>Continuous-time low-pass filters<span class="e">[<a>edit</a>]</span></h2>
+      <div class="thumb">
+        <svg width="460" height="300" viewBox="0 0 460 300" font-family="DejaVu Sans, sans-serif" id="bode">
+          <rect x="0" y="0" width="460" height="300" fill="#fff"/>
+        </svg>
+        <div class="cap">Bode magnitude and phase plot of a first-order RC low-pass filter with <span class="math">R</span> = 1.59 kΩ and <span class="math">C</span> = 100 nF (<span class="math">f<sub>c</sub></span> ≈ 1 kHz). The dashed lines are the straight-line asymptotes; the actual response is 3 dB below their intersection at the cutoff frequency.</div>
+      </div>
+      <p>There are many different types of filter circuits, with different responses to changing frequency. The <a>frequency response</a> of a filter is generally represented using a <a>Bode plot</a>, and the filter is characterized by its cutoff frequency and rate of frequency <a>rolloff</a>. In all cases, at the cutoff frequency, the filter attenuates the input power by half or 3 dB. So the <b>order</b> of the filter determines the amount of additional attenuation for frequencies higher than the cutoff frequency.</p>
+      <p>A <b>first-order filter</b>, for example, reduces the signal amplitude by half (so power reduces by a factor of 4, or 6 dB) every time the frequency doubles (goes up one <a>octave</a>); more precisely, the power rolloff approaches 20 dB per <a>decade</a> in the limit of high frequency. The magnitude Bode plot for a first-order filter looks like a horizontal line below the cutoff frequency, and a diagonal line above the cutoff frequency. There is also a "knee curve" at the boundary between the two, which smoothly transitions between the two straight-line regions.</p>
+      <h3>RC filter</h3>
+      <p>One simple low-pass filter circuit consists of a <a>resistor</a> in series with a <a>load</a>, and a <a>capacitor</a> in parallel with the load. The capacitor exhibits <a>reactance</a>, and blocks low-frequency signals, forcing them through the load instead. At higher frequencies, the reactance drops, and the capacitor effectively functions as a short circuit.</p>
+      <p><span data-gt="article-formula">For this circuit the cutoff frequency is <span class="math">f<sub>c</sub></span> = 1/(2π<span class="math">RC</span>), where <span class="math">R</span> is the resistance in ohms and <span class="math">C</span> is the capacitance in farads.</span> The product <span class="math">τ</span> = <span class="math">RC</span> is the <a>time constant</a> of the circuit; it is the time for the capacitor voltage to reach about 63.2% of a step input.<sup>[4]</sup></p>
+      <p>One way to understand this circuit is to focus on the time the capacitor takes to charge. It takes time for the capacitor to charge or discharge through the resistor. At low frequencies, there is plenty of time for the capacitor to charge up to practically the same voltage as the input voltage. At high frequencies, the capacitor only has time to charge up a small amount before the input switches direction. The output goes up and down only a small fraction of the amount the input goes up and down. At double the frequency, there is only time for it to charge up half the amount.</p>
+      <p>Another way to understand this circuit is through the concept of <a>reactance</a> at a particular frequency. Since <a>direct current</a> (DC) cannot flow through the capacitor, DC input must flow out the path marked <span class="math">V</span><sub>out</sub> (analogous to removing the capacitor). Since <a>alternating current</a> (AC) flows very well through the capacitor, almost as well as it flows through a solid wire, AC input flows out through the capacitor, effectively <a>short circuiting</a> to ground (analogous to replacing the capacitor with just a wire).</p>
+      <h3>RL filter</h3>
+      <p>A resistor–inductor circuit or <a>RL filter</a> is an electric circuit composed of resistors and <a>inductors</a> driven by a <a>voltage</a> or <a>current source</a>. A first-order RL circuit is composed of one resistor and one inductor and is the simplest type of RL circuit. Its cutoff frequency is <span class="math">f<sub>c</sub></span> = <span class="math">R</span>/(2π<span class="math">L</span>).</p>
+    </div>
+  </div>
+  <div class="side">
+    <div class="h"><span>Appearance</span><span>hide</span></div>
+    <div class="grp">Text</div>
+    <div class="rad"><i></i>Small</div><div class="rad"><i class="on"></i>Standard</div><div class="rad"><i></i>Large</div>
+    <div class="grp">Width</div>
+    <div class="rad"><i class="on"></i>Standard</div><div class="rad"><i></i>Wide</div>
+    <div class="grp">Color <span style="font-weight:400;color:#72777d">(beta)</span></div>
+    <div class="rad"><i class="on"></i>Automatic</div><div class="rad"><i></i>Light</div><div class="rad"><i></i>Dark</div>
+    <div class="tools">
+      <div class="grp" style="border-bottom:1px solid #c8ccd1;padding-bottom:6px">Tools</div>
+      <div class="a">What links here</div><div class="a">Related changes</div><div class="a">Upload file</div><div class="a">Permanent link</div><div class="a">Page information</div><div class="a">Cite this page</div><div class="a">Get shortened URL</div><div class="a">Download QR code</div>
+      <div class="grp">Print/export</div>
+      <div class="a">Download as PDF</div><div class="a">Printable version</div>
+      <div class="grp">In other projects</div>
+      <div class="a">Wikimedia Commons</div><div class="a">Wikidata item</div>
+    </div>
+  </div>
+</div>
+<script>
+  // Bode plot: 10 Hz .. 100 kHz, 100 px/decade
+  const svg = document.getElementById('bode');
+  const NS = 'http://www.w3.org/2000/svg';
+  const X0 = 58, PX = 95, fc = 1000;
+  const fx = f => X0 + Math.log10(f / 10) * PX;
+  const M_TOP = 18, M_DB = 2.0; // 0 dB at y=18, 2 px per dB, down to -60 dB at y=138
+  const my = db => M_TOP + (-db) * M_DB;
+  const P_TOP = 178, P_DEG = 1.0; // 0 deg at 178, -90 at 268
+  const py = d => P_TOP + (-d) * P_DEG;
+  let s = '';
+  // grids
+  for (let dec = 10; dec <= 100000; dec *= 10) {
+    for (let k = 1; k < 10; k++) {
+      const f = dec * k; if (f > 100000) break;
+      const x = fx(f);
+      s += `<line x1="${x}" x2="${x}" y1="${M_TOP}" y2="${my(-60)}" stroke="${k===1?'#c8ccd1':'#eef0f2'}"/>`;
+      s += `<line x1="${x}" x2="${x}" y1="${P_TOP}" y2="${py(-90)}" stroke="${k===1?'#c8ccd1':'#eef0f2'}"/>`;
+    }
+  }
+  for (let db = 0; db >= -60; db -= 20) s += `<line x1="${X0}" x2="${fx(100000)}" y1="${my(db)}" y2="${my(db)}" stroke="#c8ccd1"/><text x="${X0-6}" y="${my(db)+4}" font-size="10" text-anchor="end" fill="#333">${db}</text>`;
+  for (let d = 0; d >= -90; d -= 45) s += `<line x1="${X0}" x2="${fx(100000)}" y1="${py(d)}" y2="${py(d)}" stroke="#c8ccd1"/><text x="${X0-6}" y="${py(d)+4}" font-size="10" text-anchor="end" fill="#333">${d}°</text>`;
+  ['10', '100', '1k', '10k', '100k'].forEach((l, i) => { s += `<text x="${X0 + i*PX}" y="${py(-90)+14}" font-size="10" text-anchor="middle" fill="#333">${l}</text>`; });
+  s += `<text x="${fx(1000)}" y="${py(-90)+28}" font-size="11" text-anchor="middle" fill="#202122">Frequency (Hz)</text>`;
+  s += `<text transform="translate(14 ${my(-30)}) rotate(-90)" font-size="11" text-anchor="middle">Gain (dB)</text>`;
+  s += `<text transform="translate(14 ${py(-45)}) rotate(-90)" font-size="11" text-anchor="middle">Phase</text>`;
+  // asymptotes
+  s += `<path d="M${X0} ${my(0)} L${fx(fc)} ${my(0)} L${fx(100000)} ${my(-40)}" stroke="#d33" stroke-dasharray="5 4" fill="none" stroke-width="1.2"/>`;
+  // magnitude & phase curves
+  let pm = '', pp = '';
+  for (let i = 0; i <= 400; i++) {
+    const f = 10 * Math.pow(10, i / 100);
+    const r = f / fc;
+    const db = -10 * Math.log10(1 + r * r);
+    const ph = -Math.atan(r) * 180 / Math.PI;
+    pm += (i ? 'L' : 'M') + fx(f).toFixed(1) + ' ' + my(db).toFixed(1);
+    pp += (i ? 'L' : 'M') + fx(f).toFixed(1) + ' ' + py(ph).toFixed(1);
+  }
+  s += `<path d="${pm}" stroke="#3366cc" stroke-width="2.2" fill="none"/>`;
+  s += `<path d="${pp}" stroke="#3366cc" stroke-width="2.2" fill="none"/>`;
+  s += `<line x1="${fx(fc)}" x2="${fx(fc)}" y1="${my(0)}" y2="${py(-90)}" stroke="#72777d" stroke-dasharray="2 3"/>`;
+  s += `<text x="${fx(20000)}" y="${my(-20)-6}" font-size="10" fill="#d33">−20 dB/decade</text>`;
+  s += `<text x="${fx(1300)}" y="${py(-45)-6}" font-size="10" fill="#202122">−45°</text>`;
+  s += `<g data-gt="article-bode-corner"><circle cx="${fx(fc)}" cy="${my(-3.01)}" r="5" fill="#fff" stroke="#202122" stroke-width="1.5"/><text x="${fx(fc)-8}" y="${my(-3.01)+18}" font-size="10" text-anchor="end" fill="#202122">−3 dB at f<tspan font-size="8" dy="2">c</tspan></text></g>`;
+  s += `<circle cx="${fx(fc)}" cy="${py(-45)}" r="4" fill="#fff" stroke="#202122" stroke-width="1.5"/>`;
+  // hard-set target: where the real magnitude curve reaches -20 dB (f = fc * sqrt(99) ~ 9.95 kHz)
+  const f20 = fc * Math.sqrt(99);
+  s += `<rect data-gt="article-minus20-point" x="${(fx(f20) - 12).toFixed(1)}" y="${(my(-20) - 12).toFixed(1)}" width="24" height="24" fill="none" stroke="none"/>`;
+  svg.insertAdjacentHTML('beforeend', s);
+</script>
+</body>
+</html>

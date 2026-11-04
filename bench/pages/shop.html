@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Compare: Digital Multimeters - Circuit Shack</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1280px; overflow: hidden; }
+  body { font-family: Inter, 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 14px; color: #1b1f24; background: #f3f4f6; }
+  .top { height: 64px; background: #13233a; display: flex; align-items: center; padding: 0 40px; gap: 26px; color: #fff; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 21px; letter-spacing: -.3px; }
+  .loc { font-size: 12px; color: #b9c4d3; line-height: 1.25; }
+  .loc b { color: #fff; font-size: 13px; }
+  .search { flex: 1; height: 40px; display: flex; border-radius: 6px; overflow: hidden; }
+  .search .cat { background: #e6e8eb; color: #333; padding: 0 12px; display: flex; align-items: center; font-size: 13px; border-right: 1px solid #c9cdd2; }
+  .search .in { flex: 1; background: #fff; color: #1b1f24; display: flex; align-items: center; padding: 0 12px; }
+  .search .go { width: 52px; background: #f5a623; display: flex; align-items: center; justify-content: center; }
+  .acct { font-size: 12px; color: #b9c4d3; line-height: 1.25; }
+  .acct b { color: #fff; font-size: 13px; }
+  .cart { display: flex; align-items: flex-end; gap: 4px; font-weight: 700; position: relative; }
+  .cart .n { position: absolute; left: 17px; top: -6px; color: #f5a623; font-size: 15px; }
+  .nav { height: 40px; background: #1f3654; display: flex; align-items: center; padding: 0 40px; gap: 22px; color: #e8edf3; font-size: 13.5px; }
+  .wrap { padding: 16px 40px 0; }
+  .crumb { font-size: 13px; color: #5b6573; margin-bottom: 10px; }
+  .crumb a { color: #1a64b8; }
+  .h { display: flex; align-items: baseline; gap: 16px; margin-bottom: 14px; }
+  .h h1 { font-size: 26px; font-weight: 700; }
+  .h .tog { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 13px; color: #333; }
+  .sw { width: 36px; height: 20px; border-radius: 10px; background: #1a64b8; position: relative; }
+  .sw::after { content: ''; position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+  .grid { display: grid; grid-template-columns: 220px repeat(4, 1fr); background: #fff; border: 1px solid #dde1e6; border-radius: 8px; overflow: hidden; }
+  .lab { background: #f8f9fb; border-right: 1px solid #e6e9ed; padding: 16px; font-size: 13px; color: #5b6573; }
+  .card { padding: 14px 18px 16px; border-right: 1px solid #e6e9ed; position: relative; display: flex; flex-direction: column; gap: 6px; }
+  .card:last-child { border-right: 0; }
+  .card .x { position: absolute; right: 12px; top: 10px; color: #8a929c; font-size: 18px; }
+  .card .img { height: 236px; display: flex; align-items: center; justify-content: center; background: #fafafa; border-radius: 6px; }
+  .badge { position: absolute; left: 18px; top: 14px; background: #c7511f; color: #fff; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 3px; z-index: 1; }
+  .badge.b2 { background: #232f3e; }
+  .card .nm { font-size: 15px; font-weight: 600; line-height: 1.35; color: #0f3d73; height: 42px; overflow: hidden; }
+  .stars { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #1a64b8; }
+  .stars .s { display: inline-flex; }
+  .price { display: inline-flex; align-self: flex-start; align-items: flex-start; gap: 2px; color: #1b1f24; }
+  .price .d { font-size: 13px; margin-top: 4px; }
+  .price .w { font-size: 30px; font-weight: 600; line-height: 1; }
+  .price .c { font-size: 13px; margin-top: 4px; }
+  .price .was { margin-left: 10px; margin-top: 10px; font-size: 13px; color: #5b6573; text-decoration: line-through; }
+  .ship { font-size: 12.5px; color: #3a434e; }
+  .ship b { color: #067d62; }
+  .stock { font-size: 13px; color: #067d62; font-weight: 600; }
+  .stock.low { color: #b12704; }
+  .add { height: 36px; border-radius: 18px; background: #ffd814; border: 1px solid #fcd200; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; margin-top: 4px; }
+  .add svg { margin-right: 8px; }
+  .save { font-size: 12.5px; color: #1a64b8; text-align: center; }
+  table { width: 100%; table-layout: fixed; border-collapse: collapse; background: #fff; border: 1px solid #dde1e6; border-top: 0; font-size: 13.5px; }
+  td { padding: 0 18px; height: 31px; border-top: 1px solid #edf0f3; border-right: 1px solid #edf0f3; }
+  td:first-child { width: 220px; background: #f8f9fb; color: #3a434e; font-weight: 600; font-size: 13px; }
+  tr.sec td { background: #eef2f7; font-weight: 700; color: #13233a; height: 28px; font-size: 12.5px; letter-spacing: .3px; }
+  .y { color: #067d62; font-weight: 600; } .n { color: #b12704; }
+  .best { background: #f1faf6; }
+  .also { margin-top: 14px; background: #fff; border: 1px solid #dde1e6; border-radius: 8px; display: flex; align-items: center; gap: 26px; padding: 12px 18px; }
+  .also .at { font-weight: 700; font-size: 14px; width: 190px; line-height: 1.3; }
+  .ai { display: flex; gap: 10px; align-items: center; width: 300px; }
+  .ai svg { background: #f6f7f9; border-radius: 6px; flex: none; }
+  .an { font-size: 13px; color: #0f3d73; line-height: 1.3; }
+  .ap { font-size: 12.5px; color: #3a434e; margin-top: 3px; }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo"><svg width="32" height="32" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="6" fill="#f5a623"/><path d="M9 16h4l2-6 3 12 2-6h3" fill="none" stroke="#13233a" stroke-width="2.4" stroke-linejoin="round"/></svg>Circuit Shack</div>
+  <div class="loc">Deliver to Alex<br><b>Springfield 62704</b></div>
+  <div class="search"><div class="cat">Test &amp; Measurement ⌄</div><div class="in">multimeter true rms</div><div class="go"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#13233a" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></div></div>
+  <div class="acct">Hello, Alex<br><b>Account &amp; Lists ⌄</b></div>
+  <div class="acct">Returns<br><b>&amp; Orders</b></div>
+  <div class="cart"><svg width="36" height="30" viewBox="0 0 36 30" fill="none" stroke="#fff" stroke-width="2"><path d="M1 3h6l4 17h18l4-12H9"/><circle cx="14" cy="26" r="2"/><circle cx="27" cy="26" r="2"/></svg><span class="n">2</span>Cart</div>
+</div>
+<div class="nav"><span>☰ All</span><span>Microcontrollers</span><span>Test &amp; Measurement</span><span>Soldering</span><span>Passives</span><span>Wire &amp; Cable</span><span>Tools</span><span>Student Deals</span><span>Today's Deals</span><span style="margin-left:auto;font-weight:600">Free 2-day shipping for .edu accounts</span></div>
+<div class="wrap">
+  <div class="crumb"><a>Test &amp; Measurement</a> › <a>Multimeters</a> › <a>Handheld Digital Multimeters</a> › Compare</div>
+  <div class="h"><h1>Compare 4 multimeters</h1><span style="color:#5b6573">Prices updated 2 min ago</span><span class="tog">Highlight differences <span class="sw"></span></span></div>
+  <div class="grid" id="cards"></div>
+  <table id="specs"></table>
+  <div class="also">
+    <div class="at">Often bought together with multimeters</div>
+    <div class="ai"><svg width="54" height="54" viewBox="0 0 54 54"><path d="M6 46C20 30 30 40 48 8" stroke="#c4262e" stroke-width="4" fill="none"/><path d="M6 40C22 26 28 34 44 6" stroke="#111" stroke-width="4" fill="none"/></svg><div><div class="an">Pomona 5519A silicone test leads, 4 mm</div><div class="ap">$32.40 · ★ 4.8</div></div></div>
+    <div class="ai"><svg width="54" height="54" viewBox="0 0 54 54"><path d="M8 30l18-8 4 6-18 8z" fill="#c4262e"/><path d="M26 22l20-8M30 28l18-4" stroke="#999" stroke-width="3"/><path d="M8 44l18-8 4 6-18 8z" fill="#111"/></svg><div><div class="an">Mini alligator clip jumpers, 10 pk</div><div class="ap">$7.99 · ★ 4.5</div></div></div>
+    <div class="ai"><svg width="54" height="54" viewBox="0 0 54 54"><rect x="14" y="10" width="26" height="38" rx="3" fill="#2a2a2a"/><rect x="18" y="6" width="6" height="5" fill="#bbb"/><rect x="30" y="6" width="6" height="5" fill="#bbb"/><rect x="14" y="26" width="26" height="10" fill="#f5a623"/></svg><div><div class="an">Energizer 9V lithium battery, 2 pk</div><div class="ap">$14.29 · ★ 4.7</div></div></div>
+    <div class="ai"><svg width="54" height="54" viewBox="0 0 54 54"><rect x="8" y="14" width="38" height="28" rx="4" fill="#1f3654"/><rect x="14" y="20" width="26" height="16" rx="2" fill="#2f4f78"/></svg><div><div class="an">Hard carrying case for handheld DMMs</div><div class="ap">$15.99 · ★ 4.6</div></div></div>
+    <div class="ai"><svg width="54" height="54" viewBox="0 0 54 54"><path d="M10 44L40 14" stroke="#c4262e" stroke-width="5"/><circle cx="42" cy="12" r="5" fill="#888"/><path d="M8 46l4-4" stroke="#111" stroke-width="6"/></svg><div><div class="an">K-type thermocouple probe, −50 to 400 °C</div><div class="ap">$9.49 · ★ 4.3</div></div></div>
+  </div>
+</div>
+<script>
+  function star(fill) {
+    // fill: 0..1
+    const id = 'g' + Math.random().toString(36).slice(2, 7);
+    return `<svg width="17" height="17" viewBox="0 0 24 24"><defs><linearGradient id="${id}"><stop offset="${fill}" stop-color="#f5a623"/><stop offset="${fill}" stop-color="#d9dde2"/></linearGradient></defs><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.3 5.8 21l1.6-7L2 9.2l7.1-.6z" fill="url(#${id})" stroke="#c98a12" stroke-width=".8"/></svg>`;
+  }
+  const stars = r => Array.from({ length: 5 }, (_, i) => star(Math.max(0, Math.min(1, r - i)))).join('');
+  function meter(o) {
+    // o: body, trim, clamp, lcd
+    let s = `<svg width="190" height="226" viewBox="0 0 190 226">`;
+    s += `<ellipse cx="95" cy="218" rx="70" ry="6" fill="#00000014"/>`;
+    if (o.clamp) {
+      s += `<path d="M58 70 C40 10, 150 10, 132 70 L118 70 C128 30, 62 30, 72 70Z" fill="${o.trim}" stroke="#222" stroke-width="2"/>`;
+      s += `<rect x="92" y="18" width="6" height="18" fill="#f5a623"/>`;
+      s += `<rect x="50" y="66" width="90" height="148" rx="16" fill="${o.body}" stroke="#222" stroke-width="2"/>`;
+      s += `<rect x="62" y="82" width="66" height="34" rx="3" fill="#a9b89a" stroke="#333"/><text x="124" y="108" font-family="DejaVu Sans Mono" font-size="17" text-anchor="end" fill="#1d261a">${o.lcd}</text>`;
+      s += `<circle cx="95" cy="150" r="22" fill="#2b2b2b" stroke="#111"/><rect x="92" y="130" width="6" height="18" rx="2" fill="#ddd"/>`;
+      for (let a = 0; a < 8; a++) { const t = (200 + a * 20) * Math.PI / 180; s += `<circle cx="${95 + 30 * Math.cos(t)}" cy="${150 + 30 * Math.sin(t)}" r="1.6" fill="#ddd"/>`; }
+      s += `<circle cx="74" cy="198" r="6" fill="#111"/><circle cx="95" cy="198" r="6" fill="#111"/><circle cx="116" cy="198" r="6" fill="#b5261e"/>`;
+    } else {
+      s += `<rect x="30" y="8" width="130" height="206" rx="18" fill="${o.trim}" stroke="#222" stroke-width="2"/>`;
+      s += `<rect x="40" y="16" width="110" height="190" rx="10" fill="${o.body}"/>`;
+      s += `<rect x="50" y="26" width="90" height="46" rx="3" fill="${o.lcdbg || '#a9b89a'}" stroke="#333"/><text x="135" y="60" font-family="DejaVu Sans Mono" font-size="22" text-anchor="end" fill="${o.lcdfg || '#1d261a'}">${o.lcd}</text><text x="55" y="38" font-size="7" fill="${o.lcdfg || '#1d261a'}" font-family="DejaVu Sans">AUTO</text>`;
+      s += `<g>${[0, 1, 2, 3].map(i => `<rect x="${52 + i * 22}" y="80" width="18" height="10" rx="2" fill="${o.btn || '#555'}"/>`).join('')}</g>`;
+      s += `<circle cx="95" cy="130" r="30" fill="${o.dial || '#2b2b2b'}" stroke="#111" stroke-width="2"/><rect x="91" y="102" width="8" height="26" rx="3" fill="${o.knob || '#ddd'}"/>`;
+      for (let a = 0; a < 10; a++) { const t = (190 + a * 18) * Math.PI / 180; s += `<circle cx="${95 + 38 * Math.cos(t)}" cy="${130 + 38 * Math.sin(t)}" r="1.8" fill="${o.tick || '#eee'}"/>`; }
+      s += `<circle cx="62" cy="186" r="7" fill="#111" stroke="#666"/><circle cx="84" cy="186" r="7" fill="#111" stroke="#666"/><circle cx="106" cy="186" r="7" fill="#111" stroke="#666"/><circle cx="128" cy="186" r="7" fill="#b5261e" stroke="#666"/>`;
+    }
+    if (o.brand) s += `<text x="95" y="${o.clamp ? 180 : 203}" font-family="DejaVu Sans" font-weight="700" font-size="8" fill="${o.brandc || '#fff'}" text-anchor="middle">${o.brand}</text>`;
+    return s + '</svg>';
+  }
+  const P = [
+    { name: 'Fluke 117 Electrician\'s True-RMS Digital Multimeter with VoltAlert', r: 4.8, n: '3,412', w: '219', c: '99', was: '$249.99', ship: '<b>FREE</b> delivery Thu, Nov 5', stock: 'In stock', img: meter({ body: '#5a5d61', trim: '#f2c200', lcd: '120.4', brand: '', dial: '#f2c200', knob: '#333', tick: '#222', btn: '#f2c200' }) },
+    { name: 'Klein Tools MM400 Auto-Ranging Digital Multimeter, 600V', r: 4.6, n: '18,905', w: '49', c: '97', was: '', ship: '<b>FREE</b> delivery Thu, Nov 5', stock: 'In stock', img: meter({ body: '#2a2a2a', trim: '#e8731a', lcd: '9.012', brand: 'KLEIN', brandc: '#e8731a', btn: '#e8731a' }), badge: ["Shack's Choice", 'b2'] },
+    { name: 'AstroAI DM6000AR Digital Multimeter, 6000 Counts, Auto-Ranging', r: 4.4, n: '41,287', w: '24', c: '99', was: '$35.99', ship: '<b>FREE</b> delivery Fri, Nov 6', stock: 'Only 7 left in stock', low: true, img: meter({ body: '#1c1c1c', trim: '#c4262e', lcd: '3.300', lcdbg: '#17222c', lcdfg: '#7fd3ff', brand: 'ASTROAI', brandc: '#c4262e' }) },
+    { name: 'Klein Tools CL800 Digital Clamp Meter, AC/DC Auto-Ranging, 600A', r: 4.7, n: '6,021', w: '139', c: '97', was: '', ship: '<b>FREE</b> delivery Sat, Nov 7', stock: 'In stock', img: meter({ clamp: true, body: '#2a2a2a', trim: '#e8731a', lcd: '12.6A', brand: 'CL800', brandc: '#e8731a' }) },
+  ];
+  let h = `<div class="lab"><div style="font-weight:700;color:#1b1f24;font-size:14px;margin-bottom:8px">4 items selected</div>Pick up to 6 products to compare. Specs come from the manufacturers' datasheets.<div style="margin-top:14px;color:#1a64b8">+ Add another item</div><div style="margin-top:8px;color:#1a64b8">Clear all</div><div style="margin-top:22px;font-weight:700;color:#1b1f24">Sort by</div><div style="margin-top:6px">◉ Featured</div><div>○ Price: low to high</div><div>○ Avg. customer review</div></div>`;
+  P.forEach((p, i) => {
+    h += `<div class="card">${p.badge ? `<span class="badge ${p.badge[1]}">${p.badge[0]}</span>` : ''}<span class="x">×</span>
+      <div class="img">${p.img}</div>
+      <div class="nm">${p.name}</div>
+      <div class="stars"><span class="s"${i === 0 ? ' data-gt="shop-best-rating"' : ''}>${stars(p.r)}</span>${p.r} <span style="color:#5b6573">(${p.n})</span></div>
+      <div class="price"${i === 2 ? ' data-gt="shop-cheapest-price"' : ''}><span class="d">$</span><span class="w">${p.w}</span><span class="c">${p.c}</span>${p.was ? `<span class="was">${p.was}</span>` : ''}</div>
+      <div class="ship">${p.ship}</div>
+      <div class="stock${p.low ? ' low' : ''}">${p.stock}</div>
+      <div class="add"${i === 3 ? ' data-gt="shop-cart-clamp"' : ''}><svg width="16" height="16" viewBox="0 0 36 30" fill="none" stroke="#1b1f24" stroke-width="3"><path d="M1 3h6l4 17h18l4-12H9"/><circle cx="14" cy="26" r="2"/><circle cx="27" cy="26" r="2"/></svg>Add to cart</div>
+      <div class="save">Save for later · Remove</div>
+    </div>`;
+  });
+  document.getElementById('cards').innerHTML = h;
+  const S = [
+    ['sec', 'MEASUREMENT'],
+    ['True RMS', ['Yes', 'No', 'Yes', 'Yes']],
+    ['Display counts', ['6,000', '4,000', '6,000', '4,000']],
+    ['DC voltage accuracy', ['±0.5% + 2', '±0.5% + 3', '±0.5% + 3', '±1.0% + 5']],
+    ['Max voltage', ['600 V AC/DC', '600 V AC/DC', '600 V AC/DC', '600 V AC/DC']],
+    ['Max current', ['10 A (20 A for 30 s)', '10 A', '10 A', '600 A AC/DC (clamp)']],
+    ['Capacitance', ['1 nF – 9,999 µF', '1 nF – 1,000 µF', '9.999 nF – 99.99 mF', '1 nF – 1,000 µF']],
+    ['Frequency', ['5 Hz – 50 kHz', '10 Hz – 10 MHz', '10 Hz – 10 MHz', '10 Hz – 1 kHz']],
+    ['Temperature', ['—', '−18 to 400 °C (probe incl.)', '−20 to 1,000 °C (probe incl.)', '−18 to 400 °C']],
+    ['sec', 'SAFETY & BUILD'],
+    ['CAT rating', ['CAT III 600 V', 'CAT III 600 V', 'CAT III 600 V', 'CAT IV 600 V']],
+    ['Non-contact voltage', ['Yes (VoltAlert)', 'No', 'Yes (NCV)', 'Yes']],
+    ['Backlight / auto-off', ['Yes / Yes', 'Yes / Yes', 'Yes / Yes', 'Yes / Yes']],
+    ['Warranty', ['3 years', '2 years', '3 years', '2 years']],
+    ['Weight', ['550 g', '386 g', '320 g', '380 g']],
+  ];
+  let t = '';
+  S.forEach(row => {
+    if (row[0] === 'sec') { t += `<tr class="sec"><td>${row[1]}</td><td></td><td></td><td></td><td></td></tr>`; return; }
+    t += `<tr><td>${row[0]}</td>` + row[1].map((v, i) => {
+      const cls = v.startsWith('Yes') ? 'y' : v === 'No' ? 'n' : '';
+      const gt = row[0] === 'True RMS' && i === 2 ? ' data-gt="shop-cheap-truerms"'
+        : row[0] === 'Capacitance' && i === 2 ? ' data-gt="shop-cap-astro"' : '';
+      return `<td class="${cls}"${gt}>${v}</td>`;
+    }).join('') + '</tr>';
+  });
+  document.getElementById('specs').innerHTML = '<colgroup><col style="width:220px"><col><col><col><col></colgroup>' + t;
+</script>
+</body>
+</html>

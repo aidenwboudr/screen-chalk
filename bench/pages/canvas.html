@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Assignments: ECE 261 - Intro to Logic Circuits (Fall 2026)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1280px; overflow: hidden; }
+  body { font-family: Inter, 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 14px; color: #2d3b45; background: #fff; }
+  .gnav { position: absolute; left: 0; top: 0; bottom: 0; width: 84px; background: #0b2e5b; display: flex; flex-direction: column; align-items: center; padding-top: 6px; }
+  .gnav .logo { width: 84px; height: 84px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #ffffff22; margin-bottom: 4px; }
+  .gi { width: 84px; height: 78px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #fff; font-size: 12px; position: relative; }
+  .gi svg { width: 26px; height: 26px; stroke: #fff; fill: none; stroke-width: 1.6; }
+  .gi.on { background: #fff; color: #0b2e5b; }
+  .gi.on svg { stroke: #0b2e5b; }
+  .gi .bdg { position: absolute; top: 10px; right: 18px; background: #e0061f; color: #fff; font-size: 10px; font-weight: 700; border-radius: 9px; padding: 1px 6px; border: 2px solid #0b2e5b; }
+  .gi .avt { width: 30px; height: 30px; border-radius: 50%; background: #c7cdd1; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; color: #0b2e5b; font-weight: 700; font-size: 12px; }
+  .top { position: absolute; left: 84px; right: 0; top: 0; height: 72px; display: flex; align-items: center; padding: 0 24px; gap: 18px; border-bottom: 1px solid #c7cdd1; }
+  .ham svg { width: 24px; height: 24px; }
+  .crumb { font-size: 16px; color: #0b6ac2; display: flex; gap: 10px; align-items: center; }
+  .crumb span.cur { color: #2d3b45; }
+  .top .r { margin-left: auto; display: flex; gap: 10px; }
+  .btn { height: 38px; padding: 0 14px; border: 1px solid #c7cdd1; background: #f5f5f5; border-radius: 4px; display: flex; align-items: center; gap: 8px; color: #2d3b45; font-size: 14px; }
+  .btn.pri { background: #0b6ac2; border-color: #0a5ba8; color: #fff; }
+  .cnav { position: absolute; left: 84px; top: 72px; bottom: 0; width: 200px; padding: 18px 0 0 24px; font-size: 14.5px; }
+  .cnav .term { font-size: 12px; color: #6b7780; margin-bottom: 10px; }
+  .cnav div.i { padding: 7px 10px; color: #0b6ac2; border-left: 3px solid transparent; }
+  .cnav div.i.on { color: #2d3b45; border-left-color: #2d3b45; font-weight: 600; }
+  .main { position: absolute; left: 300px; top: 72px; bottom: 0; width: 1150px; padding: 22px 26px 0 26px; overflow: hidden; }
+  .tools { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; }
+  .srch { width: 360px; height: 38px; border: 1px solid #c7cdd1; border-radius: 4px; display: flex; align-items: center; gap: 8px; padding: 0 12px; color: #6b7780; }
+  .seg { display: flex; margin-left: auto; }
+  .seg span { height: 38px; padding: 0 16px; border: 1px solid #c7cdd1; display: flex; align-items: center; }
+  .seg span:first-child { border-radius: 4px 0 0 4px; background: #2d3b45; color: #fff; border-color: #2d3b45; }
+  .seg span:last-child { border-radius: 0 4px 4px 0; border-left: 0; }
+  .grp { border: 1px solid #c7cdd1; border-radius: 4px; margin-bottom: 16px; overflow: hidden; }
+  .gh { height: 46px; background: #f5f5f5; display: flex; align-items: center; padding: 0 14px; gap: 10px; font-weight: 700; font-size: 15px; border-bottom: 1px solid #c7cdd1; }
+  .gh .cnt { margin-left: auto; font-weight: 400; font-size: 13px; color: #6b7780; }
+  .gh.red { color: #c0281c; background: #fdf1f0; }
+  .it { display: flex; align-items: center; height: 66px; padding: 0 16px; border-bottom: 1px solid #e3e7ea; gap: 16px; }
+  .it:last-child { border-bottom: 0; }
+  .it .ic svg { width: 24px; height: 24px; }
+  .it .t { font-size: 15.5px; color: #2d3b45; font-weight: 600; }
+  .it .meta { font-size: 13px; color: #6b7780; margin-top: 4px; display: flex; gap: 8px; }
+  .it .meta b { font-weight: 600; color: #2d3b45; }
+  .it .pts { margin-left: auto; font-size: 13px; color: #6b7780; text-align: right; white-space: nowrap; }
+  .it .pts b { color: #2d3b45; font-weight: 600; font-size: 14px; }
+  .it.over { background: #fff6f5; border-left: 4px solid #e0061f; }
+  .it.over .t { color: #c0281c; }
+  .it.over .meta .late { color: #c0281c; font-weight: 700; }
+  .pill { font-size: 11.5px; font-weight: 700; padding: 2px 8px; border-radius: 10px; border: 1px solid; }
+  .pill.miss { color: #c0281c; border-color: #c0281c; }
+  .pill.sub { color: #0b874b; border-color: #0b874b; }
+  .side { position: absolute; left: 1470px; right: 0; top: 72px; bottom: 0; padding: 22px 28px 0 10px; }
+  .card { border: 1px solid #c7cdd1; border-radius: 6px; padding: 16px 18px; margin-bottom: 20px; }
+  .card h3 { font-size: 16px; font-weight: 700; margin-bottom: 4px; color: #2d3b45; }
+  .card .d { font-size: 13px; color: #6b7780; line-height: 1.5; }
+  .card .row { display: flex; justify-content: space-between; font-size: 13.5px; padding: 6px 0; border-bottom: 1px solid #eef1f3; }
+  .card .row:last-of-type { border-bottom: 0; }
+  .card .row span:first-child { color: #6b7780; }
+  .submit { height: 42px; border-radius: 4px; background: #0b874b; color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 12px 0 6px; font-size: 15px; }
+  .sh { font-size: 16px; font-weight: 700; border-bottom: 1px solid #c7cdd1; padding-bottom: 8px; margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .todo { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eef1f3; }
+  .todo svg { flex: none; width: 20px; height: 20px; margin-top: 2px; }
+  .todo .tt { color: #0b6ac2; font-size: 14px; line-height: 1.3; }
+  .todo .tm { color: #6b7780; font-size: 12.5px; margin-top: 3px; }
+  .todo .xx { margin-left: auto; color: #8b969e; font-size: 16px; }
+</style>
+</head>
+<body>
+<div class="gnav">
+  <div class="logo"><svg width="56" height="56" viewBox="0 0 56 56"><path d="M28 4l20 8v14c0 13-9 22-20 26C17 48 8 39 8 26V12z" fill="#f2b01e"/><path d="M18 34l5-14 5 9 5-9 5 14" fill="none" stroke="#0b2e5b" stroke-width="3" stroke-linejoin="round"/></svg></div>
+  <div class="gi"><span class="avt">AB</span>Account</div>
+  <div class="gi"><svg viewBox="0 0 24 24"><path d="M12 12a9 9 0 1 1 0 .01M12 12V4M12 12l6 4"/></svg>Dashboard</div>
+  <div class="gi on"><svg viewBox="0 0 24 24"><path d="M4 5h6v14H4zM10 5h4v14h-4zM15 6l4-1 3 13-4 1z"/></svg>Courses</div>
+  <div class="gi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>Groups</div>
+  <div class="gi" data-gt="canvas-nav-calendar"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M3 10h18M8 3v4M16 3v4M7 14h2M11 14h2M15 14h2M7 17h2M11 17h2"/></svg>Calendar</div>
+  <div class="gi"><svg viewBox="0 0 24 24"><path d="M3 13h5l2 3h4l2-3h5M5 4h14l2 9v6H3v-6z"/></svg>Inbox<span class="bdg">3</span></div>
+  <div class="gi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>History</div>
+  <div class="gi"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Studio</div>
+  <div class="gi"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"/></svg>Help</div>
+</div>
+<div class="top">
+  <div class="ham"><svg viewBox="0 0 24 24" fill="#0b6ac2"><rect x="3" y="5" width="18" height="2"/><rect x="3" y="11" width="18" height="2"/><rect x="3" y="17" width="18" height="2"/></svg></div>
+  <div class="crumb"><span>ECE-261-001 Intro to Logic Circuits</span><span style="color:#6b7780">›</span><span class="cur">Assignments</span></div>
+  <div class="r"><div class="btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/></svg>Immersive Reader</div></div>
+</div>
+<div class="cnav">
+  <div class="term">Fall 2026</div>
+  <div class="i">Home</div>
+  <div class="i">Announcements</div>
+  <div class="i">Syllabus</div>
+  <div class="i">Modules</div>
+  <div class="i on">Assignments</div>
+  <div class="i">Discussions</div>
+  <div class="i">Grades</div>
+  <div class="i">People</div>
+  <div class="i">Files</div>
+  <div class="i">Quizzes</div>
+  <div class="i">Gradescope</div>
+  <div class="i">Zoom</div>
+  <div class="i">Lab Kits (DE10-Lite)</div>
+  <div class="i">Office Hours</div>
+</div>
+<div class="main">
+  <div class="tools">
+    <div class="srch"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b7780" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search for Assignment</div>
+    <div class="seg"><span>Show by Date</span><span>Show by Type</span></div>
+  </div>
+  <div class="grp">
+    <div class="gh red"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c0281c" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>Overdue Assignments<span class="cnt">1 item</span></div>
+    <div class="it over" data-gt="canvas-overdue">
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#c0281c" stroke-width="1.7"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M9 11h7M9 15h7M9 19h4"/></svg></span>
+      <div><div class="t">Lab 4 Postlab Report – Mux &amp; ALU</div><div class="meta"><span class="late">Due Oct 30 at 11:59pm</span>|<span>Late submissions accepted until Nov 6 (−10%/day)</span></div></div>
+      <div class="pts"><span class="pill miss">Missing</span><br><b>-/15</b> pts</div>
+    </div>
+  </div>
+  <div class="grp">
+    <div class="gh"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>Upcoming Assignments<span class="cnt">6 items</span></div>
+    <div class="it"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M9 11h7M9 15h7M9 19h4"/></svg></span><div><div class="t">Lab 5 Prelab – Counters</div><div class="meta"><b>Available until Nov 4 at 8am</b>|<span>Due Nov 4 at 8am</span></div></div><div class="pts"><b>-/10</b> pts</div></div>
+    <div class="it"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M9 11h7M9 15h7M9 19h4"/></svg></span><div><div class="t">HW 6 – FSM Design (Moore &amp; Mealy)</div><div class="meta"><span>Due Nov 7 at 11:59pm</span></div></div><div class="pts" data-gt="canvas-hw6-points"><b>-/20</b> pts</div></div>
+    <div class="it"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M5 4h14v12l-7 5-7-5z"/><path d="M9 9l2 2 4-4"/></svg></span><div><div class="t">Midterm 2</div><div class="meta"><span>In class, Roberts 101</span>|<span>Nov 12 at 10am</span></div></div><div class="pts"><b>-/100</b> pts</div></div>
+    <div class="it"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M9 11h7M9 15h7M9 19h4"/></svg></span><div><div class="t">Lab 6 Prelab – Traffic Light FSM</div><div class="meta"><span>Not available until Nov 11</span>|<span>Due Nov 18 at 8am</span></div></div><div class="pts"><b>-/10</b> pts</div></div>
+    <div class="it"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M12 3a9 9 0 1 0 .01 0z"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"/></svg></span><div><div class="t">Quiz 3 – Registers &amp; Shift Registers</div><div class="meta"><span>Due Nov 20 at 11:59pm</span>|<span>3 attempts</span></div></div><div class="pts"><b>-/10</b> pts</div></div>
+    <div class="it"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M9 11h7M9 15h7M9 19h4"/></svg></span><div><div class="t">HW 7 – Registers &amp; Memory</div><div class="meta"><span>Due Dec 2 at 11:59pm</span></div></div><div class="pts"><b>-/20</b> pts</div></div>
+  </div>
+  <div class="grp">
+    <div class="gh"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>Past Assignments<span class="cnt">14 items</span></div>
+    <div class="it"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M9 11h7M9 15h7M9 19h4"/></svg></span><div><div class="t">HW 5 – Latches &amp; Flip-Flops</div><div class="meta"><span>Due Oct 17 at 11:59pm</span>|<span class="pill sub">Late</span></div></div><div class="pts"><b>16/20</b> pts</div></div>
+    <div class="it"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M12 3a9 9 0 1 0 .01 0z"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"/></svg></span><div><div class="t">Quiz 2 – Combinational Building Blocks</div><div class="meta"><span>Due Oct 13 at 11:59pm</span></div></div><div class="pts"><b>7/10</b> pts</div></div>
+    <div class="it"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M5 4h14v12l-7 5-7-5z"/><path d="M9 9l2 2 4-4"/></svg></span><div><div class="t">Midterm 1</div><div class="meta"><span>Oct 8 at 10am</span></div></div><div class="pts"><b>82/100</b> pts</div></div>
+    <div class="it"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M9 11h7M9 15h7M9 19h4"/></svg></span><div><div class="t">HW 4 – Combinational Design</div><div class="meta"><span>Due Oct 3 at 11:59pm</span></div></div><div class="pts"><b>20/20</b> pts</div></div>
+    <div class="it"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M9 11h7M9 15h7M9 19h4"/></svg></span><div><div class="t">Lab 3 Postlab Report – 4-bit Adder/Subtractor</div><div class="meta"><span>Due Oct 9 at 11:59pm</span></div></div><div class="pts"><b>14/15</b> pts</div></div>
+    <div class="it"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M9 11h7M9 15h7M9 19h4"/></svg></span><div><div class="t">HW 3 – Karnaugh Maps</div><div class="meta"><span>Due Sep 19 at 11:59pm</span></div></div><div class="pts"><b>17/20</b> pts</div></div>
+    <div class="it"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M12 3a9 9 0 1 0 .01 0z"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"/></svg></span><div><div class="t">Quiz 1 – Number Systems &amp; Boolean Algebra</div><div class="meta"><span>Due Sep 15 at 11:59pm</span></div></div><div class="pts"><b>9/10</b> pts</div></div>
+  </div>
+</div>
+<div class="side">
+  <div class="card">
+    <h3>Lab 5 Prelab – Counters</h3>
+    <div class="d">Draw the state diagram and next-state table for a 3-bit up/down counter with synchronous reset. Upload one PDF.</div>
+    <div class="submit" data-gt="canvas-submit">Submit Assignment</div>
+    <div class="row"><span>Due</span><span>Nov 4 at 8am</span></div>
+    <div class="row"><span>Points</span><span>10</span></div>
+    <div class="row"><span>Submitting</span><span>a file upload</span></div>
+    <div class="row"><span>File types</span><span>pdf</span></div>
+  </div>
+  <div class="sh"><span>To Do</span></div>
+  <div class="todo" data-gt="canvas-todo-midterm"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M5 4h14v12l-7 5-7-5z"/><path d="M9 9l2 2 4-4"/></svg><div><div class="tt">Midterm 2</div><div class="tm">ECE 261 · 100 points · Nov 12 at 10am</div></div><span class="xx">×</span></div>
+  <div class="todo"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M9 11h7M9 15h7"/></svg><div><div class="tt">Turn in Lab 5 Prelab – Counters</div><div class="tm">ECE 261 · 10 points · Nov 4 at 8am</div></div><span class="xx">×</span></div>
+  <div class="todo"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M9 11h7M9 15h7"/></svg><div><div class="tt">Turn in Problem Set 9 – Gauss's Law</div><div class="tm">PHYS 222 · 25 points · Nov 5 at 11:59pm</div></div><span class="xx">×</span></div>
+  <div class="todo"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M6 2h9l4 4v16H6z"/><path d="M15 2v4h4M9 11h7M9 15h7"/></svg><div><div class="tt">Turn in HW 6 – FSM Design</div><div class="tm">ECE 261 · 20 points · Nov 7 at 11:59pm</div></div><span class="xx">×</span></div>
+  <div class="todo"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M12 3a9 9 0 1 0 .01 0z"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"/></svg><div><div class="tt">WebAssign 10.3 – Series Convergence</div><div class="tm">M 273 · 12 points · Nov 6 at 11:59pm</div></div><span class="xx" data-gt="canvas-dismiss-math">×</span></div>
+  <div class="todo"><svg viewBox="0 0 24 24" fill="none" stroke="#2d3b45" stroke-width="1.7"><path d="M4 5h16v11H8l-4 4z"/></svg><div><div class="tt">Reply: Ethics case discussion #4</div><div class="tm">ENGL 202 · 5 points · Nov 8 at 11:59pm</div></div><span class="xx">×</span></div>
+  <div style="color:#0b6ac2;font-size:13.5px;margin-top:10px">Show All</div>
+  <div class="sh" style="margin-top:22px"><span>Recent Feedback</span></div>
+  <div class="todo"><svg viewBox="0 0 24 24" fill="none" stroke="#0b874b" stroke-width="2"><path d="M5 12l5 5 9-10"/></svg><div><div class="tt">HW 5 – Latches &amp; Flip-Flops</div><div class="tm"><b style="color:#2d3b45">16 out of 20</b> · "late, -10%. Q3 timing diagram is backwards."</div></div></div>
+</div>
+</body>
+</html>

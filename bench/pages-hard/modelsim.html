@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ModelSim - INTEL FPGA STARTER EDITION 2020.1</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1280px; overflow: hidden; }
+  body { font-family: 'DejaVu Sans', 'Noto Sans', sans-serif; font-size: 12px; color: #000; background: #d9d9d9; position: relative; }
+  .mono { font-family: 'DejaVu Sans Mono', monospace; }
+  .titlebar { height: 28px; background: #3c3c3c; color: #eee; display: flex; align-items: center; justify-content: center; font-size: 13px; position: relative; }
+  .titlebar .wc { position: absolute; right: 8px; top: 4px; display: flex; gap: 6px; }
+  .titlebar .wc span { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: #ddd; font-size: 12px; }
+  .menubar { height: 23px; display: flex; align-items: center; border-bottom: 1px solid #a8a8a8; }
+  .menubar span { padding: 0 8px; }
+  .tbrow { height: 28px; display: flex; align-items: center; padding-left: 4px; border-bottom: 1px solid #b4b4b4; gap: 0; }
+  .grip { width: 5px; height: 22px; margin-right: 3px; margin-left: 2px; background: repeating-linear-gradient(#999 0 1px, transparent 1px 3px); flex: none; }
+  .tb { width: 23px; height: 23px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .tb svg { width: 16px; height: 16px; }
+  .tsep { width: 2px; height: 20px; border-left: 1px solid #9a9a9a; border-right: 1px solid #f4f4f4; margin: 0 4px; flex: none; }
+  .ent { height: 20px; border: 1px solid #8a8a8a; background: #fff; padding: 0 4px; display: flex; align-items: center; font-size: 12px; flex: none; margin: 0 3px; }
+  .pane { position: absolute; background: #fff; border: 1px solid #8f8f8f; overflow: hidden; }
+  .phdr { height: 22px; background: linear-gradient(#5d7fb0, #3e5f92); color: #fff; display: flex; align-items: center; padding: 0 6px; font-size: 12px; gap: 6px; }
+  .phdr .r { margin-left: auto; display: flex; gap: 6px; font-size: 11px; }
+  .phdr.off { background: linear-gradient(#bfc6d1, #a6aebb); color: #222; }
+  table.tree { border-collapse: collapse; width: 100%; font-size: 12px; }
+  table.tree th { background: #ececec; border: 1px solid #c4c4c4; font-weight: 400; text-align: left; padding: 2px 5px; height: 20px; }
+  table.tree td { padding: 1px 5px; height: 19px; white-space: nowrap; border-right: 1px solid #e8e8e8; }
+  table.tree tr.sel td { background: #3e5f92; color: #fff; }
+  .ico { display: inline-block; width: 12px; height: 12px; vertical-align: -2px; margin-right: 4px; border-radius: 2px; }
+  .tabs { position: absolute; height: 22px; display: flex; gap: 0; font-size: 12px; }
+  .tabs span { padding: 3px 10px; border: 1px solid #9a9a9a; border-top: none; background: #cfcfcf; margin-right: -1px; }
+  .tabs span.on { background: #fff; }
+  .wave { position: absolute; left: 352px; top: 126px; right: 4px; height: 690px; background: #000; border: 1px solid #8f8f8f; }
+  .tout { padding: 3px 6px; font-size: 12px; line-height: 16px; white-space: pre; color: #000; }
+  .tout .w { color: #9b5a00; } .tout .e { color: #d00000; } .tout .n { color: #0040a0; }
+  .status { position: absolute; left: 0; right: 0; bottom: 0; height: 22px; border-top: 1px solid #a0a0a0; display: flex; align-items: center; font-size: 12px; }
+  .status span { padding: 0 12px; border-right: 1px solid #a8a8a8; }
+  svg text { font-family: 'DejaVu Sans', sans-serif; }
+</style>
+</head>
+<body>
+<div class="titlebar">ModelSim - INTEL FPGA STARTER EDITION 2020.1
+  <div class="wc"><span>—</span><span>❐</span><span>✕</span></div>
+</div>
+<div class="menubar"><span>File</span><span>Edit</span><span>View</span><span>Compile</span><span>Simulate</span><span>Add</span><span>Wave</span><span>Tools</span><span>Layout</span><span>Bookmarks</span><span>Window</span><span>Help</span></div>
+<div class="tbrow" id="tb1"></div>
+<div class="tbrow" id="tb2"></div>
+<!-- left: sim instance pane + objects -->
+<div class="pane" style="left:4px;top:126px;width:344px;height:330px">
+  <div class="phdr off">sim - Default<span class="r">＋ ▫ ✕</span></div>
+  <table class="tree" id="simtree"></table>
+</div>
+<div class="tabs" style="left:4px;top:456px"><span>Library</span><span class="on">sim</span><span>Project</span></div>
+<div class="pane" style="left:4px;top:482px;width:344px;height:334px">
+  <div class="phdr off">Objects<span class="r">＋ ▫ ✕</span></div>
+  <table class="tree" id="objs"></table>
+</div>
+<div class="wave" id="wave">
+  <div class="phdr" style="position:absolute;left:0;right:0;top:0">Wave - Default<span class="r">＋ ▫ ✕</span></div>
+  <svg id="wsvg" width="1562" height="666" style="position:absolute;left:0;top:22px"></svg>
+</div>
+<div class="tabs" style="left:352px;top:816px"><span class="on">Wave</span><span>counter8.sv</span><span>tb_counter.sv</span></div>
+<div class="pane" style="left:4px;top:842px;right:4px;height:412px">
+  <div class="phdr off">Transcript<span class="r">＋ ▫ ✕</span></div>
+  <div class="tout mono" id="tr"></div>
+</div>
+<div class="status">
+  <span>Project : lab7_counter</span><span>Now: 2,000 ns</span><span>Delta: 1</span><span>sim:/tb_counter/dut/count</span><span style="margin-left:auto;border-left:1px solid #a8a8a8">1000 ns to 1640 ns</span>
+</div>
+<script>
+// ---------------- toolbar icons ----------------
+const ic = {
+  new: '<path d="M3 1.5h7l3 3v10H3z" fill="#fff" stroke="#555"/>', open: '<path d="M1.5 4h5l1 1.5h7v8h-13z" fill="#e8c35a" stroke="#8a6a12"/>',
+  save: '<path d="M2 2h10l2 2v10H2z" fill="#3a5f9a"/><rect x="4.5" y="2.5" width="6" height="4" fill="#e8eef7"/>', print: '<rect x="4" y="2" width="8" height="5" fill="#fff" stroke="#555"/><rect x="1.5" y="6.5" width="13" height="6" fill="#777"/>',
+  cut: '<circle cx="4.5" cy="12" r="2.2" fill="none" stroke="#333"/><circle cx="11.5" cy="12" r="2.2" fill="none" stroke="#333"/><path d="M6 10.5L12 2M10 10.5L4 2" stroke="#333"/>',
+  copy: '<rect x="2" y="2" width="8" height="9" fill="#fff" stroke="#555"/><rect x="6" y="5" width="8" height="9" fill="#fff" stroke="#555"/>',
+  paste: '<rect x="2.5" y="2.5" width="10" height="12" fill="#c9a25a" stroke="#6b4f1a"/><rect x="5" y="5" width="8" height="9" fill="#fff" stroke="#555"/>',
+  undo: '<path d="M5 3.5L1.5 7 5 10.5M2 7h7.5a4 4 0 0 1 0 8" fill="none" stroke="#2a5aa0" stroke-width="1.6"/>', redo: '<path d="M11 3.5L14.5 7 11 10.5M14 7H6.5a4 4 0 0 0 0 8" fill="none" stroke="#2a5aa0" stroke-width="1.6"/>',
+  find: '<circle cx="6.5" cy="6.5" r="4.2" fill="#e6f0fb" stroke="#333" stroke-width="1.5"/><path d="M9.8 9.8l4.5 4.5" stroke="#333" stroke-width="2"/>',
+  compile: '<rect x="2" y="3" width="10" height="11" fill="#fff" stroke="#555"/><path d="M4 6h6M4 8.5h6M4 11h4" stroke="#888"/><path d="M10 9l2.5 2.5L16 6" fill="none" stroke="#1c8a1c" stroke-width="1.8"/>',
+  compall: '<rect x="1" y="2" width="9" height="10" fill="#fff" stroke="#555"/><rect x="3.5" y="4" width="9" height="10" fill="#fff" stroke="#555"/><path d="M10 10l2 2 3.5-4.5" fill="none" stroke="#1c8a1c" stroke-width="1.8"/>',
+  simulate: '<path d="M2 13l3-6 3 3 3-7 3 4" fill="none" stroke="#1c8a1c" stroke-width="1.6"/><rect x="1" y="1.5" width="14" height="13" fill="none" stroke="#555"/>',
+  break: '<rect x="3" y="2" width="4" height="12" fill="#c00"/><rect x="9" y="2" width="4" height="12" fill="#c00"/>',
+  restart: '<path d="M3 3v10M13 3L5 8l8 5z" fill="#2a5aa0" stroke="#2a5aa0"/>',
+  run: '<path d="M3 2v12l9-6z" fill="#1c8a1c"/><path d="M12.5 3v10" stroke="#555" stroke-width="1.4"/>', runall: '<path d="M1 2v12l7-6zM8 2v12l7-6z" fill="#1c8a1c"/>',
+  cont: '<path d="M4 2v12l9-6z" fill="none" stroke="#1c8a1c" stroke-width="1.6"/>', stop: '<rect x="3" y="3" width="10" height="10" fill="#c00"/>',
+  stepin: '<path d="M8 2v8M5 7l3 3 3-3" fill="none" stroke="#2a5aa0" stroke-width="1.6"/><circle cx="8" cy="13.5" r="1.5" fill="#333"/>',
+  stepover: '<path d="M2 9a6 6 0 0 1 12 0M14 9l-3-1M14 9l1-3" fill="none" stroke="#2a5aa0" stroke-width="1.6"/><circle cx="8" cy="13.5" r="1.5" fill="#333"/>',
+  stepout: '<path d="M8 12V3M5 6l3-3 3 3" fill="none" stroke="#2a5aa0" stroke-width="1.6"/><circle cx="8" cy="13.5" r="1.5" fill="#333"/>',
+  // wave group
+  wsel: '<path d="M4 2l8 6-3.5.6 2 4-1.5.8-2-4L4 11.5z" fill="#222"/>',
+  wzoommode: '<circle cx="6.5" cy="6.5" r="4.2" fill="#fff" stroke="#333" stroke-width="1.4"/><path d="M9.8 9.8l4.5 4.5" stroke="#333" stroke-width="2"/><path d="M5 5l3 3" stroke="#333"/>',
+  zin: '<circle cx="6.5" cy="6.5" r="4.6" fill="#fff" stroke="#333" stroke-width="1.4"/><path d="M4.3 6.5h4.4M6.5 4.3v4.4" stroke="#333" stroke-width="1.5"/><path d="M10 10l4.5 4.5" stroke="#333" stroke-width="2"/>',
+  zout: '<circle cx="6.5" cy="6.5" r="4.6" fill="#fff" stroke="#333" stroke-width="1.4"/><path d="M4.3 6.5h4.4" stroke="#333" stroke-width="1.5"/><path d="M10 10l4.5 4.5" stroke="#333" stroke-width="2"/>',
+  zfull: '<circle cx="6.5" cy="6.5" r="4.6" fill="#fff" stroke="#333" stroke-width="1.4"/><rect x="4.2" y="4.6" width="4.6" height="3.8" fill="none" stroke="#333" stroke-width="1"/><path d="M10 10l4.5 4.5" stroke="#333" stroke-width="2"/>',
+  zcur: '<circle cx="6.5" cy="6.5" r="4.6" fill="#fff" stroke="#333" stroke-width="1.4"/><path d="M6.5 3v7" stroke="#d4b000" stroke-width="1.6"/><path d="M10 10l4.5 4.5" stroke="#333" stroke-width="2"/>',
+  zbetw: '<circle cx="6.5" cy="6.5" r="4.6" fill="#fff" stroke="#333" stroke-width="1.4"/><path d="M4.6 3.4v6.2M8.4 3.4v6.2" stroke="#d4b000" stroke-width="1.2"/><path d="M10 10l4.5 4.5" stroke="#333" stroke-width="2"/>',
+  addcur: '<path d="M6 1v14" stroke="#d4b000" stroke-width="2"/><path d="M9 8h6M12 5v6" stroke="#1c8a1c" stroke-width="1.8"/>',
+  delcur: '<path d="M6 1v14" stroke="#d4b000" stroke-width="2"/><path d="M9 8h6" stroke="#c00" stroke-width="1.8"/>',
+  prevedge: '<path d="M1 12h5V4h8" fill="none" stroke="#1c8a1c" stroke-width="1.4"/><path d="M9 8l-3-0 M3 8l3-2.5v5z" fill="#2a5aa0"/>',
+  nextedge: '<path d="M2 4h8v8h5" fill="none" stroke="#1c8a1c" stroke-width="1.4"/><path d="M13 8l-3-2.5v5z" fill="#2a5aa0"/>',
+  prevtr: '<path d="M14 8H3M6 4.5L2.5 8 6 11.5" fill="none" stroke="#2a5aa0" stroke-width="1.6"/>', nexttr: '<path d="M2 8h11M10 4.5L13.5 8 10 11.5" fill="none" stroke="#2a5aa0" stroke-width="1.6"/>',
+  expand: '<rect x="1.5" y="3" width="13" height="10" fill="none" stroke="#555"/><path d="M4 8h8M8 5v6" stroke="#333" stroke-width="1.4"/>',
+  collapse: '<rect x="1.5" y="3" width="13" height="10" fill="none" stroke="#555"/><path d="M4 8h8" stroke="#333" stroke-width="1.4"/>',
+  divider: '<path d="M1 8h14" stroke="#333" stroke-width="2"/><path d="M1 4h14M1 12h14" stroke="#999"/>',
+  dataflow: '<rect x="1" y="2" width="5" height="4" fill="#7aa0d6" stroke="#333" stroke-width=".7"/><rect x="10" y="10" width="5" height="4" fill="#7aa0d6" stroke="#333" stroke-width=".7"/><path d="M6 4h3v8h1" fill="none" stroke="#333"/>',
+  memory: '<rect x="2" y="2" width="12" height="12" fill="#fff" stroke="#555"/><path d="M2 6h12M2 10h12M6 2v12M10 2v12" stroke="#999"/>',
+  layout: '<rect x="1.5" y="1.5" width="13" height="13" fill="#fff" stroke="#555"/><path d="M1.5 9h13M6 1.5V9" stroke="#555"/>'
+};
+function tbHtml(list) {
+  return list.map(t => {
+    if (t === '|') return '<span class="tsep"></span>';
+    if (t === 'G') return '<span class="grip"></span>';
+    if (typeof t === 'string' && t.startsWith('E:')) return `<span class="ent">${t.slice(2)}</span>`;
+    const [k, title, gt] = t;
+    return `<span class="tb" title="${title}"${gt ? ` data-gt="${gt}"` : ''}><svg viewBox="0 0 16 16">${ic[k]}</svg></span>`;
+  }).join('');
+}
+document.getElementById('tb1').innerHTML = tbHtml(['G', ['new', 'New File'], ['open', 'Open'], ['save', 'Save'], ['print', 'Print'], '|', ['cut', 'Cut'], ['copy', 'Copy'], ['paste', 'Paste'], ['undo', 'Undo'], ['redo', 'Redo'], '|', ['find', 'Find'],
+  'G', ['compile', 'Compile'], ['compall', 'Compile All'], ['simulate', 'Simulate'], ['break', 'Break'], '|', ['dataflow', 'Dataflow'], ['memory', 'Memory List'], ['layout', 'Layout'],
+  'G', ['restart', 'Restart'], 'E:100 ns&nbsp;&nbsp;▾', ['run', 'Run'], ['cont', 'Continue Run'], ['runall', 'Run -All'], ['stop', 'Stop'], '|', ['stepin', 'Step Into'], ['stepover', 'Step Over'], ['stepout', 'Step Out']]);
+document.getElementById('tb2').innerHTML = tbHtml(['G', ['wsel', 'Select Mode'], ['wzoommode', 'Zoom Mode'], '|', ['zin', 'Zoom In'], ['zout', 'Zoom Out'], ['zfull', 'Zoom Full', 'ms-zoom-full'], ['zcur', 'Zoom In on Active Cursor'], ['zbetw', 'Zoom Between Cursors'],
+  'G', ['addcur', 'Insert Cursor'], ['delcur', 'Delete Cursor'], ['prevtr', 'Find Previous Transition'], ['nexttr', 'Find Next Transition'], ['prevedge', 'Find Previous Falling Edge'], ['nextedge', 'Find Next Rising Edge'],
+  'G', ['expand', 'Expand All'], ['collapse', 'Collapse All'], ['divider', 'Insert Divider'], 'G', 'E:Search:&nbsp;<span style="width:130px"></span>', ['find', 'Search Forward']]);
+
+// ---------------- sim / objects panes ----------------
+document.getElementById('simtree').innerHTML = '<tr><th style="width:150px">Instance</th><th>Design unit</th><th>Design unit type</th></tr>' + [
+  ['− ', '#3e7fd6', 'tb_counter', 'tb_counter', 'Module', 0, 1],
+  ['− ', '#3e7fd6', 'dut', 'counter8', 'Module', 1],
+  ['', '#2a9d2a', '#ALWAYS#41', 'counter8', 'Process', 2], ['', '#2a9d2a', 'fsm_comb', 'counter8', 'Process', 2], ['', '#2a9d2a', '#ASSIGN#63', 'counter8', 'Process', 2],
+  ['', '#2a9d2a', '#INITIAL#22', 'tb_counter', 'Process', 1], ['', '#2a9d2a', '#ALWAYS#18', 'tb_counter', 'Process', 1], ['', '#d47a1a', 'chk_wrap', 'tb_counter', 'Assertion', 1],
+  ['', '#2a9d2a', '#INITIAL#95', 'tb_counter', 'Process', 1], ['+ ', '#8a5ad0', '$unit', 'tb_counter_sv_unit', 'Package', 0], ['+ ', '#8a5ad0', 'std', 'std', 'Package', 0]
+].map(([ex, c, n, du, t, lvl, sel]) => `<tr${sel ? ' class="sel"' : ''}><td style="padding-left:${5 + lvl * 16}px">${ex}<span class="ico" style="background:${c}"></span>${n}</td><td>${du}</td><td>${t}</td></tr>`).join('');
+document.getElementById('objs').innerHTML = '<tr><th style="width:130px">Name</th><th>Value</th><th>Kind</th><th>Mode</th></tr>' + [
+  ['clk', "1'h0", 'Net', 'Internal'], ['rst_n', "1'h1", 'Net', 'Internal'], ['en', "1'h1", 'Net', 'Internal'], ['load', "1'h0", 'Net', 'Internal'], ['din', "8'h3c", 'Packed Array', 'Internal'],
+  ['ovf', "1'h0", 'Net', 'Internal'], ['irq', "1'h0", 'Net', 'Internal'], ['dout', "16'h0004", 'Packed Array', 'Internal'], ['dout_valid', "1'h0", 'Net', 'Internal'], ['errors', "32'h00000001", 'Variable', 'Internal'],
+  ['cycle', "32'h00000064", 'Variable', 'Internal'], ['CLK_PERIOD', '20', 'Parameter', 'Internal']
+].map(([n, v, k, m]) => `<tr><td><span class="ico" style="background:#c9a33a;width:9px;height:9px;border-radius:5px"></span>${n}</td><td>${v}</td><td>${k}</td><td>${m}</td></tr>`).join('');
+
+// ---------------- waveform model ----------------
+const T0 = 1000, T1 = 1640;
+const NAMEW = 296, VALW = 104, WX = NAMEW + VALW + 6, WW = 1562 - WX - 14;  // wave area inside the svg
+const tx = t => WX + (t - T0) * WW / (T1 - T0);
+const edge = c => 1000 + 20 * c;
+// count after each rising edge (c = cycle index, edge at 1000+20c)
+const cnt = {}; let v = 0xED;
+for (let c = -2; c <= 32; c++) {
+  if (c >= 4 && c <= 6) { cnt[c] = v; continue; }   // en low: hold
+  if (c === 27) { v = 0x3C; cnt[c] = v; continue; }   // load of din
+  if (c >= 0) v = (v + 1) & 0xFF;
+  cnt[c] = v;
+}
+const hex = (n, w) => n.toString(16).toUpperCase().padStart(w, '0');
+function busFrom(fn, cFrom, cTo, w) { // value per cycle -> change list
+  const out = []; let last = null;
+  for (let c = cFrom; c <= cTo; c++) { const val = fn(c); if (val !== last) { out.push([edge(c) + 1, val]); last = val; } }
+  return out;
+}
+const state = c => (c >= 4 && c <= 6) ? 'HOLD' : c === 21 ? 'WRAP' : c === 27 ? 'LOAD' : 'COUNT';
+const sigs = [
+  { n: '/tb_counter/clk', t: 'clk' },
+  { n: '/tb_counter/rst_n', t: 'bit', ch: [[0, 1]] },
+  { n: '/tb_counter/en', t: 'bit', ch: [[0, 1], [1070, 0], [1130, 1]] },
+  { n: '/tb_counter/load', t: 'bit', ch: [[0, 0], [1530, 1], [1550, 0]] },
+  { n: '/tb_counter/din', w: '[7:0]', t: 'bus', ch: [[0, '00'], [1490, '3C']] },
+  { div: 'DUT' },
+  { n: '/tb_counter/dut/state', t: 'bus', ch: busFrom(state, -2, 32), wide: 1 },
+  { n: '/tb_counter/dut/count', w: '[7:0]', t: 'bus', ch: busFrom(c => hex(cnt[c], 2), -2, 32), id: 'count' },
+  { n: '/tb_counter/dut/count_nxt', w: '[7:0]', t: 'bus', ch: [] , id: 'nxt' },
+  { n: '/tb_counter/dut/div_cnt', w: '[1:0]', t: 'bus', ch: busFrom(c => String(((c % 4) + 4) % 4), -2, 32) },
+  { n: '/tb_counter/ovf', t: 'bit', ch: [[0, 0], [1421, 1], [1441, 0]], id: 'ovf' },
+  { n: '/tb_counter/irq', t: 'bit', ch: [[0, 0], [1312, 1], [1313, 0], [1422, 1], [1502, 0]], id: 'irq' },
+  { div: 'OUTPUT' },
+  { n: '/tb_counter/dout', w: '[15:0]', t: 'bus', ch: [[0, 'X'], [1181, '00F4'], [1261, '00F8'], [1341, '00FC'], [1421, '0100'], [1501, '0004'], [1581, '003E']] },
+  { n: '/tb_counter/dout_valid', t: 'bit', ch: [[0, 0], [1181, 1], [1201, 0], [1261, 1], [1281, 0], [1341, 1], [1361, 0], [1421, 1], [1441, 0], [1501, 1], [1521, 0], [1581, 1], [1601, 0]] },
+  { n: '/tb_counter/errors', w: '[31:0]', t: 'bus', ch: [[0, '0'], [1441, '1']], radix: 'dec' }
+];
+// count_nxt: combinational next value (changes just after count, and when en/load change)
+(() => {
+  const ch = []; const push = (t, val) => { if (!ch.length || ch[ch.length - 1][1] !== val) ch.push([t, val]); };
+  for (let c = -2; c <= 32; c++) {
+    const t = edge(c) + 1, cur = cnt[c];
+    const enAt = tt => !(tt >= 1070 && tt < 1130);
+    push(t, hex(enAt(t) ? (cur + 1) & 0xFF : cur, 2));
+    if (c === 3) push(1071, hex(cur, 2));
+    if (c === 6) push(1131, hex((cur + 1) & 0xFF, 2));
+    if (c === 26) push(1531, '3C');
+  }
+  sigs.find(s => s.id === 'nxt').ch = ch;
+})();
+const CURSOR = 1255;
+function valAt(s, t) {
+  if (s.t === 'clk') return ((t - 1000) % 20 + 20) % 20 < 10 ? 1 : 0;
+  let v = s.ch[0][1]; for (const [tt, vv] of s.ch) if (tt <= t) v = vv; return v;
+}
+
+// ---------------- draw ----------------
+const RH = 24, TOPPAD = 6;
+let g = '';
+g += `<rect x="0" y="0" width="${NAMEW}" height="666" fill="#000"/><rect x="${NAMEW + 3}" y="0" width="${VALW}" height="666" fill="#000"/>`;
+g += `<rect x="${NAMEW}" y="0" width="3" height="666" fill="#7c7c7c"/><rect x="${NAMEW + VALW + 3}" y="0" width="3" height="666" fill="#7c7c7c"/>`;
+// time grid
+for (let t = 1000; t <= 1640; t += 20) g += `<line x1="${tx(t)}" y1="0" x2="${tx(t)}" y2="590" stroke="#2a2a2a" stroke-width="1"/>`;
+const GREEN = '#20e020';
+let y = TOPPAD;
+const marks = {};
+sigs.forEach((s, i) => {
+  const y0 = y, y1 = y + RH - 6, ym = (y0 + y1) / 2;
+  if (s.div) {
+    g += `<text x="10" y="${ym + 4}" font-size="12" fill="#e8e8e8" font-weight="700">${s.div}</text>`;
+    g += `<line x1="${WX}" y1="${ym}" x2="${WX + WW}" y2="${ym}" stroke="#555"/>`;
+    y += RH; return;
+  }
+  const sel = s.id === 'count';
+  if (sel) g += `<rect x="0" y="${y0 - 3}" width="${NAMEW}" height="${RH}" fill="#2b4f86"/>`;
+  const exp = s.t === 'bus' && s.w ? '<tspan fill="#9a9a9a">+</tspan> ' : '<tspan fill="#000">+</tspan> ';
+  g += `<text x="6" y="${ym + 4}" font-size="12" fill="${sel ? '#fff' : '#e0e0e0'}">${exp}<tspan fill="#d4b000">◆</tspan> ${s.n}${s.w ? ' <tspan fill="#9a9a9a">' + s.w + '</tspan>' : ''}</text>`;
+  // value at cursor
+  let cv = valAt(s, CURSOR);
+  if (s.t === 'bit' || s.t === 'clk') cv = "1'h" + cv;
+  else if (s.w) { const bits = s.w.match(/\[(\d+)/)[1] * 1 + 1; cv = s.radix === 'dec' ? cv : bits + "'h" + cv; }
+  g += `<text x="${NAMEW + 8}" y="${ym + 4}" font-size="12" fill="#e0e0e0"${s.id === 'count' ? '' : ''}>${cv}</text>`;
+  // wave
+  if (s.t === 'clk') {
+    let d = `M${tx(T0)} ${y0}`;
+    for (let t = 1000; t < T1; t += 10) { const hi = ((t - 1000) % 20) === 0; d += ` L${tx(t)} ${hi ? y0 : y1} L${tx(t + 10)} ${hi ? y0 : y1}`; }
+    g += `<path d="${d}" fill="none" stroke="${GREEN}" stroke-width="1.2"/>`;
+  } else if (s.t === 'bit') {
+    const pts = []; let cur = valAt(s, T0); pts.push([tx(T0), cur ? y0 : y1]);
+    for (const [t, vv] of s.ch) { if (t <= T0 || t >= T1) continue; pts.push([tx(t), cur ? y0 : y1]); pts.push([tx(t), vv ? y0 : y1]); cur = vv; }
+    pts.push([tx(T1), cur ? y0 : y1]);
+    g += `<polyline points="${pts.map(p => p.map(v => v.toFixed(1)).join(',')).join(' ')}" fill="none" stroke="${GREEN}" stroke-width="1.2"/>`;
+    if (s.id === 'irq') {
+      const gx = tx(1312);
+      marks.glitch = `<g data-gt="ms-glitch"><rect x="${gx - 7}" y="${y0 - 3}" width="16" height="${y1 - y0 + 6}" fill="transparent"/></g>`;
+    }
+    if (s.id === 'ovf') marks.ovf = `<g data-gt="ms-ovf-pulse"><rect x="${tx(1421)}" y="${y0 - 2}" width="${tx(1441) - tx(1421)}" height="${y1 - y0 + 4}" fill="transparent"/></g>`;
+  } else {
+    // bus: segments between changes
+    const ch = s.ch.filter(([t]) => t > T0 && t < T1);
+    const bounds = [T0, ...ch.map(c => c[0]), T1];
+    for (let k = 0; k < bounds.length - 1; k++) {
+      const ta = bounds[k], tb = bounds[k + 1], val = valAt(s, ta + 0.01);
+      const xa = tx(ta), xb = tx(tb), sl = 2.5;
+      const isX = val === 'X';
+      const col = isX ? '#ff2020' : GREEN;
+      const xa2 = ta === T0 ? xa : xa + sl, xb2 = tb === T1 ? xb : xb - sl;
+      const d = `M${xa} ${ym} L${xa2} ${y0} L${xb2} ${y0} L${xb} ${ym} L${xb2} ${y1} L${xa2} ${y1} Z`;
+      const label = isX ? (s.w === '[15:0]' ? 'XXXX' : 'X') : val;
+      const fits = (xb - xa) > label.length * 7 + 4;
+      let gtA = '';
+      if (s.id === 'count' && ta === 1521) gtA = ' data-gt="ms-count-before-load"';
+      g += `<g${gtA}><path d="${d}" fill="${isX ? '#ff202033' : '#000'}" stroke="${col}" stroke-width="1.1"/>${fits ? `<text x="${(xa + xb) / 2}" y="${ym + 4}" font-size="11" fill="#fff" text-anchor="middle">${label}</text>` : ''}</g>`;
+    }
+    if (s.id === 'count') {
+      const wx = tx(1421);
+      marks.wrap = `<g data-gt="ms-wrap-edge"><rect x="${wx - 9}" y="${y0 - 3}" width="18" height="${y1 - y0 + 6}" fill="transparent"/></g>`;
+    }
+  }
+  y += RH;
+});
+// time ruler
+const RY = 600;
+g += `<rect x="0" y="${RY - 6}" width="1562" height="72" fill="#000"/><line x1="0" y1="${RY - 6}" x2="1562" y2="${RY - 6}" stroke="#7c7c7c" stroke-width="2"/>`;
+g += `<text x="10" y="${RY + 14}" font-size="12" fill="#e0e0e0">Now</text><text x="${NAMEW - 8}" y="${RY + 14}" font-size="12" fill="#e0e0e0" text-anchor="end">2000 ns</text>`;
+g += `<text x="10" y="${RY + 44}" font-size="12" fill="#e0e0e0"><tspan fill="#d4b000">🔒</tspan> Cursor 1</text><text x="${NAMEW - 8}" y="${RY + 44}" font-size="12" fill="#e0e0e0" text-anchor="end">1255 ns</text>`;
+for (let t = 1000; t <= 1640; t += 20) {
+  const major = t % 100 === 0;
+  g += `<line x1="${tx(t)}" y1="${RY}" x2="${tx(t)}" y2="${RY + (major ? 8 : 4)}" stroke="#ccc"/>`;
+  if (major) g += `<text x="${tx(t)}" y="${RY + 22}" font-size="11" fill="#e0e0e0" text-anchor="middle">${t} ns</text>`;
+}
+// cursor
+const cx = tx(CURSOR);
+g += `<line x1="${cx}" y1="0" x2="${cx}" y2="${RY + 30}" stroke="#ffe600" stroke-width="1.3"/>`;
+g += `<rect x="${cx - 32}" y="${RY + 31}" width="64" height="18" fill="#ffe600"/><text x="${cx}" y="${RY + 44}" font-size="12" fill="#000" text-anchor="middle">1255 ns</text>`;
+// scrollbar
+g += `<rect x="${WX}" y="${RY + 54}" width="${WW}" height="10" fill="#c8c8c8"/><rect x="${WX + WW * 0.5}" y="${RY + 55}" width="${WW * 0.32}" height="8" fill="#8a8a8a"/>`;
+g += `<rect x="1548" y="0" width="14" height="${RY - 6}" fill="#c8c8c8"/><rect x="1549" y="2" width="12" height="380" fill="#8a8a8a"/>`;
+g += (marks.wrap || '') + (marks.ovf || '') + (marks.glitch || '');
+document.getElementById('wsvg').innerHTML = g;
+
+// ---------------- transcript ----------------
+const T = [
+  ['', '# //  ModelSim - Intel FPGA Edition vlog 2020.1 Compiler 2020.02 Feb 28 2020'],
+  ['', '# -- Compiling module counter8'],
+  ['', '# -- Compiling module tb_counter'],
+  ['', '# End time: 14:22:05 on Nov 02,2026, Elapsed time: 0:00:01'],
+  ['', '# Errors: 0, Warnings: 0'],
+  ['', '# vsim -gui work.tb_counter -voptargs=+acc'],
+  ['', '# Start time: 14:22:07 on Nov 02,2026'],
+  ['', '# Loading work.tb_counter(fast)'],
+  ['', '# Loading work.counter8(fast)'],
+  ['w', '# ** Warning: (vsim-3015) [PCDPC] - Port size (2) does not match connection size (4) for port \'div_cnt\'. The port definition is at: ../rtl/counter8.sv(9).'],
+  ['w', '#    Time: 0 ps  Iteration: 0  Instance: /tb_counter/dut File: ../tb/tb_counter.sv Line: 31'],
+  ['', 'add wave -position insertpoint sim:/tb_counter/*  sim:/tb_counter/dut/state sim:/tb_counter/dut/count sim:/tb_counter/dut/count_nxt sim:/tb_counter/dut/div_cnt'],
+  ['', 'run 2 us'],
+  ['w', '# ** Warning: (vsim-8315) No condition is true in the unique/priority if/case statement.'],
+  ['w', '#    Time: 1312 ns  Iteration: 2  Process: /tb_counter/dut/fsm_comb File: ../rtl/counter8.sv Line: 58'],
+  ['e', '# ** Error: [chk_wrap] after wrap expected dout = 16\'h0000, got 16\'h0100'],
+  ['e', '#    Time: 1440 ns  Started: 1420 ns  Scope: tb_counter.chk_wrap File: ../tb/tb_counter.sv <span data-gt="ms-error-line">Line: 87</span>'],
+  ['n', '# ** Note: $finish    : ../tb/tb_counter.sv(112)'],
+  ['', '#    Time: 2 us  Iteration: 0  Instance: /tb_counter'],
+  ['', '# 1'],
+  ['', '# Break in Module tb_counter at ../tb/tb_counter.sv line 112'],
+  ['', 'VSIM 4> wave zoom range 1000ns 1640ns'],
+  ['', 'VSIM 5> <span style="background:#000;color:#000">_</span>']
+];
+document.getElementById('tr').innerHTML = T.map(([c, l]) => c ? `<span class="${c}">${l}</span>` : l).join('\n');
+</script>
+</body>
+</html>

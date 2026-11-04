@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>fall2026_grades.ods - LibreOffice Calc</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1280px; overflow: hidden; }
+  body { font-family: Inter, 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 13px; color: #1e1e1e; background: #f0f0f0; }
+  .titlebar { height: 34px; background: #e8e8e7; display: flex; align-items: center; justify-content: center; position: relative; border-bottom: 1px solid #d0d0d0; font-weight: 600; color: #333; }
+  .titlebar .wc { position: absolute; right: 12px; display: flex; gap: 10px; }
+  .titlebar .wc span { width: 22px; height: 22px; border-radius: 50%; background: #d8d8d6; display: inline-block; }
+  .menubar { height: 28px; display: flex; align-items: center; padding: 0 6px; background: #f6f6f5; }
+  .menubar span { padding: 4px 9px; }
+  .tb { height: 38px; display: flex; align-items: center; padding: 0 6px; gap: 1px; background: #f6f6f5; border-bottom: 1px solid #e0e0e0; }
+  .ib { width: 30px; height: 30px; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
+  .ib svg { width: 20px; height: 20px; }
+  .ib.dd { width: 40px; }
+  .ib.on { background: #d6dfea; border: 1px solid #a5bbd6; }
+  .vs { width: 1px; height: 24px; background: #cfcfcf; margin: 0 5px; }
+  .combo { height: 26px; border: 1px solid #b7b7b7; background: #fff; border-radius: 2px; display: flex; align-items: center; padding: 0 22px 0 6px; position: relative; font-size: 13px; }
+  .combo::after { content: ''; position: absolute; right: 7px; top: 10px; border: 4px solid transparent; border-top-color: #444; }
+  .fbar { height: 34px; display: flex; align-items: center; gap: 6px; padding: 0 6px; background: #f6f6f5; border-bottom: 1px solid #cfcfcf; }
+  .namebox { width: 120px; }
+  .input { flex: 1; height: 26px; border: 1px solid #b7b7b7; background: #fff; display: flex; align-items: center; padding: 0 8px; font-size: 13.5px; font-family: 'DejaVu Sans', sans-serif; }
+  .grid { position: absolute; top: 172px; left: 0; right: 16px; bottom: 58px; background: #fff; overflow: hidden; }
+  table { border-collapse: collapse; table-layout: fixed; font-family: 'DejaVu Sans', 'Noto Sans', sans-serif; font-size: 13px; }
+  td, th { height: 23px; border: 1px solid #dadada; padding: 0 4px; white-space: nowrap; overflow: hidden; }
+  th { background: #f2f2f2; font-weight: 400; color: #333; text-align: center; border-color: #c4c4c4; font-family: Inter, 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 12px; }
+  th.row { text-align: center; width: 44px; }
+  th.hl { background: #d7e3f3; color: #000; font-weight: 600; }
+  td.n { text-align: right; }
+  td.hdr { font-weight: 700; background: #dde8cb; border-bottom: 1px solid #8aa060; }
+  td.title { font-weight: 700; font-size: 16px; overflow: visible; }
+  td.sub { color: #666; font-style: italic; overflow: visible; }
+  td.err { color: #c9211e; text-align: right; }
+  td.sel { outline: 2px solid #1c5fbc; outline-offset: -2px; }
+  td.cat { color: #3c3c3c; }
+  td.tot { font-weight: 700; border-top: 2px solid #555; }
+  td.box { background: #fdf6dd; }
+  td.big { font-size: 15px; font-weight: 700; color: #2a6f2a; }
+  .vscroll { position: absolute; right: 0; top: 172px; width: 16px; bottom: 58px; background: #f0f0f0; border-left: 1px solid #ccc; }
+  .vscroll i { position: absolute; left: 3px; right: 3px; top: 30px; height: 120px; background: #c1c1c1; border-radius: 4px; }
+  .tabs { position: absolute; left: 0; right: 0; bottom: 24px; height: 34px; background: #ececec; border-top: 1px solid #c4c4c4; display: flex; align-items: flex-start; padding-left: 6px; }
+  .tabs .nav { display: flex; gap: 2px; align-items: center; height: 30px; padding-right: 6px; }
+  .tabs .nav span { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+  .tab { height: 28px; padding: 0 18px; display: flex; align-items: center; border: 1px solid #b9b9b9; border-top: 0; background: #e0e0e0; margin-right: -1px; border-radius: 0 0 4px 4px; color: #333; }
+  .tab.on { background: #fff; font-weight: 600; border-bottom: 2px solid #1c5fbc; }
+  .tabs .hs { margin-left: auto; width: 520px; height: 16px; margin-top: 8px; margin-right: 18px; background: #f7f7f7; border: 1px solid #ccc; position: relative; }
+  .tabs .hs i { position: absolute; left: 4px; top: 2px; bottom: 2px; width: 140px; background: #c1c1c1; border-radius: 4px; }
+  .status { position: absolute; left: 0; right: 0; bottom: 0; height: 24px; background: #f0f0f0; border-top: 1px solid #c4c4c4; display: flex; align-items: center; gap: 28px; padding: 0 10px; font-size: 12px; color: #333; }
+</style>
+</head>
+<body>
+<div class="titlebar">fall2026_grades.ods — LibreOffice Calc<div class="wc"><span></span><span></span><span></span></div></div>
+<div class="menubar"><span>File</span><span>Edit</span><span>View</span><span>Insert</span><span>Format</span><span>Styles</span><span>Sheet</span><span>Data</span><span>Tools</span><span>Window</span><span>Help</span></div>
+<div class="tb" id="tb1"></div>
+<div class="tb" id="tb2"></div>
+<div class="fbar">
+  <div class="combo namebox">F14</div>
+  <div class="ib" title="Function Wizard"><svg viewBox="0 0 20 20"><text x="3" y="15" font-size="13" font-style="italic" font-family="DejaVu Serif" fill="#333">fx</text></svg></div>
+  <div class="ib" title="Select Function"><svg viewBox="0 0 20 20" fill="none" stroke="#333" stroke-width="1.6"><path d="M14 4H5l5 6-5 6h9"/></svg></div>
+  <div class="ib" title="Formula"><svg viewBox="0 0 20 20" fill="none" stroke="#333" stroke-width="1.6"><path d="M5 8h10M5 12h10"/></svg></div>
+  <div class="input" data-gt="sheet-formula-bar">=D14/E14</div>
+  <div class="ib" title="Expand Formula Bar"><svg viewBox="0 0 20 20" fill="none" stroke="#333" stroke-width="1.5"><path d="M6 8l4 4 4-4"/></svg></div>
+</div>
+<div class="grid"><table id="sheet"></table></div>
+<div class="vscroll"><i></i></div>
+<div class="tabs">
+  <div class="nav">
+    <span><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2v8M10 2L4 6l6 4z" fill="#555" stroke="#555"/></svg></span>
+    <span><svg width="12" height="12" viewBox="0 0 12 12"><path d="M9 2L3 6l6 4z" fill="#555"/></svg></span>
+    <span><svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 2l6 4-6 4z" fill="#555"/></svg></span>
+    <span><svg width="12" height="12" viewBox="0 0 12 12"><path d="M10 2v8M2 2l6 4-6 4z" fill="#555" stroke="#555"/></svg></span>
+    <span><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#2a7a2a" stroke-width="1.8"><path d="M7 2v10M2 7h10"/></svg></span>
+  </div>
+  <div class="tab on">Grades</div>
+  <div class="tab" data-gt="sheet-tab-budget">Budget</div>
+  <div class="tab">Textbooks</div>
+  <div class="tab">Lab Hours</div>
+  <div class="tab">Spring 2027 Plan</div>
+  <div class="hs"><i></i></div>
+</div>
+<div class="status">
+  <span>Sheet 1 of 5</span><span>Default</span><span>English (USA)</span>
+  <span style="margin-left:auto">Error: Division by zero</span>
+  <span>Average: ; Sum: 0</span>
+  <span>▬▬▬▬▬●▬▬▬▬  100%</span>
+</div>
+<script>
+  // toolbars
+  const ic = {
+    new: '<path d="M5 2h7l4 4v12H5z" fill="#fff" stroke="#555"/><path d="M12 2v4h4" fill="none" stroke="#555"/>',
+    open: '<path d="M2 5h6l2 2h8v10H2z" fill="#f2c55c" stroke="#a07d22"/>',
+    save: '<rect x="3" y="3" width="14" height="14" rx="1" fill="#3a74c4"/><rect x="6" y="3" width="8" height="5" fill="#fff"/><rect x="6" y="11" width="8" height="6" fill="#dfe8f5"/>',
+    pdf: '<path d="M5 2h7l4 4v12H5z" fill="#fff" stroke="#555"/><rect x="3" y="10" width="11" height="6" fill="#c9211e"/><text x="4" y="15" font-size="5" fill="#fff" font-family="DejaVu Sans" font-weight="700">PDF</text>',
+    print: '<rect x="5" y="2" width="10" height="5" fill="#fff" stroke="#555"/><rect x="2" y="7" width="16" height="7" rx="1" fill="#777"/><rect x="5" y="12" width="10" height="6" fill="#fff" stroke="#555"/>',
+    cut: '<circle cx="6" cy="15" r="2.5" fill="none" stroke="#555" stroke-width="1.4"/><circle cx="14" cy="15" r="2.5" fill="none" stroke="#555" stroke-width="1.4"/><path d="M7 13L14 3M13 13L6 3" stroke="#555" stroke-width="1.4"/>',
+    copy: '<rect x="3" y="3" width="9" height="11" fill="#fff" stroke="#555"/><rect x="8" y="7" width="9" height="11" fill="#fff" stroke="#555"/>',
+    paste: '<rect x="4" y="4" width="12" height="14" rx="1" fill="#c9a26b" stroke="#7d5f30"/><rect x="7" y="2" width="6" height="4" fill="#ddd" stroke="#555"/><rect x="8" y="8" width="9" height="10" fill="#fff" stroke="#555"/>',
+    brush: '<path d="M14 2l4 4-7 7-4-4z" fill="#e8b84a" stroke="#555"/><path d="M7 9l-4 5 2 3 6-4" fill="#555"/>',
+    undo: '<path d="M7 5L3 9l4 4M3 9h9a5 5 0 0 1 0 10H9" fill="none" stroke="#3a74c4" stroke-width="1.8"/>',
+    redo: '<path d="M13 5l4 4-4 4M17 9H8a5 5 0 0 0 0 10h3" fill="none" stroke="#3a74c4" stroke-width="1.8"/>',
+    find: '<circle cx="8" cy="8" r="5" fill="none" stroke="#555" stroke-width="1.6"/><path d="M12 12l6 6" stroke="#555" stroke-width="2"/>',
+    spell: '<text x="1" y="10" font-size="8" font-family="DejaVu Sans" font-weight="700" fill="#333">ABC</text><path d="M4 14l3 3 8-7" fill="none" stroke="#2a7a2a" stroke-width="1.8"/>',
+    row: '<rect x="2" y="3" width="16" height="14" fill="#fff" stroke="#555"/><rect x="2" y="8" width="16" height="4" fill="#7fa7dd"/>',
+    col: '<rect x="2" y="3" width="16" height="14" fill="#fff" stroke="#555"/><rect x="8" y="3" width="4" height="14" fill="#7fa7dd"/>',
+    sortA: '<text x="1" y="9" font-size="7" font-family="DejaVu Sans" fill="#333">A</text><text x="1" y="18" font-size="7" font-family="DejaVu Sans" fill="#333">Z</text><path d="M14 3v13M11 13l3 3 3-3" fill="none" stroke="#3a74c4" stroke-width="1.6"/>',
+    sortD: '<text x="1" y="9" font-size="7" font-family="DejaVu Sans" fill="#333">Z</text><text x="1" y="18" font-size="7" font-family="DejaVu Sans" fill="#333">A</text><path d="M14 3v13M11 13l3 3 3-3" fill="none" stroke="#3a74c4" stroke-width="1.6"/>',
+    filter: '<path d="M2 3h16l-6 7v6l-4 2v-8z" fill="#e9eef6" stroke="#3a74c4" stroke-width="1.4"/>',
+    image: '<rect x="2" y="3" width="16" height="14" fill="#fff" stroke="#555"/><path d="M3 15l5-6 4 4 2-2 4 4" fill="#7fbf7f" stroke="#2a7a2a"/><circle cx="14" cy="7" r="1.6" fill="#e8b84a"/>',
+    chart: '<rect x="3" y="10" width="3" height="7" fill="#3a74c4"/><rect x="8.5" y="5" width="3" height="12" fill="#e07b39"/><rect x="14" y="8" width="3" height="9" fill="#5aa04a"/><path d="M2 18h16" stroke="#555"/>',
+    pivot: '<rect x="2" y="2" width="16" height="16" fill="#fff" stroke="#555"/><path d="M2 7h16M7 2v16" stroke="#555"/><rect x="2" y="2" width="5" height="5" fill="#f2c55c"/>',
+    omega: '<text x="3" y="16" font-size="15" font-family="DejaVu Serif" fill="#333">Ω</text>',
+    link: '<path d="M8 12l4-4M6 10l-2 2a3 3 0 0 0 4 4l2-2M14 10l2-2a3 3 0 0 0-4-4l-2 2" fill="none" stroke="#3a74c4" stroke-width="1.6"/>',
+    comment: '<path d="M3 3h14v10H9l-4 4v-4H3z" fill="#fdf1a6" stroke="#a08d22"/>',
+    header: '<rect x="3" y="2" width="14" height="16" fill="#fff" stroke="#555"/><rect x="5" y="4" width="10" height="3" fill="#7fa7dd"/>',
+    freeze: '<rect x="2" y="2" width="16" height="16" fill="#fff" stroke="#555"/><path d="M2 7h16M7 2v16" stroke="#3a74c4" stroke-width="2"/>',
+    bold: '<text x="5" y="15" font-size="14" font-weight="700" font-family="DejaVu Sans" fill="#222">B</text>',
+    ital: '<text x="6" y="15" font-size="14" font-style="italic" font-family="DejaVu Serif" fill="#222">I</text>',
+    under: '<text x="5" y="14" font-size="13" font-family="DejaVu Sans" fill="#222">U</text><path d="M4 17h12" stroke="#222"/>',
+    fcol: '<text x="5" y="13" font-size="12" font-family="DejaVu Sans" fill="#222">A</text><rect x="3" y="15" width="14" height="3" fill="#c9211e"/>',
+    bg: '<path d="M4 10l6-6 6 6-6 6z" fill="#fff" stroke="#555"/><rect x="3" y="16" width="14" height="3" fill="#ffd400"/>',
+    al: '<path d="M3 5h14M3 9h9M3 13h14M3 17h9" stroke="#333" stroke-width="1.5"/>',
+    ac: '<path d="M3 5h14M5.5 9h9M3 13h14M5.5 17h9" stroke="#333" stroke-width="1.5"/>',
+    ar: '<path d="M3 5h14M8 9h9M3 13h14M8 17h9" stroke="#333" stroke-width="1.5"/>',
+    wrap: '<path d="M3 5h14M3 10h11a3 3 0 0 1 0 6h-4M12 14l-2 2 2 2M3 15h4" fill="none" stroke="#333" stroke-width="1.4"/>',
+    merge: '<rect x="2" y="5" width="16" height="10" fill="#fff" stroke="#555"/><path d="M5 10h10M7 8l-2 2 2 2M13 8l2 2-2 2" fill="none" stroke="#3a74c4" stroke-width="1.3"/>',
+    cur: '<text x="5" y="15" font-size="14" font-family="DejaVu Sans" fill="#2a7a2a">$</text>',
+    pct: '<text x="3" y="15" font-size="13" font-family="DejaVu Sans" fill="#333">%</text>',
+    num: '<text x="1" y="14" font-size="9" font-family="DejaVu Sans" fill="#333">0.0</text>',
+    dec1: '<text x="0" y="14" font-size="8" font-family="DejaVu Sans" fill="#333">.00</text><path d="M14 6v8M12 8l2-2 2 2" stroke="#2a7a2a" fill="none"/>',
+    dec2: '<text x="0" y="14" font-size="8" font-family="DejaVu Sans" fill="#333">.0</text><path d="M14 6v8M12 12l2 2 2-2" stroke="#c9211e" fill="none"/>',
+    border: '<rect x="3" y="3" width="14" height="14" fill="none" stroke="#999" stroke-dasharray="2 2"/><path d="M3 17h14" stroke="#222" stroke-width="2"/>',
+    cond: '<rect x="2" y="3" width="16" height="4" fill="#f7a8a8"/><rect x="2" y="8" width="16" height="4" fill="#fde39b"/><rect x="2" y="13" width="16" height="4" fill="#b7dfa8"/>'
+  };
+  const svg = k => `<svg viewBox="0 0 20 20">${ic[k]}</svg>`;
+  const tb1 = ['new','open','save','|','pdf','print','|','cut','copy','paste','brush','|','undo','redo','|','find','spell','|','row','col','|','sortA','sortD','filter','|','image','chart','pivot','|','omega','link','comment','header','|','freeze'];
+  const t1 = document.getElementById('tb1');
+  tb1.forEach(k => {
+    if (k === '|') { t1.insertAdjacentHTML('beforeend', '<span class="vs"></span>'); return; }
+    t1.insertAdjacentHTML('beforeend', `<div class="ib${['paste','undo','redo','row','col','border'].includes(k)?' dd':''}"${k==='chart'?' data-gt="sheet-chart-btn" title="Insert Chart"':''}${k==='sortD'?' data-gt="sheet-sort-desc" title="Sort Descending"':''}>${svg(k)}</div>`);
+  });
+  const t2 = document.getElementById('tb2');
+  t2.insertAdjacentHTML('beforeend', '<div class="combo" style="width:180px">Liberation Sans</div><span style="width:6px"></span><div class="combo" style="width:64px">10 pt</div><span class="vs"></span>');
+  ['bold','ital','under','|','fcol','bg','|','al','ac','ar','|','wrap','merge','|','cur','pct','num','dec1','dec2','|','border','cond'].forEach(k => {
+    if (k === '|') { t2.insertAdjacentHTML('beforeend', '<span class="vs"></span>'); return; }
+    t2.insertAdjacentHTML('beforeend', `<div class="ib${k==='ar'?' on':''}">${svg(k)}</div>`);
+  });
+
+  // grid
+  const widths = [110, 250, 70, 82, 82, 92, 220, 40, 160, 80, 80, 90, 110, 90, 90, 90, 90, 90, 90];
+  const letters = 'ABCDEFGHIJKLMNOPQRS';
+  const rows = {
+    1: [['ECE 261 — Introduction to Logic Circuits — Fall 2026', 'title']],
+    2: [['Prof. Cheng · MWF 10:00 · Engineering Hall 632 · grades as of Nov 2', 'sub']],
+    3: [],
+    4: [['Category','hdr'],['Item','hdr'],['Due','hdr'],['Earned','hdr n'],['Possible','hdr n'],['Percent','hdr n'],['Notes','hdr'],null,['Category','hdr'],['Weight','hdr n'],['Earned','hdr n'],['Possible','hdr n'],['Contribution','hdr n']],
+  };
+  const items = [
+    ['Homework','HW 1 – Number systems','09/05',18,20,''],
+    ['Homework','HW 2 – Boolean algebra','09/12',19.5,20,''],
+    ['Homework','HW 3 – K-maps','09/19',17,20,'lost pts on don\'t-cares'],
+    ['Homework','HW 4 – Combinational design','10/03',20,20,''],
+    ['Homework','HW 5 – Latches & flip-flops','10/17',16,20,'late, -10%'],
+    ['Lab','Lab 1 – DE10-Lite intro','09/09',10,10,''],
+    ['Lab','Lab 2 – 7-segment decoder','09/23',9,10,''],
+    ['Lab','Lab 3 – 4-bit adder/subtractor','10/07',10,10,''],
+    ['Lab','Lab 4 – Mux & ALU','10/21',8.5,10,'timing diagram missing'],
+    ['Lab','Lab 5 – Counters','11/04',0,0,'not graded yet'],
+    ['Quiz','Quiz 1','09/15',9,10,''],
+    ['Quiz','Quiz 2','10/13',7,10,'retake allowed'],
+    ['Exam','Midterm 1','10/08',82,100,''],
+    ['Exam','Midterm 2','11/12','',100,'study: FSMs, ch. 6'],
+    ['Exam','Final','12/16','',150,''],
+  ];
+  items.forEach((it, i) => {
+    const r = 5 + i;
+    const pct = it[4] === 0 ? null : (it[3] === '' ? 0 : it[3] / it[4]);
+    rows[r] = [[it[0],'cat'],[it[1],''],[it[2],'n'],[it[3],'n'],[it[4],'n'], pct === null ? ['#DIV/0!','err sel'] : [(pct*100).toFixed(1)+'%','n'], [it[5],'sub']];
+  });
+  // summary table I..M rows 5..9
+  const sum = [['Homework','20%',90.5,100,'18.10'],['Lab','25%',37.5,40,'23.44'],['Quiz','10%',16,20,'8.00'],['Exams','45%',82,100,'36.90'],['Total','100%','','','86.44']];
+  sum.forEach((s, i) => {
+    const r = 5 + i;
+    const cls = i === 4 ? 'tot' : '';
+    rows[r][7] = null;
+    rows[r][8] = [s[0], cls + ' box']; rows[r][9] = [s[1], 'n box ' + cls]; rows[r][10] = [s[2], 'n box ' + cls]; rows[r][11] = [s[3], 'n box ' + cls]; rows[r][12] = [s[4], 'n box ' + cls];
+  });
+  rows[11][8] = ['Letter grade', '']; rows[11][9] = ['B', 'big'];
+  rows[12][8] = ['Need on final for A', 'sub']; rows[12][12] = ['138 / 150', 'n'];
+  rows[21] = [['Totals', 'tot'], ['', 'tot'], ['', 'tot'], ['=SUM(D5:D19)', 'tot n'], ['', 'tot'], ['', 'tot'], ['', 'tot']];
+  rows[21][3] = ['217.0', 'tot n']; rows[21][4] = ['560', 'tot n']; rows[21][5] = ['38.8%', 'tot n'];
+  rows[24] = [['Upcoming', 'hdr'], ['What', 'hdr'], ['Date', 'hdr'], ['Pts', 'hdr n'], ['Weight', 'hdr n'], ['Est. hrs', 'hdr n'], ['Prep', 'hdr']];
+  [['Lab', 'Lab 5 demo (counters)', '11/04', 10, '25%', 3, 'bring DE10-Lite + USB-B'],
+   ['Homework', 'HW 6 – FSM design', '11/07', 20, '20%', 4, 'Moore vs Mealy, ch. 6.2'],
+   ['Exam', 'Midterm 2', '11/12', 100, '45%', 8, 'practice exam on Canvas'],
+   ['Lab', 'Lab 6 – Traffic light FSM', '11/18', 10, '25%', 5, 'state diagram before lab'],
+   ['Quiz', 'Quiz 3', '11/20', 10, '10%', 1, ''],
+   ['Homework', 'HW 7 – Registers & memory', '12/02', 20, '20%', 4, ''],
+   ['Exam', 'Final', '12/16', 150, '45%', 12, 'cumulative']].forEach((u, i) => {
+    rows[25 + i] = [[u[0], 'cat'], [u[1], ''], [u[2], 'n'], [u[3], 'n'], [u[4], 'n'], [u[5], 'n'], [u[6], 'sub']];
+  });
+  rows[32] = [['', 'tot'], ['', 'tot'], ['', 'tot'], ['320', 'tot n'], ['', 'tot'], ['37', 'tot n'], ['', 'tot']];
+  const tbl = document.getElementById('sheet');
+  let html = '<colgroup><col style="width:44px">' + widths.map(w => `<col style="width:${w}px">`).join('') + '</colgroup>';
+  html += '<tr><th class="row"></th>' + widths.map((w, i) => `<th class="${i===5?'hl':''}">${letters[i]}</th>`).join('') + '</tr>';
+  for (let r = 1; r <= 46; r++) {
+    html += `<tr><th class="row${r===14?' hl':''}">${r}</th>`;
+    const row = rows[r] || [];
+    for (let c = 0; c < widths.length; c++) {
+      const cell = row[c];
+      if (cell) {
+        const gt = cell[1].includes('err') ? ' data-gt="sheet-div0"'
+          : r === 9 && c === 5 ? ' data-gt="sheet-hw5-pct"' : r === 9 && c === 1 ? ' data-gt="sheet-hw5-item"' : '';
+        html += `<td class="${cell[1]}"${gt}>${cell[0]}</td>`;
+      } else html += '<td></td>';
+    }
+    html += '</tr>';
+  }
+  tbl.style.width = (44 + widths.reduce((a, b) => a + b, 0)) + 'px';
+  tbl.innerHTML = html;
+</script>
+</body>
+</html>

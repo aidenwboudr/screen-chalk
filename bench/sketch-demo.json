@@ -1,0 +1,20 @@
+[
+ {"kind": "circle", "box": [670, 420, 110, 100], "label": "C1 + R1 = the filter"},
+ {"kind": "sketch", "box": [430, 300, 380, 230], "title": "why it's a low-pass", "size": [420, 300], "items": [
+   {"text": "gain (dB)", "at": [6, 18], "size": 18},
+   {"arrow": [40, 270, 40, 30]},
+   {"arrow": [40, 270, 405, 270]},
+   {"text": "freq (log)", "at": [320, 292], "size": 18},
+   {"path": [[40, 90], [120, 90], [170, 92], [205, 104], [240, 135], [300, 190], [380, 248]], "smooth": true, "color": "yellow", "width": 3.2},
+   {"line": [205, 60, 205, 270], "dash": true, "color": "blue"},
+   {"text": "fc = 1/(2πRC) ≈ 995 Hz", "at": [212, 58], "size": 18, "color": "blue"},
+   {"text": "−3 dB", "at": [150, 125], "size": 17},
+   {"text": "−20 dB/decade", "at": [272, 170], "size": 17, "color": "yellow"},
+   {"text": "low f: C barely conducts, Vout ≈ Vin", "at": [50, 74], "size": 16}
+ ]},
+ {"kind": "sketch", "board": false, "box": [240, 330, 480, 90], "color": "green", "items": [
+   {"arrow": [20, 20, 200, 20]},
+   {"text": "current charges C1", "at": [40, 12], "size": 18},
+   {"arrow": [470, 30, 470, 80]}
+ ]}
+]

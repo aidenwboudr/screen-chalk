@@ -1,0 +1,412 @@
+[
+ {
+  "id": "settings-buffer",
+  "page": "settings.html",
+  "q": "my audio keeps crackling when I record, where do I change how big the audio buffer is?",
+  "gt": [
+   "settings-buffer-size"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "settings-midi-keyboard",
+  "page": "settings.html",
+  "q": "I plugged my MPK keyboard in but nothing happens when I play it, what do I have to turn on here?",
+  "gt": [
+   "settings-midi-mpk"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "settings-metronome",
+  "page": "settings.html",
+  "q": "how do I turn on the click track?",
+  "gt": [
+   "settings-metronome-btn"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "settings-apply",
+  "page": "settings.html",
+  "q": "which button saves these changes without closing the window?",
+  "gt": [
+   "settings-apply"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "code-bug-line",
+  "page": "code.html",
+  "q": "which line is causing this crash?",
+  "gt": [
+   "code-bug-line",
+   "code-traceback-line"
+  ],
+  "kind": "highlight"
+ },
+ {
+  "id": "code-error-msg",
+  "page": "code.html",
+  "q": "what's the actual error it's complaining about?",
+  "gt": [
+   "code-error-msg"
+  ],
+  "kind": "underline"
+ },
+ {
+  "id": "code-run",
+  "page": "code.html",
+  "q": "how do I run this file again?",
+  "gt": [
+   "code-run-btn"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "code-source-control",
+  "page": "code.html",
+  "q": "where do I go to commit my changes?",
+  "gt": [
+   "code-git-icon"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "code-interpreter",
+  "page": "code.html",
+  "q": "how do I switch which Python interpreter it's using?",
+  "gt": [
+   "code-interpreter"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "article-cutoff-def",
+  "page": "article.html",
+  "q": "what does cutoff frequency actually mean?",
+  "gt": [
+   "article-cutoff-def"
+  ],
+  "kind": "underline"
+ },
+ {
+  "id": "article-formula",
+  "page": "article.html",
+  "q": "where's the formula for the cutoff frequency of an RC filter?",
+  "gt": [
+   "article-formula"
+  ],
+  "kind": "highlight"
+ },
+ {
+  "id": "article-bode-corner",
+  "page": "article.html",
+  "q": "where on this graph is the cutoff?",
+  "gt": [
+   "article-bode-corner"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "article-rolloff",
+  "page": "article.html",
+  "q": "how fast does the signal drop off once you're past the cutoff?",
+  "gt": [
+   "article-infobox-rolloff"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "sheet-div0",
+  "page": "spreadsheet.html",
+  "q": "why is one of my percentages broken?",
+  "gt": [
+   "sheet-div0"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "sheet-formula-bar",
+  "page": "spreadsheet.html",
+  "q": "where can I see the formula that's in this cell?",
+  "gt": [
+   "sheet-formula-bar"
+  ],
+  "kind": "box"
+ },
+ {
+  "id": "sheet-chart",
+  "page": "spreadsheet.html",
+  "q": "how do I make a chart out of this?",
+  "gt": [
+   "sheet-chart-btn"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "sheet-budget-tab",
+  "page": "spreadsheet.html",
+  "q": "how do I get to my budget sheet?",
+  "gt": [
+   "sheet-tab-budget"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "dash-kpi-drop",
+  "page": "dashboard.html",
+  "q": "which of the numbers up top should I be worried about?",
+  "gt": [
+   "dash-kpi-drop"
+  ],
+  "kind": "box"
+ },
+ {
+  "id": "dash-spike",
+  "page": "dashboard.html",
+  "q": "what part of the chart is weird?",
+  "gt": [
+   "dash-spike"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "dash-degraded",
+  "page": "dashboard.html",
+  "q": "is any of my services having problems?",
+  "gt": [
+   "dash-degraded"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "dash-legend-mem",
+  "page": "dashboard.html",
+  "q": "which color is memory on that graph?",
+  "gt": [
+   "dash-legend-mem"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "dash-refresh",
+  "page": "dashboard.html",
+  "q": "how do I refresh this?",
+  "gt": [
+   "dash-refresh-btn"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "shop-cheapest",
+  "page": "shop.html",
+  "q": "which one's the cheapest?",
+  "gt": [
+   "shop-cheapest-price"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "shop-best-rated",
+  "page": "shop.html",
+  "q": "which one has the best reviews?",
+  "gt": [
+   "shop-best-rating"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "shop-buy-clamp",
+  "page": "shop.html",
+  "q": "I want the clamp one, how do I buy it?",
+  "gt": [
+   "shop-cart-clamp"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "shop-cheap-truerms",
+  "page": "shop.html",
+  "q": "does the cheapest one do true RMS?",
+  "gt": [
+   "shop-cheap-truerms"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "circuit-capacitor",
+  "page": "circuit.html",
+  "q": "which part is the capacitor?",
+  "gt": [
+   "circuit-c1"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "circuit-opamp",
+  "page": "circuit.html",
+  "q": "where's the op-amp?",
+  "gt": [
+   "circuit-u1"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "circuit-run",
+  "page": "circuit.html",
+  "q": "how do I run the simulation?",
+  "gt": [
+   "circuit-run-btn"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "circuit-add-resistor",
+  "page": "circuit.html",
+  "q": "how do I add another resistor?",
+  "gt": [
+   "circuit-resistor-tool"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "circuit-output-wave",
+  "page": "circuit.html",
+  "q": "which wave is the output?",
+  "gt": [
+   "circuit-vout-legend",
+   "circuit-vout-trace"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "inbox-archive",
+  "page": "inbox.html",
+  "q": "how do I archive this?",
+  "gt": [
+   "inbox-archive-btn",
+   "inbox-archive-btn-list"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "inbox-attachment",
+  "page": "inbox.html",
+  "q": "which one has an attachment?",
+  "gt": [
+   "inbox-attach-row"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "inbox-starred",
+  "page": "inbox.html",
+  "q": "which email did I star?",
+  "gt": [
+   "inbox-starred-row"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "inbox-unread-count",
+  "page": "inbox.html",
+  "q": "how many unread emails do I have?",
+  "gt": [
+   "inbox-unread-count"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "inbox-deadline",
+  "page": "inbox.html",
+  "q": "when do I have to get this done by?",
+  "gt": [
+   "inbox-deadline-sentence"
+  ],
+  "kind": "underline"
+ },
+ {
+  "id": "term-error",
+  "page": "terminal.html",
+  "q": "why did the build fail, which file and line do I need to fix?",
+  "gt": [
+   "term-error-header",
+   "term-error-line",
+   "term-error-src"
+  ],
+  "kind": "underline"
+ },
+ {
+  "id": "term-warning",
+  "page": "terminal.html",
+  "q": "is there a warning in here too?",
+  "gt": [
+   "term-warning"
+  ],
+  "kind": "underline"
+ },
+ {
+  "id": "term-prompt",
+  "page": "terminal.html",
+  "q": "where do I type the next command?",
+  "gt": [
+   "term-prompt"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "term-new-tab",
+  "page": "terminal.html",
+  "q": "how do I open another tab?",
+  "gt": [
+   "term-newtab-btn"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "canvas-overdue",
+  "page": "canvas.html",
+  "q": "what am I late on?",
+  "gt": [
+   "canvas-overdue"
+  ],
+  "kind": "box"
+ },
+ {
+  "id": "canvas-submit",
+  "page": "canvas.html",
+  "q": "how do I turn in the prelab?",
+  "gt": [
+   "canvas-submit"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "canvas-todo-biggest",
+  "page": "canvas.html",
+  "q": "what's the biggest thing on my to-do list?",
+  "gt": [
+   "canvas-todo-midterm"
+  ],
+  "kind": "circle"
+ },
+ {
+  "id": "canvas-calendar",
+  "page": "canvas.html",
+  "q": "where's the calendar?",
+  "gt": [
+   "canvas-nav-calendar"
+  ],
+  "kind": "arrow"
+ },
+ {
+  "id": "canvas-hw6-points",
+  "page": "canvas.html",
+  "q": "how many points is the FSM homework worth?",
+  "gt": [
+   "canvas-hw6-points"
+  ],
+  "kind": "circle"
+ }
+]

@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""chalk-mcp: MCP server (stdio) that gives Claude Code eyes and a marker on the user's screen.
+
+Tools: screen_look (screenshot + OCR'd text ids), screen_draw (shapes), screen_clear.
+It shells out to the `chalk` CLI next to it (which can forward to another machine's screen, CHALK_HOST).
+Register: claude mcp add -s user chalk -- ~/.local/bin/chalk-mcp
+"""
+import base64, json, os, subprocess, sys
+
+HERE = os.path.dirname(os.path.realpath(__file__))
+CHALK = os.path.join(HERE, "chalk")
+PROTOCOL = "2025-06-18"
+
+SHAPE = {
+    "type": "object",
+    "properties": {
+        "kind": {"type": "string", "enum": ["circle", "box", "underline", "highlight", "strike", "arrow", "point",
+                                            "label", "card", "spotlight", "path", "sketch"]},
+        "id": {"type": "string", "description": "OCR element id from screen_look, e.g. t12"},
+        "span": {"type": "string", "description": "with id: only these exact words of that element"},
+        "text": {"type": "string", "description": "exact on-screen words to find (label/card: the words to write)"},
+        "box": {"type": "array", "items": {"type": "number"}, "description": "[x, y, w, h] screen px, for things OCR didn't read"},
+        "at": {"type": "array", "items": {"type": "number"}, "description": "[x, y] for point/label"},
+        "from": {"type": "array", "items": {"type": "number"}, "description": "arrow tail [x, y]; omit to place it automatically"},
+        "label": {"type": "string", "description": "a few handwritten words next to the mark"},
+        "title": {"type": "string", "description": "card title"},
+        "image": {"type": "string", "description": "card image: a path on the machine with the screen"},
+        "color": {"type": "string", "description": "red (default), orange, yellow, green, blue, purple, pink, white, or #rrggbb"},
+        "delay": {"type": "number", "description": "ms to wait before this shape starts (shapes already play in order)"},
+        "ttl": {"type": "number", "description": "seconds to stay after drawing; 0 = until replaced or cleared"},
+        "points": {"type": "array", "items": {"type": "array", "items": {"type": "number"}}, "description": "path: [[x, y], ...]"},
+        "size": {"type": "array", "items": {"type": "number"}, "description": "sketch: canvas [w, h] the items are drawn in (~420x300)"},
+        "board": {"type": "boolean", "description": "sketch: false draws the items straight over `box` (its own px) instead of on a paper card"},
+        "items": {"type": "array", "items": {"type": "object"}, "description": (
+            "sketch: drawn in order like a pen, canvas units: {line|arrow: [x1,y1,x2,y2]}, {rect: [x,y,w,h]}, "
+            "{circle: [cx,cy,r]}, {path: [[x,y],...], smooth: true}, {text: str, at: [x, baseline_y], size: 16-22, "
+            "align}; any item may have color and dash")},
+    },
+    "required": ["kind"],
+}
+
+TOOLS = [
+    {"name": "screen_look",
+     "description": ("Screenshot the user's screen (1 image px = 1 screen px, origin top-left; the drawing is "
+                     "hidden while it shoots). Call this before screen_draw and give shapes boxes in this image's "
+                     "pixels. ocr: true also lists the text OCR found as `id [x,y,w,h] \"text\"` (adds ~1.5 s; "
+                     "only worth it for marking exact words in dense text)."),
+     "inputSchema": {"type": "object", "properties": {
+         "ocr": {"type": "boolean", "description": "also list on-screen text with ids"}}}},
+    {"name": "screen_draw",
+     "description": ("Draw hand-drawn marks on the user's screen to show them something: circle/box around a thing, "
+                     "underline/highlight text, arrow or point at a small thing, label (words), card (a short "
+                     "explanation panel with optional image), sketch (a diagram it draws stroke by stroke on a paper card "
+                     "next to the thing, or straight over it: plots, block diagrams, current flow) or spotlight (dim "
+                     "everything else). Place each shape by "
+                     "OCR id (best), exact on-screen text, or a box in screen px for icons and graphics. Replaces "
+                     "the previous drawing unless keep is true. The overlay is click-through."),
+     "inputSchema": {"type": "object", "properties": {
+         "shapes": {"type": "array", "items": SHAPE},
+         "keep": {"type": "boolean", "description": "add to what's already drawn instead of replacing it"}},
+         "required": ["shapes"]}},
+    {"name": "screen_clear", "description": "Erase what chalk drew (a question card still waiting on them stays until the user answers or closes it).", "inputSchema": {"type": "object", "properties": {}}},
+]
+
+
+def chalk(*args, stdin=None):
+    r = subprocess.run([CHALK, *args], input=stdin, capture_output=True, text=True, timeout=60)
+    return r.returncode, r.stdout, r.stderr
+
+
+def call(name, args):
+    if name == "screen_look":
+        code, out, err = chalk("look", "--json", *(["--ocr"] if args.get("ocr") else []))
+        if code:
+            return [{"type": "text", "text": err or out}], True
+        data = json.loads(out)
+        sys.path.insert(0, HERE)
+        import ground
+        w, h = data["size"]
+        text = f"Screenshot {w}x{h} px, origin top-left; give screen_draw boxes in these pixels."
+        if data["elements"]:
+            text += "\nText on screen (id [x,y,w,h] \"text\"):\n" + ground.element_listing(data["elements"])
+        png = base64.b64encode(open(data["shot"], "rb").read()).decode()
+        return [{"type": "image", "data": png, "mimeType": "image/png"}, {"type": "text", "text": text}], False
+    if name == "screen_draw":
+        flags = ["--keep"] if args.get("keep") else []
+        code, out, err = chalk("draw", "-", *flags, stdin=json.dumps(args.get("shapes", [])))
+        return [{"type": "text", "text": (out + err).strip() or "drawn"}], bool(code)
+    if name == "screen_clear":
+        code, out, err = chalk("clear", "--marks")
+        return [{"type": "text", "text": (out + err).strip() or "cleared"}], bool(code)
+    return [{"type": "text", "text": f"unknown tool {name}"}], True
+
+
+def reply(id_, result=None, error=None):
+    msg = {"jsonrpc": "2.0", "id": id_}
+    if error:
+        msg["error"] = error
+    else:
+        msg["result"] = result
+    sys.stdout.write(json.dumps(msg) + "\n")
+    sys.stdout.flush()
+
+
+def main():
+    for line in sys.stdin:
+        try:
+            req = json.loads(line)
+        except ValueError:
+            continue
+        method, id_ = req.get("method"), req.get("id")
+        if id_ is None:
+            continue  # notifications
+        if method == "initialize":
+            reply(id_, {"protocolVersion": req.get("params", {}).get("protocolVersion", PROTOCOL),
+                        "capabilities": {"tools": {}}, "serverInfo": {"name": "chalk", "version": "0.1"}})
+        elif method == "tools/list":
+            reply(id_, {"tools": TOOLS})
+        elif method == "tools/call":
+            p = req.get("params", {})
+            try:
+                content, is_err = call(p.get("name"), p.get("arguments") or {})
+            except Exception as e:
+                content, is_err = [{"type": "text", "text": f"chalk-mcp: {e}"}], True
+            reply(id_, {"content": content, "isError": is_err})
+        elif method == "ping":
+            reply(id_, {})
+        else:
+            reply(id_, error={"code": -32601, "message": f"no method {method}"})
+
+
+if __name__ == "__main__":
+    main()

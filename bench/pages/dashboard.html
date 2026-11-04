@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home lab / atlas - Dashboards - Grafana</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1280px; overflow: hidden; }
+  body { font-family: Inter, 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 13px; color: #ccccdc; background: #111217; }
+  .mono { font-family: 'JetBrains Mono','DejaVu Sans Mono',monospace; }
+  .top { height: 48px; background: #181b1f; border-bottom: 1px solid #2c3235; display: flex; align-items: center; padding: 0 12px; gap: 12px; }
+  .crumb { display: flex; gap: 8px; align-items: center; color: #9fa7b3; font-size: 14px; }
+  .crumb b { color: #e4e7eb; font-weight: 500; }
+  .srch { margin-left: 40px; width: 420px; height: 32px; border: 1px solid #2c3235; background: #111217; border-radius: 2px; display: flex; align-items: center; padding: 0 10px; gap: 8px; color: #6e7581; }
+  .srch kbd { margin-left: auto; font-size: 11px; border: 1px solid #2c3235; padding: 1px 5px; border-radius: 2px; color: #8e95a2; font-family: inherit; }
+  .right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .ib { width: 32px; height: 32px; border-radius: 2px; display: flex; align-items: center; justify-content: center; border: 1px solid transparent; }
+  .ib.b { border-color: #2c3235; background: #1e2228; }
+  .ib svg { width: 16px; height: 16px; stroke: #ccccdc; fill: none; stroke-width: 1.7; }
+  .btn { height: 32px; padding: 0 12px; border: 1px solid #2c3235; background: #1e2228; border-radius: 2px; display: flex; align-items: center; gap: 6px; color: #ccccdc; }
+  .btn.pri { background: #3d71d9; border-color: #3d71d9; color: #fff; }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg,#7b5cd6,#d65c8a); }
+  .side { position: absolute; top: 48px; left: 0; bottom: 0; width: 56px; background: #181b1f; border-right: 1px solid #2c3235; display: flex; flex-direction: column; align-items: center; padding-top: 10px; gap: 6px; }
+  .side .ib svg { width: 20px; height: 20px; stroke: #9fa7b3; }
+  .side .ib.on svg { stroke: #ff8833; }
+  .main { position: absolute; top: 48px; left: 56px; right: 0; bottom: 0; padding: 12px 16px; }
+  .bar2 { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .var { display: flex; align-items: center; border: 1px solid #2c3235; border-radius: 2px; height: 30px; }
+  .var span { padding: 0 10px; height: 100%; display: flex; align-items: center; }
+  .var span:first-child { background: #22252b; color: #9fa7b3; border-right: 1px solid #2c3235; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
+  .panel { background: #181b1f; border: 1px solid #22252b; border-radius: 3px; position: relative; }
+  .panel .ph { height: 32px; display: flex; align-items: center; padding: 0 10px; color: #e4e7eb; font-weight: 500; font-size: 13px; gap: 6px; }
+  .panel .ph .i { color: #6e7581; font-size: 12px; }
+  .kpi { height: 152px; }
+  .kpi .val { font-size: 44px; font-weight: 500; padding: 4px 14px 0; letter-spacing: -1px; }
+  .kpi .sub { padding: 0 14px; font-size: 12px; color: #8e95a2; }
+  .kpi svg.spark { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 44px; }
+  .kpi.red { background: #3a1418; border-color: #5c1f25; }
+  .kpi.red .val { color: #ff5c6c; }
+  .g { color: #73bf69; } .o { color: #ff9830; } .rr { color: #f2495c; } .bl { color: #5794f2; } .pu { color: #b877d9; }
+  .chart { height: 478px; margin-bottom: 10px; }
+  .legend { display: flex; gap: 22px; padding: 2px 14px; font-size: 12.5px; color: #ccccdc; align-items: center; }
+  .legend .sw { display: inline-block; width: 14px; height: 4px; border-radius: 2px; margin-right: 6px; vertical-align: 3px; }
+  .legend .st { color: #8e95a2; margin-left: 6px; }
+  .bottom { display: grid; grid-template-columns: 1fr 480px; gap: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-weight: 500; color: #8e95a2; padding: 6px 10px; border-bottom: 1px solid #2c3235; font-size: 12px; }
+  td { padding: 0 10px; height: 31px; border-bottom: 1px solid #22252b; }
+  tr:nth-child(even) td { background: #1c1f24; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; height: 20px; padding: 0 9px; border-radius: 10px; font-size: 11.5px; font-weight: 500; }
+  .pill i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+  .pill.up { background: #1b3b1f; color: #73bf69; } .pill.up i { background: #73bf69; }
+  .pill.deg { background: #4a3410; color: #ffb357; } .pill.deg i { background: #ff9830; }
+  .pill.off { background: #2c3235; color: #9fa7b3; } .pill.off i { background: #6e7581; }
+  .mini { display: inline-block; width: 70px; height: 6px; background: #2c3235; border-radius: 3px; vertical-align: middle; margin-right: 6px; position: relative; overflow: hidden; }
+  .mini b { position: absolute; left: 0; top: 0; bottom: 0; background: #5794f2; }
+  .alert { padding: 8px 12px; border-bottom: 1px solid #22252b; display: flex; gap: 10px; }
+  .alert .dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex: none; }
+  .alert .t { color: #e4e7eb; }
+  .alert .m { color: #8e95a2; font-size: 12px; }
+  .disk { padding: 6px 12px; }
+  .disk .row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .disk .b { height: 14px; background: #22252b; border-radius: 2px; overflow: hidden; margin-bottom: 9px; }
+  .disk .b i { display: block; height: 100%; }
+</style>
+</head>
+<body>
+<div class="top">
+  <svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="12" fill="none" stroke="#ff8833" stroke-width="3"/><circle cx="14" cy="14" r="5" fill="#f2cc0c"/><path d="M14 2v6M26 14h-6" stroke="#ff8833" stroke-width="3"/></svg>
+  <div class="crumb">Home <span>›</span> Dashboards <span>›</span> Home lab <span>›</span> <b>atlas overview</b> <span style="color:#f2cc0c">★</span></div>
+  <div class="srch"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6e7581" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search or jump to...<kbd>ctrl+k</kbd></div>
+  <div class="right">
+    <div class="btn">+ ⌄</div>
+    <div class="ib"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-6 4 12 2-6h6"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10 21h4"/></svg></div>
+    <div class="avatar"></div>
+  </div>
+</div>
+<div class="side">
+  <div class="ib"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10H3z"/></svg></div>
+  <div class="ib"><svg viewBox="0 0 24 24"><path d="M12 2l3 6 6 1-4.5 4 1 6-5.5-3-5.5 3 1-6L3 9l6-1z"/></svg></div>
+  <div class="ib on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></div>
+  <div class="ib"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></div>
+  <div class="ib"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/></svg></div>
+  <div class="ib"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div>
+  <div class="ib"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></div>
+</div>
+<div class="main">
+  <div class="bar2">
+    <div class="var"><span>datasource</span><span>Prometheus ⌄</span></div>
+    <div class="var"><span>instance</span><span>atlas:9100 ⌄</span></div>
+    <div class="var"><span>stack</span><span>All ⌄</span></div>
+    <div class="right">
+      <div class="btn">⊕ Add ⌄</div>
+      <div class="ib b"><svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg></div>
+      <div class="ib b"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></div>
+      <div class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ccccdc" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Last 24 hours ⌄</div>
+      <div class="ib b"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4M8 11h6"/></svg></div>
+      <div class="ib b" data-gt="dash-refresh-btn" title="Refresh dashboard"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/></svg></div>
+      <div class="btn" style="padding:0 8px">Auto ⌄</div>
+      <div class="btn pri">Share</div>
+    </div>
+  </div>
+  <div class="kpis">
+    <div class="panel kpi"><div class="ph">Uptime (30d)<span class="i">ⓘ</span></div><div class="val g">99.97%</div><div class="sub">13 min down · nightly reboot 04:00</div><svg class="spark" viewBox="0 0 400 44" preserveAspectRatio="none"><path d="M0 30 L400 30 L400 44 L0 44Z" fill="#73bf6922"/><path d="M0 30 L400 30" stroke="#73bf69" stroke-width="2"/></svg></div>
+    <div class="panel kpi"><div class="ph">Requests / min (Traefik)</div><div class="val bl">1,284</div><div class="sub">▲ 8.2% vs yesterday</div><svg class="spark" viewBox="0 0 400 44" preserveAspectRatio="none" id="sp1"></svg></div>
+    <div class="panel kpi red" data-gt="dash-kpi-drop"><div class="ph">Immich ML jobs / hr</div><div class="val">41 <span style="font-size:22px">▼ 87%</span></div><div class="sub" style="color:#ff9aa5">was 318 / hr yesterday · face detection queue 2,904</div><svg class="spark" viewBox="0 0 400 44" preserveAspectRatio="none" id="sp2"></svg></div>
+    <div class="panel kpi"><div class="ph">Free space · md1 (RAID 0)</div><div class="val o">612 GB</div><div class="sub">of 3.6 TB · 83% used</div><svg class="spark" viewBox="0 0 400 44" preserveAspectRatio="none" id="sp3"></svg></div>
+  </div>
+  <div class="panel chart">
+    <div class="ph">CPU and memory · last 24h<span class="i">ⓘ node_exporter · 1m step</span><span style="margin-left:auto;color:#6e7581">⋮</span></div>
+    <svg id="ch" width="1820" height="398" style="display:block"></svg>
+    <div class="legend">
+      <span><span class="sw" style="background:#73bf69"></span>CPU busy %<span class="st">mean 18.4  max 97.1</span></span>
+      <span data-gt="dash-legend-mem"><span class="sw" style="background:#5794f2"></span>Memory used %<span class="st">mean 58.2  max 71.6</span></span>
+      <span><span class="sw" style="background:#ff9830"></span>iowait %<span class="st">mean 2.1  max 38.0</span></span>
+      <span><span class="sw" style="background:#f2495c;height:2px"></span>Alert threshold 90%</span>
+    </div>
+  </div>
+  <div class="bottom">
+    <div class="panel" style="height:492px">
+      <div class="ph">Services<span class="i">docker + systemd · 14 checks</span></div>
+      <table>
+        <tr><th>Service</th><th>Host / unit</th><th>Status</th><th>Uptime</th><th>CPU</th><th>Memory</th><th>Last check</th></tr>
+        <tbody id="svc"></tbody>
+      </table>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="panel" style="height:282px">
+        <div class="ph">Firing alerts<span class="i">3</span></div>
+        <div class="alert"><span class="dot" style="background:#ff9830"></span><div><div class="t">ImmichMLSlow</div><div class="m">immich-machine-learning p95 latency 14.2 s &gt; 5 s for 6h</div></div></div>
+        <div class="alert"><span class="dot" style="background:#f2495c"></span><div><div class="t">RaidDegraded md0</div><div class="m">md0 [U_] 1 of 2 devices active · since Oct 9</div></div></div>
+        <div class="alert"><span class="dot" style="background:#ff9830"></span><div><div class="t">HighCPU atlas</div><div class="m">cpu busy 97% at 03:52 · resolved 04:31</div></div></div>
+        <div class="alert"><span class="dot" style="background:#6e7581"></span><div><div class="t" style="color:#8e95a2">CertExpiry tv.example.net</div><div class="m">silenced · renews in 21 days</div></div></div>
+      </div>
+      <div class="panel" style="height:200px">
+        <div class="ph">Storage</div>
+        <div class="disk">
+          <div class="row"><span>/ (nvme0n1p2)</span><span class="mono">142 / 468 GB</span></div><div class="b"><i style="width:30%;background:#73bf69"></i></div>
+          <div class="row"><span>md0 · Nextcloud (degraded)</span><span class="mono">1.31 / 1.8 TB</span></div><div class="b"><i style="width:73%;background:#ff9830"></i></div>
+          <div class="row"><span>md1 · Immich (RAID 0)</span><span class="mono">2.99 / 3.6 TB</span></div><div class="b"><i style="width:83%;background:#ff9830"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  let seed = 11; const rnd = () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  function spark(id, vals, col) {
+    const el = document.getElementById(id); const mx = Math.max(...vals), mn = Math.min(...vals);
+    const pts = vals.map((v, i) => `${(i / (vals.length - 1) * 400).toFixed(1)} ${(40 - (v - mn) / (mx - mn || 1) * 32).toFixed(1)}`);
+    el.innerHTML = `<path d="M${pts.join(' L')} L400 44 L0 44Z" fill="${col}22"/><path d="M${pts.join(' L')}" stroke="${col}" stroke-width="2" fill="none"/>`;
+  }
+  spark('sp1', Array.from({ length: 40 }, (_, i) => 900 + 300 * Math.sin(i / 6) + rnd() * 200), '#5794f2');
+  spark('sp2', Array.from({ length: 40 }, (_, i) => i < 26 ? 300 + rnd() * 40 : 40 + rnd() * 15), '#ff5c6c');
+  spark('sp3', Array.from({ length: 40 }, (_, i) => 700 - i * 2 - rnd() * 6), '#ff9830');
+
+  // main chart
+  const ch = document.getElementById('ch');
+  const L = 56, R = 1800, T = 12, B = 366;
+  const W = R - L, H = B - T;
+  const N = 144; // 10-min samples over 24h, starting 10:00 yesterday
+  const x = i => L + i / (N - 1) * W;
+  const y = v => B - v / 100 * H;
+  let s = '';
+  for (let v = 0; v <= 100; v += 25) s += `<line x1="${L}" x2="${R}" y1="${y(v)}" y2="${y(v)}" stroke="#2c3235"/><text x="${L - 8}" y="${y(v) + 4}" fill="#8e95a2" font-size="11" text-anchor="end">${v}%</text>`;
+  for (let h = 0; h <= 24; h += 2) {
+    const i = h * 6; const xx = L + (h / 24) * W;
+    const hr = (10 + h) % 24;
+    s += `<line x1="${xx}" x2="${xx}" y1="${T}" y2="${B}" stroke="#22252b"/><text x="${xx}" y="${B + 18}" fill="#8e95a2" font-size="11" text-anchor="middle">${String(hr).padStart(2, '0')}:00</text>`;
+  }
+  s += `<line x1="${L}" x2="${R}" y1="${y(90)}" y2="${y(90)}" stroke="#f2495c" stroke-dasharray="6 4"/>`;
+  const cpu = [], mem = [], io = [];
+  const spikeStart = 105, spikeEnd = 111; // 03:30 .. 04:30
+  for (let i = 0; i < N; i++) {
+    const hr = (10 + i / 6) % 24;
+    let c = 14 + 6 * Math.sin(i / 9) + rnd() * 7 + (hr > 18 && hr < 23 ? 8 : 0);
+    let m = 55 + 3 * Math.sin(i / 30) + rnd() * 1.5;
+    let o = 1 + rnd() * 2;
+    if (i >= spikeStart && i <= spikeEnd) { const k = [0.45, 0.85, 0.97, 0.95, 0.9, 0.7, 0.35][i - spikeStart]; c = 14 + 83 * k; m += 13 * k; o = 38 * k; }
+    cpu.push(c); mem.push(m); io.push(o);
+  }
+  const path = a => a.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+  s += `<path d="${path(cpu)} L${R} ${B} L${L} ${B}Z" fill="#73bf6918"/>`;
+  s += `<path d="${path(io)}" stroke="#ff9830" stroke-width="1.5" fill="none"/>`;
+  s += `<path d="${path(mem)}" stroke="#5794f2" stroke-width="2" fill="none"/>`;
+  s += `<path d="${path(cpu)}" stroke="#73bf69" stroke-width="2" fill="none"/>`;
+  // annotation markers (deploys)
+  [[40, 'deploy notes #196'], [118, 'reboot']].forEach(([i, t]) => { s += `<line x1="${x(i)}" x2="${x(i)}" y1="${T}" y2="${B}" stroke="#b877d9" stroke-dasharray="2 3"/><path d="M${x(i) - 5} ${B} l5 -7 l5 7z" fill="#b877d9"/>`; });
+  const sx0 = x(spikeStart - 1), sx1 = x(spikeEnd + 1);
+  s += `<rect data-gt="dash-spike" x="${sx0.toFixed(1)}" y="${y(100).toFixed(1)}" width="${(sx1 - sx0).toFixed(1)}" height="${(B - y(100)).toFixed(1)}" fill="transparent"/>`;
+  // hard-set target: the highest point of the memory line
+  const mi = mem.indexOf(Math.max(...mem));
+  s += `<rect data-gt="dash-mem-peak" x="${(x(mi) - 14).toFixed(1)}" y="${(y(mem[mi]) - 14).toFixed(1)}" width="28" height="28" fill="transparent"/>`;
+  ch.innerHTML = s;
+
+  const svcs = [
+    ['traefik', 'easypanel / traefik:v3.2', 'up', '12d 4h', 3, 6],
+    ['cloudflared', 'apex tunnel', 'up', '12d 4h', 1, 2],
+    ['immich-server', 'immich / v1.132.3', 'up', '3d 19h', 6, 18],
+    ['immich-machine-learning', 'immich / ml (CPU)', 'deg', '3d 19h', 72, 41],
+    ['nextcloud', 'easypanel / nextcloud:30', 'up', '12d 4h', 4, 11],
+    ['navidrome', 'music.example.net', 'up', '6d 2h', 2, 4],
+    ['jellyfin', 'tv.example.net', 'up', '1d 7h', 9, 14],
+    ['gluetun + deluge', 'mullvad · clean alpaca', 'up', '1d 7h', 3, 5],
+    ['notes', 'systemd --user :8090', 'up', '1d 2h', 1, 3],
+    ['gitea', 'gitea.service :3000', 'up', '0d 22h', 5, 22],
+    ['postgres', 'immich-db 16.4', 'up', '3d 19h', 2, 9],
+    ['audiomuse-ai', 'tailnet :8095', 'off', '—', 0, 0],
+  ];
+  document.getElementById('svc').innerHTML = svcs.map(([n, h, st, up, c, m], i) => `<tr><td style="color:#e4e7eb"${n === 'gitea' ? ' data-gt="dash-gitea-name"' : ''}>${n}</td><td style="color:#8e95a2">${h}</td><td><span class="pill ${st}"${st === 'deg' ? ' data-gt="dash-degraded"' : ''}><i></i>${st === 'up' ? 'healthy' : st === 'deg' ? 'degraded' : 'stopped'}</span></td><td class="mono">${up}</td><td class="mono"><span class="mini"><b style="width:${c}%;background:${c > 60 ? '#ff9830' : '#73bf69'}"></b></span>${c}%</td><td class="mono"${n === 'gitea' ? ' data-gt="dash-gitea-mem"' : ''}><span class="mini"><b style="width:${m}%"></b></span>${m}%</td><td style="color:#8e95a2">${[12, 12, 14, 9, 13, 15, 11, 12, 10, 14, 13, 16][i]}s ago</td></tr>`).join('');
+</script>
+</body>
+</html>

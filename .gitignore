@@ -1,0 +1,16 @@
+bench/vpointer/vpointer
+
+# inherited from general's .gitignore
+.venv/
+venv/
+node_modules/
+__pycache__/
+*.pyc
+dist/
+build/
+.cache/
+.env
+.env.*
+*.pem
+*.key
+*.log

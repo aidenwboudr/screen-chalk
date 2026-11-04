@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>lowpass.py - ece317 - Visual Studio Code</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1280px; overflow: hidden; }
+  body { font-family: Inter, 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 13px; color: #cccccc; background: #1e1e1e; }
+  .mono { font-family: 'JetBrains Mono','DejaVu Sans Mono',monospace; }
+  .title { height: 35px; background: #1f1f1f; border-bottom: 1px solid #2b2b2b; display: flex; align-items: center; padding: 0 10px; gap: 4px; }
+  .title .menu span { padding: 4px 8px; color: #cccccc; font-size: 13px; }
+  .title .search { margin: 0 auto; width: 560px; height: 24px; border: 1px solid #3c3c3c; background: #2a2a2a; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; color: #9d9d9d; font-size: 12px; }
+  .title .wc { display: flex; gap: 22px; padding-right: 8px; color: #ccc; }
+  .layout { position: absolute; top: 35px; bottom: 22px; left: 0; right: 0; display: flex; }
+  .actbar { width: 48px; background: #181818; border-right: 1px solid #2b2b2b; display: flex; flex-direction: column; align-items: center; padding-top: 4px; }
+  .act { width: 47px; height: 48px; display: flex; align-items: center; justify-content: center; position: relative; }
+  .act svg { width: 24px; height: 24px; stroke: #858585; fill: none; stroke-width: 1.6; }
+  .act.on { border-left: 2px solid #0078d4; }
+  .act.on svg { stroke: #e6e6e6; }
+  .badge { position: absolute; right: 8px; bottom: 8px; background: #0078d4; color: #fff; font-size: 9px; min-width: 16px; height: 16px; border-radius: 8px; text-align: center; line-height: 16px; padding: 0 4px; font-weight: 600; }
+  .side { width: 300px; background: #181818; border-right: 1px solid #2b2b2b; display: flex; flex-direction: column; }
+  .side .hdr { height: 35px; display: flex; align-items: center; padding: 0 20px; font-size: 11px; letter-spacing: .5px; color: #bbbbbb; }
+  .sec { font-size: 11px; font-weight: 700; padding: 3px 4px; color: #cccccc; display: flex; align-items: center; gap: 4px; }
+  .tree div { height: 22px; line-height: 22px; white-space: nowrap; font-size: 13px; color: #cccccc; display: flex; align-items: center; gap: 5px; }
+  .tree div.sel { background: #37373d; outline: 1px solid #0078d4; outline-offset: -1px; }
+  .tree .ic { width: 16px; height: 16px; display: inline-block; flex: none; font-size: 11px; text-align: center; line-height: 16px; }
+  .tree .m { margin-left: auto; padding-right: 14px; font-size: 12px; }
+  .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .tabs { height: 35px; background: #181818; display: flex; border-bottom: 1px solid #2b2b2b; }
+  .tab { padding: 0 12px; display: flex; align-items: center; gap: 6px; border-right: 1px solid #2b2b2b; color: #9d9d9d; font-size: 13px; }
+  .tab.on { background: #1f1f1f; color: #ffffff; border-top: 1px solid #0078d4; }
+  .tabs .tools { margin-left: auto; display: flex; align-items: center; gap: 4px; padding-right: 10px; }
+  .ib { width: 28px; height: 24px; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
+  .ib svg { width: 16px; height: 16px; }
+  .crumbs { height: 22px; display: flex; align-items: center; padding-left: 16px; gap: 6px; color: #a9a9a9; font-size: 12px; background: #1f1f1f; }
+  .editor { flex: 1; position: relative; background: #1f1f1f; overflow: hidden; }
+  .code { position: absolute; top: 0; left: 0; right: 120px; font-size: 14px; line-height: 20px; }
+  .ln { display: flex; height: 20px; white-space: pre; }
+  .ln .no { width: 64px; text-align: right; padding-right: 22px; color: #6e7681; flex: none; }
+  .ln.cur { background: #2a2d2e33; outline: 1px solid #282828; }
+  .ln.cur .no { color: #cccccc; }
+  .ln .tx { flex: none; padding-right: 20px; }
+  .kw { color: #c586c0; } .kw2 { color: #569cd6; } .str { color: #ce9178; } .com { color: #6a9955; } .num { color: #b5cea8; } .fn { color: #dcdcaa; } .bi { color: #4ec9b0; } .var { color: #9cdcfe; } .op { color: #d4d4d4; } .self { color: #9cdcfe; }
+  .minimap { position: absolute; right: 14px; top: 0; width: 100px; bottom: 0; opacity: .55; }
+  .minimap i { display: block; height: 2px; margin: 2px 0; background: #6b7a8a; }
+  .vscroll { position: absolute; right: 0; top: 0; width: 14px; bottom: 0; border-left: 1px solid #2b2b2b; }
+  .vscroll i { position: absolute; left: 3px; right: 3px; top: 0; height: 520px; background: #79797933; }
+  .panel { height: 380px; border-top: 1px solid #2b2b2b; background: #181818; display: flex; flex-direction: column; }
+  .ptabs { height: 35px; display: flex; align-items: center; padding: 0 10px; gap: 22px; font-size: 11px; letter-spacing: .4px; color: #9d9d9d; }
+  .ptabs .on { color: #e7e7e7; border-bottom: 1px solid #e7e7e7; padding-bottom: 5px; padding-top: 6px; }
+  .ptabs .cnt { background: #616161; color: #fff; border-radius: 8px; padding: 0 5px; font-size: 10px; margin-left: 4px; }
+  .ptabs .right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+  .term { flex: 1; display: flex; min-height: 0; }
+  .tout { flex: 1; padding: 4px 18px; font-size: 13.5px; line-height: 19px; white-space: pre; color: #cccccc; overflow: hidden; }
+  .tlist { width: 200px; border-left: 1px solid #2b2b2b; padding-top: 4px; font-size: 13px; }
+  .tlist div { padding: 3px 12px; display: flex; gap: 8px; align-items: center; color: #ccc; }
+  .tlist div.on { background: #37373d; }
+  .status { position: absolute; bottom: 0; left: 0; right: 0; height: 22px; background: #181818; border-top: 1px solid #2b2b2b; display: flex; align-items: center; font-size: 12px; color: #cccccc; }
+  .status span { padding: 0 8px; display: flex; align-items: center; gap: 4px; height: 21px; }
+  .status .remote { background: #0078d4; color: #fff; padding: 0 12px; }
+  .g { color: #73c991; } .y { color: #e2c08d; } .r { color: #f14c4c; } .b { color: #3b8eea; } .dim { color: #8b8b8b; }
+</style>
+</head>
+<body>
+<div class="title">
+  <svg width="18" height="18" viewBox="0 0 24 24"><path d="M17 2l5 2.5v15L17 22 7 13l-4 3-2-1V9l2-1 4 3 10-9zM17 7l-6 5 6 5z" fill="#0f7fd5"/></svg>
+  <div class="menu"><span>File</span><span>Edit</span><span>Selection</span><span>View</span><span>Go</span><span>Run</span><span>Terminal</span><span>Help</span></div>
+  <div class="search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9d9d9d" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>ece317</div>
+  <div class="wc"><span>—</span><span>☐</span><span>✕</span></div>
+</div>
+<div class="layout">
+  <div class="actbar">
+    <div class="act on" title="Explorer"><svg viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/></svg></div>
+    <div class="act" title="Search"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-5-5"/></svg></div>
+    <div class="act" data-gt="code-git-icon" title="Source Control"><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.2"/><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="8" r="2.2"/><path d="M6 7.2v9.6M18 10.2c0 4-5 4-11 7.2"/></svg><span class="badge">3</span></div>
+    <div class="act" title="Run and Debug"><svg viewBox="0 0 24 24"><path d="M8 5v14l10-7z"/><circle cx="17" cy="17" r="3"/></svg></div>
+    <div class="act" title="Extensions"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="7" height="7"/><rect x="10" y="11" width="7" height="7"/><rect x="10" y="4" width="7" height="7"/><rect x="15" y="2" width="6" height="6" transform="rotate(15 18 5)"/></svg></div>
+    <div class="act" title="Testing"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L5 19a1.5 1.5 0 0 0 1.3 2h11.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/></svg></div>
+    <div class="act" title="Remote Explorer"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M8 20h8M12 16v4"/></svg></div>
+    <div style="flex:1"></div>
+    <div class="act" title="Accounts"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.5-6 8-6s7 2 8 6"/></svg></div>
+    <div class="act" title="Manage"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></div>
+  </div>
+  <div class="side">
+    <div class="hdr">EXPLORER<span style="margin-left:auto;letter-spacing:2px">···</span></div>
+    <div class="sec">⌄ EELE317</div>
+    <div class="tree" id="tree"></div>
+    <div style="flex:1"></div>
+    <div class="sec" style="border-top:1px solid #2b2b2b;padding:5px 4px">› OUTLINE</div>
+    <div class="sec" style="border-top:1px solid #2b2b2b;padding:5px 4px">› TIMELINE</div>
+    <div class="sec" style="border-top:1px solid #2b2b2b;padding:5px 4px">› PYTHON PACKAGES</div>
+  </div>
+  <div class="main">
+    <div class="tabs">
+      <div class="tab"><span class="y">⬢</span>plot_bode.py</div>
+      <div class="tab on"><span class="b">⬢</span>lowpass.py<span style="margin-left:8px;color:#ccc">✕</span></div>
+      <div class="tab"><span class="dim">ⓘ</span>README.md</div>
+      <div class="tab"><span class="g">▤</span>scope_1khz.csv</div>
+      <div class="tools">
+        <div class="ib" data-gt="code-run-btn" title="Run Python File"><svg viewBox="0 0 16 16"><path d="M4 2.5v11l9-5.5z" fill="none" stroke="#cccccc" stroke-width="1.3" stroke-linejoin="round"/></svg></div>
+        <div class="ib" title="More run options"><svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" fill="none" stroke="#cccccc" stroke-width="1.3"/></svg></div>
+        <div class="ib" title="Split Editor Right"><svg viewBox="0 0 16 16" fill="none" stroke="#cccccc" stroke-width="1.2"><rect x="2" y="2.5" width="12" height="11" rx="1"/><path d="M8 2.5v11"/></svg></div>
+        <div class="ib" title="More Actions"><svg viewBox="0 0 16 16" fill="#cccccc"><circle cx="3.5" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12.5" cy="8" r="1.1"/></svg></div>
+      </div>
+    </div>
+    <div class="crumbs">lab5 <span>›</span> <span class="b">⬢</span> lowpass.py <span>›</span> <span style="color:#b180d7">⬡</span> rc_lowpass</div>
+    <div class="editor">
+      <div class="code mono" id="code"></div>
+      <div class="minimap" id="mm"></div>
+      <div class="vscroll"><i></i></div>
+    </div>
+    <div class="panel">
+      <div class="ptabs">
+        <span>PROBLEMS<span class="cnt">2</span></span><span>OUTPUT</span><span>DEBUG CONSOLE</span><span class="on">TERMINAL</span><span>PORTS</span>
+        <span class="right">
+          <span style="font-size:12px;letter-spacing:0;color:#ccc">bash - lab5</span>
+          <span class="ib"><svg viewBox="0 0 16 16" fill="none" stroke="#ccc" stroke-width="1.3"><path d="M8 3v10M3 8h10"/></svg></span>
+          <span class="ib"><svg viewBox="0 0 16 16" fill="none" stroke="#ccc" stroke-width="1.2"><rect x="2" y="2.5" width="12" height="11" rx="1"/><path d="M8 2.5v11"/></svg></span>
+          <span class="ib" data-gt="code-kill-terminal" title="Kill Terminal"><svg viewBox="0 0 16 16" fill="none" stroke="#ccc" stroke-width="1.2"><path d="M4 4.5h8M5 4.5v8.5h6V4.5M6.5 4.5V3h3v1.5"/></svg></span>
+          <span class="ib"><svg viewBox="0 0 16 16" fill="none" stroke="#ccc" stroke-width="1.3"><path d="M4 10l4-4 4 4"/></svg></span>
+          <span class="ib"><svg viewBox="0 0 16 16" fill="none" stroke="#ccc" stroke-width="1.3"><path d="M4 4l8 8M12 4l-8 8"/></svg></span>
+        </span>
+      </div>
+      <div class="term">
+<div class="tout mono"><span class="g">alex@thinkpad</span>:<span class="b">~/ece317/lab5</span>$ source .venv/bin/activate
+(.venv) <span class="g">alex@thinkpad</span>:<span class="b">~/ece317/lab5</span>$ python lowpass.py data/scope_1khz.csv
+Traceback (most recent call last):
+  File "/home/alex/ece317/lab5/lowpass.py", line 48, in &lt;module&gt;
+    main()
+  File "/home/alex/ece317/lab5/lowpass.py", line 40, in main
+    filtered = rc_lowpass(v, dt)
+               ^^^^^^^^^^^^^^^^^
+<span data-gt="code-traceback-line">  File "/home/alex/ece317/lab5/lowpass.py", line 28, in rc_lowpass</span>
+    y[n] = y[n - 1] + alpha * (<span data-gt="code-tb-samples-n1">samples[n + 1]</span> - y[n - 1])
+                               ~~~~~~~^^^^^^^
+<span data-gt="code-error-msg">IndexError: list index out of range</span>
+(.venv) <span class="g">alex@thinkpad</span>:<span class="b">~/ece317/lab5</span>$ wc -l data/scope_1khz.csv
+1201 data/scope_1khz.csv
+(.venv) <span class="g">alex@thinkpad</span>:<span class="b">~/ece317/lab5</span>$ <span style="background:#ccc"> </span></div>
+        <div class="tlist">
+          <div><span>⌘</span>python</div>
+          <div class="on"><span>⌘</span>bash  lab5</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="status">
+  <span class="remote">⇄</span>
+  <span>⑂ lab5-filter*</span>
+  <span>⟳ 1↓ 2↑</span>
+  <span>⊗ 0 ⚠ 2</span>
+  <span style="margin-left:auto">Ln 28, Col 41</span>
+  <span>Spaces: 4</span>
+  <span>UTF-8</span>
+  <span>LF</span>
+  <span>{ } Python</span>
+  <span data-gt="code-interpreter">3.12.3 ('.venv': venv)</span>
+  <span>⚇ Prettier</span>
+  <span>🔔</span>
+</div>
+<script>
+const src = `"""Discrete first-order RC low-pass filter for ECE 317 lab 5."""
+import csv
+import math
+import sys
+
+import numpy as np
+
+
+def load_scope_csv(path):
+    """Read a Rigol DS1054Z export (time, CH1 voltage) into two lists."""
+    t, v = [], []
+    with open(path, newline="") as f:
+        reader = csv.reader(f)
+        next(reader)  # skip header row
+        for row in reader:
+            t.append(float(row[0]))
+            v.append(float(row[1]))
+    return t, v
+
+
+def rc_lowpass(samples, dt, r=10e3, c=100e-9):
+    """Backward-Euler RC filter: y[n] = y[n-1] + alpha * (x[n] - y[n-1])."""
+    tau = r * c
+    alpha = dt / (tau + dt)
+    y = [0.0] * len(samples)
+    y[0] = samples[0]
+    for n in range(1, len(samples)):
+        y[n] = y[n - 1] + alpha * (samples[n + 1] - y[n - 1])
+    return y
+
+
+def cutoff_hz(r, c):
+    """-3 dB corner of a single-pole RC network."""
+    return 1 / (2 * math.pi * r * c)
+
+
+def main():
+    t, v = load_scope_csv(sys.argv[1])
+    dt = t[1] - t[0]
+    filtered = rc_lowpass(v, dt)
+    print(f"fc = {cutoff_hz(10e3, 100e-9):.1f} Hz, dt = {dt * 1e6:.2f} us")
+    print(f"peak in: {max(v):.3f} V   peak out: {max(filtered):.3f} V")
+    np.savetxt("filtered.csv", np.column_stack([t, filtered]),
+               delimiter=",", header="t,vout", comments="")
+
+
+if __name__ == "__main__":
+    main()
+`.split('\n');
+const KW = /^(import|from|def|return|for|in|with|as|if|else|elif|while|not|and|or|class|pass|break)$/;
+function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function hl(line) {
+  let out = '', i = 0;
+  const re = /("""[^]*?"""|f?"[^"]*"|#.*$|\b\d+(?:\.\d+)?(?:e-?\d+)?\b|\b[A-Za-z_]\w*\b|\s+|.)/g;
+  let m, prev = '';
+  while ((m = re.exec(line))) {
+    const t = m[0];
+    let cls = '';
+    if (t.startsWith('"""')) cls = 'str';
+    else if (/^f?"/.test(t)) cls = 'str';
+    else if (t.startsWith('#')) cls = 'com';
+    else if (/^\d/.test(t)) cls = 'num';
+    else if (KW.test(t)) cls = 'kw';
+    else if (/^(True|False|None)$/.test(t)) cls = 'kw2';
+    else if (/^(float|len|range|open|max|print|min|abs)$/.test(t)) cls = 'fn';
+    else if (/^(csv|math|sys|np|numpy)$/.test(t)) cls = 'bi';
+    else if (prev === 'def') cls = 'fn';
+    else if (/^[A-Za-z_]/.test(t)) cls = line.slice(m.index + t.length).startsWith('(') ? 'fn' : 'var';
+    if (/\S/.test(t)) prev = t;
+    out += cls ? `<span class="${cls}">${esc(t)}</span>` : esc(t);
+  }
+  return out;
+}
+const code = document.getElementById('code');
+src.forEach((l, i) => {
+  if (i === src.length - 1 && l === '') return;
+  const d = document.createElement('div');
+  d.className = 'ln' + (i + 1 === 28 ? ' cur' : '');
+  d.innerHTML = `<span class="no">${i + 1}</span><span class="tx">${hl(l) || ' '}</span>`;
+  if (i + 1 === 28) {
+    const tx = d.querySelector('.tx');
+    tx.setAttribute('data-gt', 'code-bug-line');
+    // hard-set targets: the bad index alone, and the whole out-of-range access
+    tx.innerHTML = tx.innerHTML.replace('<span class="var">samples</span>[<span class="var">n</span> + <span class="num">1</span>]',
+      '<span data-gt="code-samples-n1"><span class="var">samples</span>[<span data-gt="code-index-n1"><span class="var">n</span> + <span class="num">1</span></span>]</span>');
+  }
+  code.appendChild(d);
+});
+const mm = document.getElementById('mm');
+src.forEach(l => { const i = document.createElement('i'); i.style.width = Math.min(100, l.length * 1.3) + 'px'; i.style.marginLeft = (l.search(/\S|$/) * 1.3) + 'px'; if (!l.trim()) i.style.background = 'transparent'; mm.appendChild(i); });
+const tree = [
+  [0, '›', '.venv', 'dim', ''], [0, '›', '.vscode', '', ''], [0, '›', 'lab3', '', ''], [0, '›', 'lab4', '', ''],
+  [0, '⌄', 'lab5', 'y', '●'], [1, '⌄', 'data', '', ''], [2, '▤', 'scope_1khz.csv', 'g', ''], [2, '▤', 'scope_10khz.csv', 'g', ''], [2, '▤', 'scope_step.csv', 'g', 'U'],
+  [1, '⬢', 'lowpass.py', 'b', 'M', true], [1, '⬢', 'plot_bode.py', 'y', 'M'], [1, '▤', 'filtered.csv', 'dim', ''], [1, 'ⓘ', 'README.md', 'dim', ''], [1, '≡', 'requirements.txt', 'dim', ''],
+  [0, '›', 'lab6', '', ''], [0, '›', 'homework', '', ''], [0, '◆', '.gitignore', 'dim', ''], [0, 'ⓘ', 'README.md', 'dim', '']
+];
+const tr = document.getElementById('tree');
+tree.forEach(([lvl, ic, name, c, m, sel]) => {
+  const d = document.createElement('div');
+  if (sel) d.className = 'sel';
+  d.style.paddingLeft = (10 + lvl * 16) + 'px';
+  const col = m === 'M' ? 'y' : m === 'U' ? 'g' : '';
+  d.innerHTML = `<span class="ic ${c}">${ic}</span><span class="${col}">${name}</span><span class="m ${col}">${m}</span>`;
+  tr.appendChild(d);
+});
+</script>
+</body>
+</html>

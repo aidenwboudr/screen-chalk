@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Inbox (7) | alex.rivera@example.com | Proton Mail</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1280px; overflow: hidden; }
+  body { font-family: Inter, 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 14px; color: #e6e3ee; background: #1b1a22; }
+  .side { position: absolute; left: 0; top: 0; bottom: 0; width: 256px; background: #16141c; padding: 14px 12px; display: flex; flex-direction: column; }
+  .brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 16px; font-weight: 700; font-size: 18px; }
+  .newbtn { height: 42px; border-radius: 8px; background: #6d4aff; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 600; margin-bottom: 14px; }
+  .fold { display: flex; align-items: center; gap: 12px; height: 36px; padding: 0 10px; border-radius: 8px; color: #cfcadb; }
+  .fold svg { width: 18px; height: 18px; stroke: #a7a0b8; fill: none; stroke-width: 1.7; flex: none; }
+  .fold.on { background: #2e2a3b; color: #fff; font-weight: 600; }
+  .fold .ct { margin-left: auto; font-size: 12.5px; font-weight: 700; color: #fff; background: #6d4aff; border-radius: 10px; padding: 1px 8px; }
+  .fold .ct.g { background: transparent; color: #a7a0b8; font-weight: 500; }
+  .sec { font-size: 12px; text-transform: uppercase; letter-spacing: .6px; color: #8d859e; padding: 16px 10px 6px; display: flex; justify-content: space-between; }
+  .lab { display: flex; align-items: center; gap: 12px; height: 32px; padding: 0 10px; color: #cfcadb; }
+  .lab i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin: 0 4px; }
+  .store { margin-top: auto; font-size: 12px; color: #8d859e; padding: 0 10px; }
+  .store .b { height: 4px; background: #2e2a3b; border-radius: 2px; margin: 6px 0; }
+  .store .b i { display: block; height: 100%; width: 38%; background: #6d4aff; border-radius: 2px; }
+  .topbar { position: absolute; left: 256px; right: 0; top: 0; height: 64px; display: flex; align-items: center; padding: 0 18px; gap: 14px; }
+  .search { width: 640px; height: 40px; border-radius: 8px; background: #26232f; display: flex; align-items: center; gap: 10px; padding: 0 14px; color: #8d859e; }
+  .tr { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .ib { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .ib svg { width: 19px; height: 19px; stroke: #cfcadb; fill: none; stroke-width: 1.7; }
+  .ib:hover { background: #2e2a3b; }
+  .av { width: 34px; height: 34px; border-radius: 8px; background: #3b335a; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+  .list { position: absolute; left: 256px; top: 64px; bottom: 0; width: 680px; overflow: hidden; background: #1f1d27; border-radius: 12px 0 0 0; display: flex; flex-direction: column; border-right: 1px solid #2e2a3b; }
+  .ltb { flex: none; height: 52px; display: flex; align-items: center; padding: 0 12px; gap: 2px; border-bottom: 1px solid #2e2a3b; }
+  .cb { width: 16px; height: 16px; border: 1.5px solid #7d7590; border-radius: 4px; margin: 0 12px 0 8px; flex: none; }
+  .vsep { width: 1px; height: 22px; background: #3a3547; margin: 0 6px; }
+  .pill { height: 28px; padding: 0 12px; border-radius: 14px; display: flex; align-items: center; font-size: 13px; color: #cfcadb; }
+  .pill.on { background: #2e2a3b; color: #fff; }
+  .row { flex: none; height: 78px; display: flex; padding: 12px 16px 10px 4px; border-bottom: 1px solid #29263300; position: relative; gap: 2px; }
+  .row + .row { border-top: 1px solid #2a2733; }
+  .row .avc { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; flex: none; margin: 2px 12px 0 8px; }
+  .row .bd { flex: 1; min-width: 0; }
+  .row .l1 { display: flex; align-items: center; gap: 8px; }
+  .row .from { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #cfcadb; }
+  .row .dt { font-size: 12.5px; color: #8d859e; white-space: nowrap; }
+  .row .subj { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #cfcadb; margin-top: 3px; }
+  .row .snip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #8d859e; font-size: 13px; margin-top: 2px; }
+  .row.unread .from, .row.unread .subj { color: #fff; font-weight: 700; }
+  .row.unread .dt { color: #fff; font-weight: 600; }
+  .row.unread::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #6d4aff; }
+  .row.sel { background: #2e2a3b; }
+  .tag { font-size: 11px; padding: 1px 7px; border-radius: 9px; font-weight: 600; }
+  .read { position: absolute; left: 937px; right: 0; top: 64px; bottom: 0; background: #1f1d27; display: flex; flex-direction: column; }
+  .rtb { height: 52px; display: flex; align-items: center; padding: 0 16px; gap: 2px; border-bottom: 1px solid #2e2a3b; }
+  .msg { padding: 22px 32px; overflow: hidden; }
+  .msg h1 { font-size: 22px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
+  .hdr { display: flex; gap: 14px; margin: 18px 0 6px; align-items: flex-start; }
+  .hdr .avc { width: 40px; height: 40px; border-radius: 8px; background: #1f6b3a; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; }
+  .hdr .who b { color: #fff; }
+  .hdr .who div { font-size: 13px; color: #8d859e; margin-top: 2px; }
+  .hdr .when { margin-left: auto; font-size: 13px; color: #8d859e; text-align: right; }
+  .lock { font-size: 12.5px; color: #8d859e; display: flex; gap: 6px; align-items: center; margin: 0 0 18px 54px; }
+  .bodytext { background: #f7f6fa; color: #222; border-radius: 8px; padding: 26px 30px; font-size: 14.5px; line-height: 1.6; }
+  .bodytext p { margin-bottom: 12px; }
+  .bodytext ul { margin: 0 0 12px 22px; }
+  .bodytext .logo { display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #ddd; padding-bottom: 14px; margin-bottom: 16px; font-weight: 700; color: #1f6b3a; font-size: 16px; }
+  .bodytext .btn { display: inline-block; background: #1f6b3a; color: #fff; padding: 9px 18px; border-radius: 4px; font-weight: 600; margin: 4px 0 14px; }
+  .bodytext .sig { color: #555; font-size: 13px; border-top: 1px solid #ddd; padding-top: 12px; margin-top: 6px; }
+  .reply { margin-top: 16px; display: flex; gap: 10px; }
+  .reply span { height: 38px; padding: 0 18px; border: 1px solid #3a3547; border-radius: 8px; display: flex; align-items: center; gap: 8px; color: #cfcadb; }
+</style>
+</head>
+<body>
+<div class="side">
+  <div class="brand"><svg width="30" height="30" viewBox="0 0 30 30"><path d="M3 7l12 9 12-9v15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="#6d4aff"/><path d="M3 7l12 9 12-9" fill="none" stroke="#c4b5ff" stroke-width="2"/></svg>Proton Mail</div>
+  <div class="newbtn">New message</div>
+  <div class="fold on"><svg viewBox="0 0 24 24"><path d="M3 13h5l2 3h4l2-3h5M5 4h14l2 9v6H3v-6z"/></svg>Inbox<span class="ct" data-gt="inbox-unread-count">7</span></div>
+  <div class="fold"><svg viewBox="0 0 24 24"><path d="M4 20h4l11-11-4-4L4 16z"/></svg>Drafts<span class="ct g">3</span></div>
+  <div class="fold"><svg viewBox="0 0 24 24"><path d="M3 11l18-8-8 18-2-8z"/></svg>Sent</div>
+  <div class="fold"><svg viewBox="0 0 24 24"><path d="M12 3l2.8 5.8 6.2.9-4.5 4.4 1 6.2L12 17.4 6.5 20.3l1-6.2L3 9.7l6.2-.9z"/></svg>Starred</div>
+  <div class="fold"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/></svg>Archive</div>
+  <div class="fold"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16v.5"/></svg>Spam<span class="ct g">2</span></div>
+  <div class="fold"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>Trash</div>
+  <div class="fold"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>All mail</div>
+  <div class="sec"><span>Folders</span><span>+</span></div>
+  <div class="fold"><svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3z"/></svg>Receipts<span class="ct g">1</span></div>
+  <div class="fold"><svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3z"/></svg>Home lab alerts</div>
+  <div class="sec"><span>Labels</span><span>+</span></div>
+  <div class="lab"><i style="background:#3cbb7a"></i>School</div>
+  <div class="lab"><i style="background:#ffb547"></i>Internships</div>
+  <div class="lab"><i style="background:#5aa0ff"></i>Home lab</div>
+  <div class="lab"><i style="background:#ff6b8b"></i>Family</div>
+  <div class="lab"><i style="background:#b38bff"></i>Music</div>
+  <div class="store">1.42 GB of 15 GB<div class="b"><i></i></div>Mail Plus · renews Dec 3</div>
+</div>
+<div class="topbar">
+  <div class="search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8d859e" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>Search messages<span style="margin-left:auto"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8d859e" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg></span></div>
+  <div class="tr">
+    <div class="ib"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="4"/><path d="M2 20c1-4 4-6 7-6s6 2 7 6M17 11h5M19.5 8.5v5"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.7M12 17h.01"/></svg></div>
+    <div class="av">AB</div>
+  </div>
+</div>
+<div class="list">
+  <div class="ltb">
+    <span class="cb"></span>
+    <div class="ib"><svg viewBox="0 0 24 24"><path d="M3 7l9 6 9-6M3 7v11h18V7z"/></svg></div>
+    <div class="ib" data-gt="inbox-archive-btn-list"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></div>
+    <div class="ib" data-gt="inbox-move-btn-list"><svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3zM10 13h6M13 10l3 3-3 3"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg></div>
+    <span class="vsep"></span>
+    <span class="pill on">All</span><span class="pill">Unread</span><span class="pill">Has file</span>
+    <div class="ib" style="margin-left:auto"><svg viewBox="0 0 24 24"><path d="M7 4v16M3 16l4 4 4-4M14 6h7M14 11h5M14 16h3"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="16" rx="1"/><rect x="13" y="4" width="8" height="16" rx="1"/></svg></div>
+  </div>
+  <div id="rows"></div>
+</div>
+<div class="read">
+  <div class="rtb">
+    <div class="ib"><svg viewBox="0 0 24 24"><path d="M3 7l9 6 9-6M3 7v11h18V7z"/></svg></div>
+    <div class="ib" data-gt="inbox-archive-btn"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9M10 13h4"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></div>
+    <div class="ib" data-gt="inbox-move-btn"><svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v11H3zM10 13h6M13 10l3 3-3 3"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/></svg></div>
+    <span class="vsep"></span>
+    <div class="ib"><svg viewBox="0 0 24 24"><path d="M10 6L4 12l6 6M4 12h10a6 6 0 0 1 6 6"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><path d="M9 6L3 12l6 6M14 6l-6 6 6 6M8 12h7a6 6 0 0 1 6 6"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><path d="M14 6l6 6-6 6M20 12H10a6 6 0 0 0-6 6"/></svg></div>
+    <div class="ib" style="margin-left:auto"><svg viewBox="0 0 24 24"><path d="M12 3l2.8 5.8 6.2.9-4.5 4.4 1 6.2L12 17.4 6.5 20.3l1-6.2L3 9.7l6.2-.9z"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><path d="M6 9V3h12v6M6 17H3v-8h18v8h-3M7 14h10v7H7z"/></svg></div>
+    <div class="ib"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/></svg></div>
+  </div>
+  <div class="msg">
+    <h1>Next steps: Summer 2027 Electrical Engineering Intern (Req 41872)<span class="tag" style="background:#4a3a14;color:#ffb547">Internships</span></h1>
+    <div class="hdr">
+      <div class="avc">X</div>
+      <div class="who"><b>Northwind Power Talent Acquisition</b> &lt;careers@northwindpower.example&gt;<div>to me · cc university-relations@northwindpower.example</div></div>
+      <div class="when">Mon, Nov 2, 2026, 9:14 AM<br>(3 hours ago)</div>
+    </div>
+    <div class="lock"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8d859e" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Stored with zero-access encryption · Sent from outside Proton with TLS</div>
+    <div class="bodytext">
+      <div class="logo"><svg width="26" height="26" viewBox="0 0 26 26"><circle cx="13" cy="13" r="12" fill="#1f6b3a"/><path d="M8 7l10 12M18 7L8 19" stroke="#fff" stroke-width="2.4"/></svg>Northwind Power · Careers</div>
+      <p>Hi Alex,</p>
+      <p>Thank you for applying to the <b>Summer 2027 Electrical Engineering Intern</b> position with our Transmission Engineering team in Minneapolis, MN. After reviewing your application and résumé, we would like to move you forward to the next step of our process.</p>
+      <p>The next step is a short online assessment that covers basic circuit analysis, three-phase power, and workplace scenarios. It takes about 45 minutes and can be completed on any computer with a webcam.</p>
+      <p><span data-gt="inbox-deadline-sentence">Please complete the assessment by 11:59 PM Central on Friday, November 6, 2026; links that expire cannot be reopened.</span></p>
+      <span class="btn">Start assessment</span>
+      <p>Candidates who pass the assessment will be invited to a 30-minute virtual interview with the hiring manager during the weeks of November 16 or November 30. You'll be able to pick a time slot through our scheduling tool.</p>
+      <p>A few things to have ready:</p>
+      <ul><li>An unofficial transcript (PDF) showing Fall 2026 courses in progress</li><li>Confirmation of your work authorization in the U.S.</li><li>Your preferred start date (we typically start May 26 or June 8)</li></ul>
+      <p>If you have any questions or need an accommodation, reply to this email or call our University Relations team at (612) 330-5500.</p>
+      <div class="sig">Best regards,<br><b>Megan Thorsen</b> · University Recruiter, Northwind Power<br>100 Main St, Springfield, IL 62701</div>
+    </div>
+    <div class="reply"><span>↩ Reply</span><span>↩↩ Reply all</span><span>↪ Forward</span></div>
+  </div>
+</div>
+<script>
+  const msgs = [
+    { f: 'Northwind Power Talent Acquisition', s: 'Next steps: Summer 2027 Electrical Engineering Intern (Req 41872)', n: 'Hi Alex, Thank you for applying to the Summer 2027 Electrical Engineering Intern position…', d: '9:14 AM', u: 1, sel: 1, c: '#1f6b3a', tag: ['Internships', '#4a3a14', '#ffb547'] },
+    { f: 'Jordan Pierce (ECE 261 TA)', s: 'Lab 5 prelab + DE10-Lite pin assignments', n: 'Attached is the prelab for Thursday. Please bring your counter state diagram printed out…', d: '8:02 AM', u: 1, c: '#2a6fb0', att: 1, tag: ['School', '#173a26', '#3cbb7a'] },
+    { f: 'University Career Services', s: 'Engineering Career Fair: employer list now posted', n: 'More than 140 employers will be in the SUB Ballrooms on Nov 10. Review the list and plan your…', d: '7:30 AM', u: 1, c: '#2f4f9a' },
+    { f: 'GitHub', s: '[aidenwboudr/general] cpa-usage: alert when the weekly Claude limit burns fast (#210)', n: 'Merged #210 into main. 3 files changed, 148 additions, 12 deletions.', d: '6:41 AM', u: 1, c: '#24292f', tag: ['Home lab', '#162a46', '#5aa0ff'] },
+    { f: 'Mom', s: 'Thanksgiving flights — BZN to MSP', n: 'Found a Delta flight on the 24th that lands at 4:10, Dad can pick you up. Let me know before Friday so…', d: 'Yesterday', u: 0, c: '#b0476a', star: 1, tag: ['Family', '#46192a', '#ff6b8b'] },
+    { f: 'Canvas Notifications', s: 'Assignment graded: HW 5 – Latches & flip-flops', n: 'Your submission for HW 5 in ECE 261 has been graded. Score: 16/20. Comment: "late, -10%"', d: 'Yesterday', u: 1, c: '#c4402f', tag: ['School', '#173a26', '#3cbb7a'] },
+    { f: 'Contoso Medical Careers', s: 'We received your application: R&D Engineering Intern – Summer 2027', n: 'Thank you for your interest in Contoso Medical. Our team is reviewing applications and will reach out if…', d: 'Oct 31', u: 0, c: '#1d4f91', tag: ['Internships', '#4a3a14', '#ffb547'] },
+    { f: 'Riley', s: 'jellyfin keeps buffering on the 4k ones lol', n: 'it plays fine for like 2 min then the spinner. is it my wifi or the server? tried the fire stick and laptop', d: 'Oct 31', u: 1, c: '#7b5cd6' },
+    { f: 'Falcons Athletics Ticketing', s: 'Your student ticket: Falcons vs. Riverside — Sat, Nov 7', n: 'Your mobile ticket is ready. Gates open at 12:00 PM. Section S, general admission student section.', d: 'Oct 30', u: 1, c: '#b07a12' },
+    { f: 'Storage Rentals of America', s: 'Your November invoice for unit 5x10 is ready', n: 'Amount due: $62.00 on Nov 26. Autopay is turned off for this account. Pay online or at the office.', d: 'Oct 29', u: 0, c: '#5b6a7a' },
+    { f: 'Proton', s: 'Tips: set up auto-forwarding and filters for your new address', n: 'Make Proton your home for email. Here are three ways to move your old Gmail messages over…', d: 'Oct 28', u: 0, c: '#6d4aff' },
+    { f: 'Discogs', s: 'Order #3418820-212 shipped by vinylsurplus_mpls', n: 'Good news! Your order of 4 items has been marked as shipped. Tracking: 9400 1118 9922 3360…', d: 'Oct 27', u: 0, c: '#333' },
+    { f: 'Acme Health', s: 'Your Explanation of Benefits is ready to view', n: 'A new claim was processed for RIVERA, ALEX. Log in to myAcme to see what you may owe…', d: 'Oct 26', u: 0, c: '#0a6e8a' },
+    { f: 'Prof. Lin Cheng', s: 'Re: Midterm 1 regrade request (Q4 K-map)', n: 'You are right that the don\'t-care at m13 can be grouped. I\'ve added 4 points back; your new score…', d: 'Oct 24', u: 0, c: '#3c7a5a', tag: ['School', '#173a26', '#3cbb7a'] },
+    { f: 'Mullvad VPN', s: 'Your account time is running low', n: 'Your Mullvad account has 9 days of time left. Add more time to keep your connection uninterrupted.', d: 'Oct 23', u: 0, c: '#294d73' },
+  ];
+  const clip = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#cfcadb" stroke-width="2"><path d="M21 11l-8.5 8.5a5 5 0 0 1-7-7L14 4a3.5 3.5 0 0 1 5 5l-8.5 8.5a2 2 0 0 1-3-3L15 7"/></svg>';
+  const star = on => `<svg width="16" height="16" viewBox="0 0 24 24" fill="${on ? '#ffb547' : 'none'}" stroke="${on ? '#ffb547' : '#5c556b'}" stroke-width="1.8"><path d="M12 3l2.8 5.8 6.2.9-4.5 4.4 1 6.2L12 17.4 6.5 20.3l1-6.2L3 9.7l6.2-.9z"/></svg>`;
+  document.getElementById('rows').innerHTML = msgs.map(m => {
+    const gt = m.att ? ' data-gt="inbox-attach-row"' : m.star ? ' data-gt="inbox-starred-row"' : '';
+    const init = m.f.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    return `<div class="row${m.u ? ' unread' : ''}${m.sel ? ' sel' : ''}"${gt}>
+      <div class="avc" style="background:${m.c}">${init}</div>
+      <div class="bd">
+        <div class="l1"><span class="from">${m.f}</span>${m.tag ? `<span class="tag" style="background:${m.tag[1]};color:${m.tag[2]}">${m.tag[0]}</span>` : ''}${m.att ? clip : ''}${star(m.star)}<span class="dt">${m.d}</span></div>
+        <div class="subj">${m.s}</div>
+        <div class="snip">${m.n}</div>
+      </div></div>`;
+  }).join('');
+</script>
+</body>
+</html>

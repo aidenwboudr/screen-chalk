@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>nano-dev-board — PCB Editor</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1280px; overflow: hidden; }
+  body { font-family: 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 13px; color: #2e3436; background: #f6f5f4; position: relative; }
+  .titlebar { height: 32px; background: #ebebeb; border-bottom: 1px solid #d6d6d6; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; position: relative; }
+  .titlebar .wc { position: absolute; right: 10px; top: 6px; display: flex; gap: 8px; }
+  .titlebar .wc span { width: 20px; height: 20px; border-radius: 10px; background: #dcdcdc; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 400; color: #333; }
+  .menubar { height: 25px; display: flex; align-items: center; padding-left: 4px; font-size: 13px; border-bottom: 1px solid #e0e0e0; }
+  .menubar span { padding: 0 9px; }
+  .toolbar { height: 33px; display: flex; align-items: center; padding-left: 4px; gap: 1px; border-bottom: 1px solid #cfcfcf; }
+  .tb { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 3px; flex: none; }
+  .tb svg { width: 18px; height: 18px; }
+  .tb.on { background: #d4dce8; box-shadow: inset 0 0 0 1px #9fb2cc; }
+  .sep { width: 1px; height: 20px; background: #c8c8c8; margin: 0 4px; flex: none; }
+  .vsep { height: 1px; width: 18px; background: #c8c8c8; margin: 3px auto; flex: none; }
+  .dd { height: 24px; border: 1px solid #c4c4c4; border-radius: 3px; background: #fff; display: flex; align-items: center; padding: 0 6px; font-size: 12px; gap: 6px; flex: none; margin: 0 2px; }
+  .dd .sw { width: 12px; height: 12px; border: 1px solid #555; }
+  .dd i { font-style: normal; color: #555; font-size: 10px; margin-left: 4px; }
+  .lefttb { position: absolute; left: 0; top: 91px; width: 30px; bottom: 49px; border-right: 1px solid #cfcfcf; display: flex; flex-direction: column; align-items: center; padding-top: 3px; gap: 1px; }
+  .righttb { position: absolute; left: 1530px; top: 91px; width: 30px; bottom: 49px; border-left: 1px solid #cfcfcf; border-right: 1px solid #cfcfcf; display: flex; flex-direction: column; align-items: center; padding-top: 3px; gap: 1px; }
+  .canvas { position: absolute; left: 30px; top: 91px; width: 1500px; height: 1140px; background: #001023; overflow: hidden; }
+  .appear { position: absolute; left: 1560px; top: 91px; right: 0; bottom: 49px; display: flex; flex-direction: column; font-size: 12px; }
+  .ptitle { height: 24px; display: flex; align-items: center; padding: 0 8px; font-weight: 700; font-size: 12px; background: #ececec; border-bottom: 1px solid #d0d0d0; }
+  .ptabs { display: flex; gap: 0; border-bottom: 1px solid #c8c8c8; padding: 4px 6px 0; }
+  .ptabs span { padding: 4px 14px; border: 1px solid transparent; border-bottom: none; border-radius: 3px 3px 0 0; font-size: 12px; }
+  .ptabs span.on { background: #fff; border-color: #c8c8c8; margin-bottom: -1px; }
+  .layers { background: #fff; padding: 2px 0; }
+  .lrow { height: 20px; display: flex; align-items: center; padding-left: 6px; gap: 6px; font-size: 12px; }
+  .lrow.act { background: #c9d7ea; }
+  .lrow .ind { width: 8px; font-size: 9px; color: #333; }
+  .lrow .sw { width: 13px; height: 13px; border: 1px solid #5c5c5c; flex: none; }
+  .lrow .eye { width: 16px; height: 14px; flex: none; display: flex; align-items: center; }
+  .lrow .eye svg { width: 16px; height: 12px; }
+  .lrow .nm { flex: 1; }
+  .ldo { padding: 6px 8px; border-top: 1px solid #d8d8d8; font-size: 12px; }
+  .ldo .rad { display: flex; gap: 12px; margin: 5px 0 4px 8px; align-items: center; }
+  .rb { width: 12px; height: 12px; border-radius: 6px; border: 1px solid #888; display: inline-block; vertical-align: -2px; margin-right: 4px; background: #fff; }
+  .rb.on { border: 4px solid #3584e4; }
+  .cb { width: 13px; height: 13px; border: 1px solid #888; border-radius: 2px; display: inline-block; vertical-align: -2px; margin-right: 5px; background: #fff; position: relative; }
+  .cb.on { background: #3584e4; border-color: #3584e4; }
+  .cb.on::after { content: ''; position: absolute; left: 3px; top: 0px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .selfilt { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; padding: 6px 10px; font-size: 12px; }
+  .msgpanel { position: absolute; left: 0; right: 0; bottom: 22px; height: 27px; border-top: 1px solid #cfcfcf; display: flex; align-items: center; font-size: 12px; gap: 0; background: #f6f5f4; }
+  .msgpanel div { padding: 0 14px; border-right: 1px solid #d6d6d6; display: flex; gap: 6px; }
+  .msgpanel b { font-weight: 400; color: #1c5fb0; }
+  .status { position: absolute; left: 0; right: 0; bottom: 0; height: 22px; border-top: 1px solid #d6d6d6; display: flex; align-items: center; font-size: 12px; background: #efefef; }
+  .status span { padding: 0 12px; border-right: 1px solid #d0d0d0; white-space: nowrap; }
+  svg text { font-family: 'DejaVu Sans', sans-serif; }
+</style>
+</head>
+<body>
+<div class="titlebar">nano-dev-board — PCB Editor
+  <div class="wc"><span>—</span><span>▢</span><span>✕</span></div>
+</div>
+<div class="menubar"><span>File</span><span>Edit</span><span>View</span><span>Place</span><span>Route</span><span>Inspect</span><span>Tools</span><span>Preferences</span><span>Help</span></div>
+<div class="toolbar" id="toptb"></div>
+<div class="lefttb" id="lefttb"></div>
+<div class="canvas"><svg id="board" width="1500" height="1140" viewBox="0 0 1500 1140"></svg></div>
+<div class="righttb" id="righttb"></div>
+<div class="appear">
+  <div class="ptitle">Appearance</div>
+  <div class="ptabs"><span class="on">Layers</span><span>Objects</span><span>Nets</span></div>
+  <div class="layers" id="layers"></div>
+  <div class="ldo">
+    <div>▾ Layer Display Options</div>
+    <div class="rad" style="margin-top:6px">Inactive layers: <span><span class="rb on"></span>Normal</span><span><span class="rb"></span>Dim</span><span><span class="rb"></span>Hide</span></div>
+    <div style="margin-left:8px"><span class="cb"></span>Flip board view</div>
+  </div>
+  <div class="ldo" style="display:flex;align-items:center;gap:8px">Presets (Ctrl+Tab): <span class="dd" style="flex:1">All Layers<i style="margin-left:auto">▾</i></span></div>
+  <div class="ldo" style="display:flex;align-items:center;gap:8px">Viewports (Shift+Tab): <span class="dd" style="flex:1">---<i style="margin-left:auto">▾</i></span></div>
+  <div style="flex:1"></div>
+  <div class="ptitle" style="border-top:1px solid #d0d0d0">Selection Filter</div>
+  <div class="selfilt">
+    <span><span class="cb on"></span>All items</span><span><span class="cb"></span>Locked items</span>
+    <span><span class="cb on"></span>Footprints</span><span><span class="cb on"></span>Text</span>
+    <span><span class="cb on"></span>Tracks</span><span><span class="cb on"></span>Vias</span>
+    <span><span class="cb on"></span>Pads</span><span><span class="cb on"></span>Graphics</span>
+    <span><span class="cb on"></span>Zones</span><span><span class="cb on"></span>Rule Areas</span>
+    <span><span class="cb on"></span>Dimensions</span><span><span class="cb on"></span>Other items</span>
+  </div>
+</div>
+<div class="msgpanel">
+  <div>Pads <b>176</b></div><div>Vias <b>23</b></div><div>Track Segments <b>318</b></div><div>Nets <b>49</b></div><div>Unrouted <b>1</b></div>
+</div>
+<div class="status">
+  <span>Z 3.38</span><span>X 101.2500&nbsp; Y 52.7500</span><span>dx 0.0000&nbsp; dy 0.0000&nbsp; dist 0.0000</span><span>grid X 0.2500&nbsp; Y 0.2500</span><span>mm</span><span style="border:none">Select item(s)</span>
+  <span style="margin-left:auto;border:none;border-left:1px solid #d0d0d0">nano-dev-board.kicad_pcb</span>
+</div>
+<script>
+// ---------- toolbar icons (18px glyphs, 16-unit viewBox) ----------
+const I = {
+  setup: '<rect x="1.5" y="3" width="10" height="9" fill="#2f8a3a"/><path d="M3 5h4v3H3z" fill="#e2c048"/><circle cx="12" cy="11.5" r="3" fill="#fff" stroke="#555" stroke-width="1.4"/><circle cx="12" cy="11.5" r="1" fill="#555"/>',
+  save: '<path d="M2 2h10l2 2v10H2z" fill="#3c6eb4"/><rect x="4.5" y="2.5" width="6" height="4" fill="#e8eef7"/><rect x="4" y="9" width="8" height="5" fill="#fff"/>',
+  page: '<path d="M3 1.5h7l3 3v10H3z" fill="#fff" stroke="#666"/><path d="M5 7h6M5 9.5h6M5 12h4" stroke="#999"/><rect x="9" y="10" width="5" height="4.5" fill="#f0c040" stroke="#946d10" stroke-width=".8"/>',
+  print: '<rect x="4" y="2" width="8" height="5" fill="#fff" stroke="#666"/><rect x="1.5" y="6.5" width="13" height="6" rx="1" fill="#777"/><rect x="4" y="10" width="8" height="4.5" fill="#fff" stroke="#666"/>',
+  plot: '<path d="M3 1.5h7l3 3v10H3z" fill="#fff" stroke="#666"/><path d="M4.5 12l2-4 2 2 3-5" stroke="#d04040" stroke-width="1.4" fill="none"/>',
+  undo: '<path d="M5 4L1.5 7.5 5 11" fill="none" stroke="#3c6eb4" stroke-width="1.8"/><path d="M2 7.5h7a4.5 4.5 0 0 1 0 9" fill="none" stroke="#3c6eb4" stroke-width="1.8" transform="translate(0 -2)"/>',
+  redo: '<path d="M11 4l3.5 3.5L11 11" fill="none" stroke="#3c6eb4" stroke-width="1.8"/><path d="M14 7.5H7a4.5 4.5 0 0 0 0 9" fill="none" stroke="#3c6eb4" stroke-width="1.8" transform="translate(0 -2)"/>',
+  find: '<circle cx="6.5" cy="6.5" r="4.3" fill="#e6f0fb" stroke="#555" stroke-width="1.6"/><path d="M9.8 9.8l4.5 4.5" stroke="#555" stroke-width="2.2"/>',
+  refresh: '<path d="M13 8a5 5 0 1 1-1.5-3.6" fill="none" stroke="#2f8a3a" stroke-width="1.8"/><path d="M12.5 1.5v3.5H9" fill="none" stroke="#2f8a3a" stroke-width="1.8"/>',
+  zin: '<circle cx="6.5" cy="6.5" r="4.6" fill="#fff" stroke="#555" stroke-width="1.5"/><path d="M4.3 6.5h4.4M6.5 4.3v4.4" stroke="#2f8a3a" stroke-width="1.6"/><path d="M10 10l4.5 4.5" stroke="#555" stroke-width="2.2"/>',
+  zout: '<circle cx="6.5" cy="6.5" r="4.6" fill="#fff" stroke="#555" stroke-width="1.5"/><path d="M4.3 6.5h4.4" stroke="#d04040" stroke-width="1.6"/><path d="M10 10l4.5 4.5" stroke="#555" stroke-width="2.2"/>',
+  zfit: '<rect x="1.5" y="1.5" width="13" height="13" fill="none" stroke="#555" stroke-dasharray="2 1.5"/><circle cx="7.5" cy="7.5" r="3.4" fill="#fff" stroke="#555" stroke-width="1.4"/><path d="M10 10l3 3" stroke="#555" stroke-width="1.8"/>',
+  zobj: '<rect x="3" y="4" width="7" height="6" fill="#2f8a3a" opacity=".8"/><circle cx="9" cy="9" r="3.6" fill="none" stroke="#555" stroke-width="1.4"/><path d="M11.6 11.6l3 3" stroke="#555" stroke-width="1.8"/>',
+  zarea: '<rect x="1.5" y="1.5" width="9" height="8" fill="#dbe7f6" stroke="#3c6eb4" stroke-dasharray="2 1"/><circle cx="10" cy="10" r="3.4" fill="#fff" stroke="#555" stroke-width="1.4"/><path d="M12.4 12.4l2.5 2.5" stroke="#555" stroke-width="1.8"/>',
+  rccw: '<path d="M3 8a5 5 0 1 0 1.5-3.6" fill="none" stroke="#555" stroke-width="1.6"/><path d="M1.5 2v4h4" fill="none" stroke="#555" stroke-width="1.6"/>',
+  rcw: '<path d="M13 8a5 5 0 1 1-1.5-3.6" fill="none" stroke="#555" stroke-width="1.6"/><path d="M14.5 2v4h-4" fill="none" stroke="#555" stroke-width="1.6"/>',
+  flip: '<path d="M8 1v14" stroke="#555" stroke-dasharray="1.5 1"/><path d="M6.5 3v10L1.5 13z" fill="#c83434"/><path d="M9.5 3v10l5 0z" fill="#4d7fc4"/>',
+  mirror: '<path d="M8 1v14" stroke="#555"/><path d="M6.5 4L2 12h4.5z" fill="#777"/><path d="M9.5 4L14 12H9.5z" fill="none" stroke="#777"/>',
+  group: '<rect x="1.5" y="1.5" width="13" height="13" fill="none" stroke="#555" stroke-dasharray="2 1"/><rect x="3.5" y="4" width="4" height="4" fill="#3c6eb4"/><circle cx="10.5" cy="10.5" r="2.4" fill="#d04040"/>',
+  ungroup: '<rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="#555" stroke-dasharray="2 1"/><rect x="3" y="3" width="4" height="4" fill="#3c6eb4"/><circle cx="11.5" cy="11.5" r="2.4" fill="#d04040"/><path d="M9 14l5-5" stroke="#555" stroke-dasharray="1 1"/>',
+  lock: '<rect x="3" y="7" width="10" height="7.5" rx="1" fill="#e2b13c" stroke="#8a6512"/><path d="M5 7V5a3 3 0 0 1 6 0v2" fill="none" stroke="#666" stroke-width="1.6"/>',
+  unlock: '<rect x="3" y="7" width="10" height="7.5" rx="1" fill="#e2b13c" stroke="#8a6512"/><path d="M5 7V5a3 3 0 0 1 6 0" fill="none" stroke="#666" stroke-width="1.6"/>',
+  fpedit: '<rect x="4" y="3" width="8" height="10" fill="#333"/><path d="M2 4.5h2M2 7h2M2 9.5h2M2 12h2M12 4.5h2M12 7h2M12 9.5h2M12 12h2" stroke="#c83434" stroke-width="1.3"/><path d="M9 15l5-5 1.5 1.5-5 5z" fill="#e2b13c" transform="translate(-1 -2)"/>',
+  fpbrowse: '<rect x="1.5" y="2" width="13" height="12" fill="#fff" stroke="#666"/><rect x="3.5" y="4" width="4" height="3" fill="#333"/><rect x="9" y="4" width="4" height="3" fill="#333"/><rect x="3.5" y="9" width="4" height="3" fill="#333"/><rect x="9" y="9" width="4" height="3" fill="#c83434"/>',
+  updpcb: '<rect x="1" y="2" width="6" height="8" fill="#fff" stroke="#8a1a1a"/><path d="M2.5 4.5h3M2.5 6.5h3" stroke="#8a1a1a"/><path d="M7.5 9h3V6.5L14 10l-3.5 3.5V11h-3z" fill="#2f8a3a"/><rect x="9" y="12" width="6" height="3" fill="#2f8a3a" opacity=".6"/>',
+  drc: '<ellipse cx="8" cy="9.5" rx="4" ry="5" fill="#d04040"/><path d="M8 4.5v10" stroke="#5a1010" stroke-width=".9"/><circle cx="8" cy="3.6" r="2" fill="#333"/><path d="M4 7.5L1.5 6M4 10H1M4.4 12.5L2 14.5M12 7.5l2.5-1.5M12 10h3M11.6 12.5l2.4 2" stroke="#333" stroke-width="1.1"/><circle cx="6.3" cy="8" r=".8" fill="#333"/><circle cx="9.8" cy="11" r=".8" fill="#333"/>',
+  v3d: '<path d="M2 5l6-3 6 3v6l-6 3-6-3z" fill="#2f8a3a"/><path d="M2 5l6 3 6-3M8 8v6" stroke="#cfe8cf" stroke-width=".9" fill="none"/><text x="8" y="7" font-size="4.6" fill="#fff" text-anchor="middle" font-weight="700">3D</text>',
+  py: '<rect x="1.5" y="2" width="13" height="12" rx="1.5" fill="#2e3436"/><path d="M4 6l2.5 2L4 10" fill="none" stroke="#e2c048" stroke-width="1.4"/><path d="M8 11h4" stroke="#fff" stroke-width="1.3"/>',
+  // left toolbar
+  grid: '<g fill="#555"><circle cx="3" cy="3" r=".9"/><circle cx="8" cy="3" r=".9"/><circle cx="13" cy="3" r=".9"/><circle cx="3" cy="8" r=".9"/><circle cx="8" cy="8" r=".9"/><circle cx="13" cy="8" r=".9"/><circle cx="3" cy="13" r=".9"/><circle cx="8" cy="13" r=".9"/><circle cx="13" cy="13" r=".9"/></g>',
+  polar: '<circle cx="3" cy="13" r="1.4" fill="#d04040"/><path d="M3 13L13 4" stroke="#555" stroke-width="1.3"/><path d="M9 13a6 6 0 0 0-1.6-4.2" fill="none" stroke="#3c6eb4" stroke-width="1.3"/><path d="M3 13h11" stroke="#555"/>',
+  inch: '<text x="8" y="12" font-size="10" text-anchor="middle" fill="#333" font-weight="700">in</text>',
+  mils: '<text x="8" y="11.5" font-size="7.5" text-anchor="middle" fill="#333" font-weight="700">mil</text>',
+  mm: '<text x="8" y="11.5" font-size="8" text-anchor="middle" fill="#333" font-weight="700">mm</text>',
+  cross: '<path d="M8 0v16M0 8h16" stroke="#555" stroke-width="1.2"/><circle cx="8" cy="8" r="2.5" fill="none" stroke="#d04040"/>',
+  rats: '<circle cx="3" cy="12" r="2" fill="#c83434"/><circle cx="13" cy="4" r="2" fill="#c83434"/><path d="M3 12L13 4" stroke="#555" stroke-width=".9"/><circle cx="12" cy="13" r="1.6" fill="#c83434"/><path d="M3 12h9" stroke="#555" stroke-width=".9"/>',
+  ratscurve: '<circle cx="3" cy="12" r="2" fill="#c83434"/><circle cx="13" cy="4" r="2" fill="#c83434"/><path d="M3 12C3 5 9 4 13 4" fill="none" stroke="#555" stroke-width=".9"/>',
+  zfill: '<path d="M2 3h12v10H2z" fill="#c83434"/><path d="M2 3h12v10H2z" fill="none" stroke="#7a1a1a"/>',
+  zoutl: '<path d="M2 3h12v10H2z" fill="none" stroke="#c83434" stroke-width="1.6"/>',
+  zfrac: '<path d="M2 3h12v10H2z" fill="#f2c4c4" stroke="#c83434"/><path d="M2 8h12M6 3v10M10 3v10" stroke="#c83434" stroke-width=".7"/>',
+  padsk: '<rect x="2" y="4" width="5" height="8" rx="1" fill="none" stroke="#c83434" stroke-width="1.3"/><rect x="9" y="4" width="5" height="8" rx="1" fill="#c83434"/>',
+  viask: '<circle cx="5" cy="8" r="3.5" fill="none" stroke="#9a9a9a" stroke-width="1.2"/><circle cx="11.5" cy="8" r="3.5" fill="#9a9a9a"/><circle cx="11.5" cy="8" r="1.3" fill="#fff"/>',
+  trsk: '<path d="M1.5 11.5L6 7h8.5" fill="none" stroke="#c83434" stroke-width="3.6"/><path d="M1.5 11.5L6 7h8.5" fill="none" stroke="#fff" stroke-width="2"/>',
+  hicon: '<rect x="1.5" y="1.5" width="13" height="13" fill="#fff" stroke="#666"/><path d="M1.5 14.5L14.5 1.5V14.5z" fill="#333"/>',
+  netcol: '<path d="M1 5h14" stroke="#d04040" stroke-width="2"/><path d="M1 8h14" stroke="#2f8a3a" stroke-width="2"/><path d="M1 11h14" stroke="#3c6eb4" stroke-width="2"/>',
+  props: '<rect x="1.5" y="1.5" width="13" height="13" fill="#fff" stroke="#666"/><path d="M3.5 5h3M3.5 8h3M3.5 11h3" stroke="#666"/><rect x="8" y="4" width="5" height="2" fill="#bcd"/><rect x="8" y="7" width="5" height="2" fill="#bcd"/><rect x="8" y="10" width="5" height="2" fill="#bcd"/>',
+  appearm: '<rect x="1.5" y="1.5" width="13" height="13" fill="#fff" stroke="#666"/><rect x="3" y="3.5" width="3" height="2" fill="#c83434"/><rect x="3" y="7" width="3" height="2" fill="#4d7fc4"/><rect x="3" y="10.5" width="3" height="2" fill="#f2eda1" stroke="#999" stroke-width=".4"/><path d="M7.5 4.5h5M7.5 8h5M7.5 11.5h5" stroke="#777"/>',
+  netinsp: '<rect x="1.5" y="1.5" width="13" height="13" fill="#fff" stroke="#666"/><path d="M3 5h10M3 8h10M3 11h10" stroke="#3c6eb4" stroke-width="1"/><circle cx="11" cy="11" r="3" fill="#fff" stroke="#555" stroke-width="1.2"/>',
+  ripple: '<path d="M2 12a3 3 0 0 1 6 0M8 12a3 3 0 0 1 6 0" fill="none" stroke="#666" stroke-width="1.3"/><path d="M4 5h8" stroke="#666" stroke-width="1.3" stroke-dasharray="2 1"/>',
+  // right toolbar
+  select: '<path d="M3.5 1.5l9.5 7.2-4.3.7 2.6 4.6-1.7.9-2.6-4.6-3.5 3z" fill="#2e3436"/>',
+  hlnet: '<path d="M1 13h14" stroke="#d6c400" stroke-width="3"/><path d="M5 9.5l6.5-7 2.2 2.2-7 6.5-3 .8z" fill="#4a4a4a"/>',
+  localrats: '<rect x="1" y="10" width="4" height="4" fill="#c83434"/><rect x="11" y="2" width="4" height="4" fill="#c83434"/><path d="M5 12L11 4" stroke="#333" stroke-width="1" stroke-dasharray="1.6 1"/><path d="M5 12h8" stroke="#333" stroke-width="1" stroke-dasharray="1.6 1"/><circle cx="13.5" cy="12" r="1.5" fill="#c83434"/>',
+  addfp: '<rect x="4.5" y="2.5" width="7" height="11" fill="#2e3436"/><path d="M2 4.5h2.5M2 7h2.5M2 9.5h2.5M2 12h2.5M11.5 4.5H14M11.5 7H14M11.5 9.5H14M11.5 12H14" stroke="#c83434" stroke-width="1.5"/><circle cx="6.3" cy="4.3" r=".8" fill="#ddd"/>',
+  route: '<path d="M1.5 14L7 8.5h8" fill="none" stroke="#c83434" stroke-width="2.6"/><circle cx="2" cy="13.5" r="1.8" fill="#c83434"/><path d="M12 6l3 2.5-3 2.5" fill="none" stroke="#2e3436" stroke-width="1.2"/>',
+  diffpair: '<path d="M1 11.5L5.5 7H15" fill="none" stroke="#c83434" stroke-width="1.6"/><path d="M1 15l5-5h9" fill="none" stroke="#c83434" stroke-width="1.6"/>',
+  tune: '<path d="M1 10h2V4h3v8h3V4h3v6h3" fill="none" stroke="#c83434" stroke-width="1.6"/>',
+  tunedp: '<path d="M1 7h2V3h3v6h3V3h3v4h3" fill="none" stroke="#c83434" stroke-width="1.2"/><path d="M1 13h2V9.5h3v5h3v-5h3V13h3" fill="none" stroke="#c83434" stroke-width="1.2"/>',
+  skew: '<path d="M1 6h14" stroke="#c83434" stroke-width="1.4"/><path d="M1 12h3V9h3v6h3v-3h5" fill="none" stroke="#c83434" stroke-width="1.4"/>',
+  via: '<circle cx="8" cy="8" r="5.6" fill="#c8b74a" stroke="#7c6f1f" stroke-width=".9"/><circle cx="8" cy="8" r="2.3" fill="#fff" stroke="#7c6f1f" stroke-width=".8"/>',
+  zone: '<path d="M2 3h9l3 4v6H2z" fill="#c83434" opacity=".85"/><path d="M2 3h9l3 4v6H2z" fill="none" stroke="#7a1a1a"/><circle cx="2" cy="3" r="1.2" fill="#2e3436"/><circle cx="11" cy="3" r="1.2" fill="#2e3436"/>',
+  rulearea: '<path d="M2 3h9l3 4v6H2z" fill="none" stroke="#a03ad0" stroke-dasharray="2 1"/><path d="M3 12l7-8M6 12l7-7M2 8l4-4.5" stroke="#a03ad0" stroke-width=".8"/>',
+  line: '<path d="M2 13L14 3" stroke="#2e3436" stroke-width="1.4"/><rect x="1" y="12" width="2.4" height="2.4" fill="#3c6eb4"/><rect x="12.6" y="1.6" width="2.4" height="2.4" fill="#3c6eb4"/>',
+  arc: '<path d="M2 13A11 11 0 0 1 13 2" fill="none" stroke="#2e3436" stroke-width="1.4"/><rect x="1" y="12" width="2.4" height="2.4" fill="#3c6eb4"/><rect x="11.8" y="1" width="2.4" height="2.4" fill="#3c6eb4"/><circle cx="13" cy="13" r="1" fill="#d04040"/>',
+  rect: '<rect x="2.5" y="4" width="11" height="8" fill="none" stroke="#2e3436" stroke-width="1.4"/>',
+  circle: '<circle cx="8" cy="8" r="5.5" fill="none" stroke="#2e3436" stroke-width="1.4"/><circle cx="8" cy="8" r=".9" fill="#d04040"/>',
+  poly: '<path d="M2 12L4 3l6 2 4-2-1 9z" fill="none" stroke="#2e3436" stroke-width="1.3"/>',
+  bezier: '<path d="M2 13C3 3 13 13 14 3" fill="none" stroke="#2e3436" stroke-width="1.3"/><path d="M2 13L3 3M14 3l-1 10" stroke="#3c6eb4" stroke-width=".7"/>',
+  text: '<path d="M3 3h10M8 3v11" stroke="#2e3436" stroke-width="2"/>',
+  textbox: '<rect x="1.5" y="2" width="13" height="12" fill="none" stroke="#2e3436"/><path d="M5 5h6M8 5v7" stroke="#2e3436" stroke-width="1.5"/>',
+  table: '<rect x="1.5" y="2.5" width="13" height="11" fill="#fff" stroke="#2e3436"/><path d="M1.5 6h13M1.5 9.7h13M6 2.5v11M10.3 2.5v11" stroke="#2e3436" stroke-width=".8"/>',
+  dim: '<path d="M2 3v10M14 3v10" stroke="#2e3436"/><path d="M2 8h12" stroke="#2e3436"/><path d="M2 8l3-2v4zM14 8l-3-2v4z" fill="#2e3436"/>',
+  leader: '<path d="M2 14l6-6h6" fill="none" stroke="#2e3436"/><path d="M2 14l1-3.4 2.4 2.4z" fill="#2e3436"/><path d="M9 6h5" stroke="#3c6eb4"/>',
+  drillorig: '<circle cx="8" cy="8" r="4.5" fill="none" stroke="#d04040" stroke-width="1.3"/><path d="M8 1v14M1 8h14" stroke="#d04040" stroke-width="1.1"/>',
+  gridorig: '<circle cx="8" cy="8" r="4" fill="none" stroke="#3c6eb4" stroke-width="1.3"/><path d="M8 2v12M2 8h12" stroke="#3c6eb4" stroke-width="1.1"/><circle cx="8" cy="8" r="1.3" fill="#3c6eb4"/>',
+  del: '<path d="M3 4h10M6 4V2.5h4V4M4.5 4l.8 10h5.4l.8-10" fill="none" stroke="#2e3436" stroke-width="1.3"/><path d="M7 6.5v5M9 6.5v5" stroke="#2e3436"/>'
+};
+function tb(key, title, extra) {
+  const gt = extra && extra.gt ? ` data-gt="${extra.gt}"` : '';
+  const on = extra && extra.on ? ' on' : '';
+  return `<div class="tb${on}" title="${title}"${gt}><svg viewBox="0 0 16 16">${I[key]}</svg></div>`;
+}
+const TOPTB = [
+  ['setup','Board Setup'],['save','Save'],'|',['page','Page Settings'],['print','Print'],['plot','Plot'],'|',['undo','Undo'],['redo','Redo'],'|',['find','Find'],'|',
+  ['refresh','Refresh'],['zin','Zoom In'],['zout','Zoom Out'],['zfit','Zoom to Fit'],['zobj','Zoom to Objects'],['zarea','Zoom to Selection'],'|',
+  ['rccw','Rotate Counterclockwise'],['rcw','Rotate Clockwise'],['flip','Change Side / Flip'],['mirror','Mirror'],'|',['group','Group'],['ungroup','Ungroup'],['lock','Lock'],['unlock','Unlock'],'|',
+  ['fpedit','Footprint Editor'],['fpbrowse','Footprint Library Browser'],'|',['updpcb','Update PCB from Schematic'],['drc','Design Rules Checker',{gt:'kicad-drc-btn'}],'|'
+];
+let h = TOPTB.map(t => t === '|' ? '<div class="sep"></div>' : tb(t[0], t[1], t[2])).join('');
+h += '<div class="dd"><span class="sw" style="background:#c83434"></span>F.Cu (PgUp)<i>▾</i></div><div class="sep"></div>';
+h += tb('v3d','3D Viewer') + tb('py','Scripting Console') + '<div class="sep"></div>';
+h += '<div class="dd">Track: use netclass width<i>▾</i></div><div class="dd">Via: use netclass sizes<i>▾</i></div><div class="sep"></div>';
+h += '<div class="dd">Grid: 0.2500 mm (9.84 mils)<i>▾</i></div><div class="dd">Zoom Auto<i>▾</i></div>';
+document.getElementById('toptb').innerHTML = h;
+const left = [['grid','Show Grid',{on:1}],['polar','Polar Coordinates'],['inch','Inches'],['mils','Mils'],['mm','Millimeters',{on:1}],['cross','Full-Window Crosshair'],'-',
+  ['rats','Show Ratsnest',{on:1}],['ratscurve','Curved Ratsnest Lines'],'-',['zfill','Draw Zone Fills',{on:1}],['zoutl','Draw Zone Outlines'],['zfrac','Draw Zone Fill Fracture Borders'],'-',
+  ['padsk','Sketch Pads'],['viask','Sketch Vias'],['trsk','Sketch Tracks'],['hicon','High Contrast Mode'],['netcol','Net Color Mode'],'-',['props','Properties Manager'],['appearm','Appearance Manager',{on:1}],['netinsp','Net Inspector'],['ripple','Constraints Manager']];
+document.getElementById('lefttb').innerHTML = left.map(t => t === '-' ? '<div class="vsep"></div>' : tb(t[0], t[1], t[2])).join('');
+const right = [['select','Select item(s)',{on:1}],['hlnet','Highlight Net'],['localrats','Local Ratsnest'],'-',['addfp','Add Footprint'],['route','Route Single Track'],['diffpair','Route Differential Pair'],'-',
+  ['tune','Tune Length of a Single Track'],['tunedp','Tune Length of a Differential Pair'],['skew','Tune Skew of a Differential Pair'],'-',['via','Add Vias',{gt:'kicad-via-tool'}],['zone','Add Filled Zone'],['rulearea','Add Rule Area'],'-',
+  ['line','Draw Lines'],['arc','Draw Arcs'],['rect','Draw Rectangles'],['circle','Draw Circles'],['poly','Draw Polygons'],['bezier','Draw Bezier Curve'],'-',
+  ['text','Add Text'],['textbox','Add Text Box'],['table','Add Table'],['dim','Add Aligned Dimension'],['leader','Add Leader'],'-',['drillorig','Drill/Place File Origin'],['gridorig','Grid Origin'],'-',['del','Interactive Delete Tool']];
+document.getElementById('righttb').innerHTML = right.map(t => t === '-' ? '<div class="vsep"></div>' : tb(t[0], t[1], t[2])).join('');
+
+// ---------- layers panel ----------
+const EYE_ON = '<svg viewBox="0 0 16 12"><path d="M1 6c2-3.5 4.5-5 7-5s5 1.5 7 5c-2 3.5-4.5 5-7 5S3 9.5 1 6z" fill="#fff" stroke="#444" stroke-width="1.1"/><circle cx="8" cy="6" r="2.4" fill="#444"/></svg>';
+const EYE_OFF = '<svg viewBox="0 0 16 12"><path d="M1 6c2-3.5 4.5-5 7-5s5 1.5 7 5c-2 3.5-4.5 5-7 5S3 9.5 1 6z" fill="#fff" stroke="#aaa" stroke-width="1.1"/><circle cx="8" cy="6" r="2.4" fill="#bbb"/><path d="M2 11L14 1" stroke="#888" stroke-width="1.3"/></svg>';
+const LAYERS = [
+  ['F.Cu','#c83434',1,1,'kicad-fcu'],['B.Cu','#4d7fc4',1,0,'kicad-bcu'],['F.Adhesive','#8400b4',0],['B.Adhesive','#0000b4',0],['F.Paste','#b4a0a0',0],['B.Paste','#00c2c2',0],
+  ['F.Silkscreen','#f2eda1',1,0,'kicad-fsilk'],['B.Silkscreen','#e8b2a7',1],['F.Mask','#d864ff',0],['B.Mask','#02ffee',0],['User.Drawings','#c2c2c2',1],['User.Comments','#5994dc',0],
+  ['User.Eco1','#b4dbd2',0],['User.Eco2','#d8c852',0],['Edge.Cuts','#d0d2cd',1],['Margin','#ff26e2',0],['F.Courtyard','#ff26e2',0],['B.Courtyard','#26e9ff',0],['F.Fab','#afafaf',0],['B.Fab','#5858ff',0],['User.1','#c2c2c2',0],['User.2','#89b2c8',0]
+];
+document.getElementById('layers').innerHTML = LAYERS.map(([n, c, vis, act, g]) =>
+  `<div class="lrow${act ? ' act' : ''}"><span class="ind">${act ? '▶' : ''}</span><span class="sw" style="background:${c}"${g ? ` data-gt="${g}-swatch"` : ''}></span><span class="eye"${g ? ` data-gt="${g}-eye"` : ''}>${vis ? EYE_ON : EYE_OFF}</span><span class="nm">${n}</span></div>`).join('');
+
+// ---------- board ----------
+const S = 9, OX = 210, OY = 214;
+const X = x => OX + x * S, Y = y => OY + y * S;
+const C = { fcu: '#c83434', bcu: '#4d7fc4', silk: '#f2eda1', bsilk: '#e8b2a7', edge: '#d0d2cd', tht: '#c2c200', via: '#c3c3c3', hole: '#e3b72e' };
+const svg = document.getElementById('board');
+let G = { grid: '', bcu: '', fcu: '', pads: '', silk: '', vias: '', top: '' };
+// grid dots every 2.5mm
+for (let gx = -22; gx <= 145; gx += 2.5) for (let gy = -22; gy <= 100; gy += 2.5) G.grid += `<circle cx="${X(gx).toFixed(1)}" cy="${Y(gy).toFixed(1)}" r=".7" fill="#4b5a6e"/>`;
+
+const FP = {};
+function rot(p, r) { // r in degrees, clockwise in screen space
+  const [x, y] = p;
+  if (r === 90) return [-y, x];
+  if (r === 180) return [-x, -y];
+  if (r === 270) return [y, -x];
+  return [x, y];
+}
+function place(ref, at, r, pads, silk, refOff, opt = {}) {
+  const fp = { ref, at, r, pads: {}, gt: opt.gt };
+  let pg = '', sg = '';
+  let minx = 1e9, miny = 1e9, maxx = -1e9, maxy = -1e9;
+  for (const p of pads) {
+    let [cx, cy] = rot([p.x, p.y], r);
+    let w = p.w, hh = p.h;
+    if (r === 90 || r === 270) [w, hh] = [hh, w];
+    const ax = at[0] + cx, ay = at[1] + cy;
+    fp.pads[p.n] = [ax, ay];
+    minx = Math.min(minx, ax - w / 2); maxx = Math.max(maxx, ax + w / 2); miny = Math.min(miny, ay - hh / 2); maxy = Math.max(maxy, ay + hh / 2);
+    const col = p.tht ? C.tht : C.fcu;
+    const pgt = opt.padGt && opt.padGt[p.n] ? ` data-gt="${opt.padGt[p.n]}"` : '';
+    if (p.shape === 'circle') {
+      pg += `<circle cx="${X(ax)}" cy="${Y(ay)}" r="${w / 2 * S}" fill="${col}"${pgt}/>`;
+    } else {
+      const rr = p.shape === 'rect' ? 0 : Math.min(w, hh) * 0.25 * S;
+      pg += `<rect x="${X(ax - w / 2)}" y="${Y(ay - hh / 2)}" width="${w * S}" height="${hh * S}" rx="${rr}" fill="${col}"${pgt}/>`;
+    }
+    if (p.tht) pg += `<circle cx="${X(ax)}" cy="${Y(ay)}" r="${p.drill / 2 * S}" fill="${C.hole}"/>`;
+    if (p.label) pg += `<text x="${X(ax)}" y="${Y(ay) + 2.4}" font-size="6.5" fill="#fff" text-anchor="middle">${p.label}</text>`;
+  }
+  for (const s of silk) {
+    if (s.c) { const [cx, cy] = rot([s.c[0], s.c[1]], r); sg += `<circle cx="${X(at[0] + cx)}" cy="${Y(at[1] + cy)}" r="${s.c[2] * S}" fill="${C.silk}"/>`; continue; }
+    const a = rot([s[0], s[1]], r), b = rot([s[2], s[3]], r);
+    sg += `<line x1="${X(at[0] + a[0])}" y1="${Y(at[1] + a[1])}" x2="${X(at[0] + b[0])}" y2="${Y(at[1] + b[1])}" stroke="${C.silk}" stroke-width="${0.12 * S}" stroke-linecap="round"/>`;
+  }
+  const body = `<rect x="${X(minx)}" y="${Y(miny)}" width="${(maxx - minx) * S}" height="${(maxy - miny) * S}" fill="transparent"/>`;
+  G.pads += `<g${opt.gt ? ` data-gt="${opt.gt}"` : ''}>${body}${pg}</g>`;
+  G.silk += sg;
+  const [lx, ly, lrot] = refOff;
+  const fs = opt.fs || 7.5;
+  const tx = X(at[0] + lx), ty = Y(at[1] + ly) + fs * 0.36;
+  G.top += `<text x="${tx}" y="${ty}" font-size="${fs}" fill="${C.silk}" text-anchor="middle"${lrot ? ` transform="rotate(${lrot} ${tx} ${ty - fs * 0.36})"` : ''}${opt.refGt ? ` data-gt="${opt.refGt}"` : ''}>${ref}</text>`;
+  FP[ref] = fp;
+  return fp;
+}
+const chip = (pitch, pw, ph) => [{ n: 1, x: -pitch / 2, y: 0, w: pw, h: ph }, { n: 2, x: pitch / 2, y: 0, w: pw, h: ph }];
+const silk0603 = [[-0.25, -0.73, 0.25, -0.73], [-0.25, 0.73, 0.25, 0.73]];
+const silk0805 = [[-0.27, -0.85, 0.27, -0.85], [-0.27, 0.85, 0.27, 0.85]];
+function R0603(ref, at, r, refOff, opt) { return place(ref, at, r, chip(1.65, 0.8, 0.95), silk0603, refOff, opt); }
+function C0805(ref, at, r, refOff, opt) { return place(ref, at, r, chip(1.9, 1.0, 1.45), silk0805, refOff, opt); }
+function LED(ref, at, r, refOff) { return place(ref, at, r, chip(1.65, 0.8, 0.95), [[-1.55, -0.75, 0.8, -0.75], [-1.55, -0.75, -1.55, 0.75], [-1.55, 0.75, 0.8, 0.75]], refOff); }
+
+// mounting holes
+[[4, 4, 'H1'], [116, 4, 'H2'], [4, 74, 'H3'], [116, 74, 'H4']].forEach(([x, y, n]) => {
+  place(n, [x, y], 0, [{ n: 1, x: 0, y: 0, w: 5.6, h: 5.6, shape: 'circle', tht: 1, drill: 3.2 }], [], [0, -4.0], { fs: 8.5 });
+});
+// USB-C J1 at left edge
+(() => {
+  const pads = [];
+  const names = ['B8', 'A5', 'B7', 'A6', 'A7', 'B6', 'A8', 'B5'];
+  pads.push({ n: 'A1', x: 0, y: -3.2, w: 1.15, h: 0.6 }, { n: 'A4', x: 0, y: -2.4, w: 1.15, h: 0.6 });
+  names.forEach((nm, i) => pads.push({ n: nm, x: 0, y: -1.75 + i * 0.5, w: 1.15, h: 0.3 }));
+  pads.push({ n: 'B4', x: 0, y: 2.4, w: 1.15, h: 0.6 }, { n: 'B1', x: 0, y: 3.2, w: 1.15, h: 0.6 });
+  pads.push({ n: 'S1', x: -4.2, y: -4.32, w: 1.0, h: 2.1, shape: 'round', tht: 1, drill: 0.6 }, { n: 'S2', x: -4.2, y: 4.32, w: 1.0, h: 2.1, shape: 'round', tht: 1, drill: 0.6 });
+  pads.push({ n: 'S3', x: -0.2, y: -4.32, w: 1.0, h: 1.8, shape: 'round', tht: 1, drill: 0.6 }, { n: 'S4', x: -0.2, y: 4.32, w: 1.0, h: 1.8, shape: 'round', tht: 1, drill: 0.6 });
+  place('J1', [6.2, 39], 0, pads, [[-5.6, -4.6, -5.6, 4.6], [-5.6, -5.6, -1.0, -5.6], [-5.6, 5.6, -1.0, 5.6]], [-2.5, -7.2], { fs: 8.5 });
+})();
+// passives and parts
+R0603('R1', [13, 33.5], 0, [0, -1.5]);
+R0603('R2', [13, 44.5], 0, [0, 1.6]);
+place('D1', [14, 23], 0, [{ n: 1, x: -1.65, y: 0, w: 0.9, h: 1.2 }, { n: 2, x: 1.65, y: 0, w: 0.9, h: 1.2 }], [[-2.5, -1.0, 1.65, -1.0], [-2.5, -1.0, -2.5, 1.0], [-2.5, 1.0, 1.65, 1.0]], [0, -2.0]);
+// U2 SOT-223 (LDO)
+place('U2', [27, 15], 0, [{ n: 1, x: -2.3, y: 3.15, w: 0.95, h: 2.0 }, { n: 2, x: 0, y: 3.15, w: 0.95, h: 2.0 }, { n: 3, x: 2.3, y: 3.15, w: 0.95, h: 2.0 }, { n: 4, x: 0, y: -3.15, w: 3.25, h: 2.0 }],
+  [[-3.4, -1.9, 3.4, -1.9], [-3.4, 1.9, 3.4, 1.9], [-3.4, -1.9, -3.4, 1.9], [3.4, -1.9, 3.4, 1.9]], [0, 0.1], { fs: 8.5 });
+C0805('C1', [17.5, 10], 90, [-1.9, 0, -90]);
+C0805('C2', [36, 10], 90, [1.9, 0, -90]);
+LED('D2', [36, 22], 0, [0, -1.5]);
+R0603('R3', [36, 26], 0, [0, 1.6]);
+// U3 SOIC-16 (USB-UART)
+(() => {
+  const pads = [];
+  for (let i = 0; i < 8; i++) pads.push({ n: i + 1, x: -2.475, y: -4.445 + i * 1.27, w: 1.95, h: 0.6, shape: i === 0 ? 'rect' : 'round' });
+  for (let i = 0; i < 8; i++) pads.push({ n: 16 - i, x: 2.475, y: -4.445 + i * 1.27, w: 1.95, h: 0.6 });
+  place('U3', [29, 47], 0, pads, [[-1.95, -5.1, 1.95, -5.1], [-1.95, 5.1, 1.95, 5.1], [-3.7, -5.1, -1.95, -5.1], { c: [-3.9, -5.8, 0.25] }], [0, 0, 90], { fs: 8.5 });
+})();
+R0603('C3', [22, 38.5], 0, [0, -1.5]);
+R0603('C4', [22, 56], 0, [0, 1.6]);
+R0603('R4', [42, 43], 0, [0, -1.5]);
+R0603('R5', [42, 47], 0, [0, 1.6]);
+// U1 TQFP-32 rotated 90 (pin 1 ends up on the top edge, right end)
+(() => {
+  const pads = [];
+  for (let k = 0; k < 8; k++) pads.push({ n: 1 + k, x: -4.25, y: -2.8 + 0.8 * k, w: 1.5, h: 0.55, shape: k === 0 ? 'rect' : 'round' });
+  for (let k = 0; k < 8; k++) pads.push({ n: 9 + k, x: -2.8 + 0.8 * k, y: 4.25, w: 0.55, h: 1.5 });
+  for (let k = 0; k < 8; k++) pads.push({ n: 17 + k, x: 4.25, y: 2.8 - 0.8 * k, w: 1.5, h: 0.55 });
+  for (let k = 0; k < 8; k++) pads.push({ n: 25 + k, x: 2.8 - 0.8 * k, y: -4.25, w: 0.55, h: 1.5 });
+  const sl = [[-3.6, -3.6, -3.25, -3.6], [-3.6, -3.6, -3.6, -3.25], [3.6, -3.6, 3.25, -3.6], [3.6, -3.6, 3.6, -3.25], [-3.6, 3.6, -3.25, 3.6], [-3.6, 3.6, -3.6, 3.25], [3.6, 3.6, 3.25, 3.6], [3.6, 3.6, 3.6, 3.25], { c: [-5.25, -3.7, 0.28] }];
+  place('U1', [67, 38], 90, pads, sl, [0, 0], { fs: 9, padGt: { 1: 'kicad-u1-pin1' } });
+})();
+place('Y1', [57, 27], 0, [{ n: 1, x: -1.1, y: 0.8, w: 1.4, h: 1.2 }, { n: 2, x: 1.1, y: 0.8, w: 1.4, h: 1.2 }, { n: 3, x: 1.1, y: -0.8, w: 1.4, h: 1.2 }, { n: 4, x: -1.1, y: -0.8, w: 1.4, h: 1.2 }],
+  [[-2.1, -1.75, 2.1, -1.75], [-2.1, 1.75, -2.1, -1.75], { c: [-2.5, 2.0, 0.22] }], [0, -2.7]);
+R0603('C5', [52.5, 24], 90, [-1.5, 0, -90]);
+R0603('C6', [61.5, 24], 90, [1.5, 0, -90]);
+R0603('C7', [59, 43], 90, [-1.5, 0, -90]);
+R0603('C8', [74, 48], 0, [0, 1.6]);
+// SW1 reset
+place('SW1', [86, 13], 0, [{ n: 1, x: -3.1, y: -1.85, w: 1.8, h: 1.1 }, { n: 1, x: 3.1, y: -1.85, w: 1.8, h: 1.1 }, { n: 2, x: -3.1, y: 1.85, w: 1.8, h: 1.1 }, { n: 2, x: 3.1, y: 1.85, w: 1.8, h: 1.1 }],
+  [[-2.0, -2.5, 2.0, -2.5], [-2.0, 2.5, 2.0, 2.5], [-3.1, -0.9, -3.1, 0.9], [3.1, -0.9, 3.1, 0.9], { c: [0, 0, 0.95] }], [0, -3.6], { fs: 8.5 });
+// resistor bank (pull-ups / series), refs deliberately not in order
+const bank = [['R9', 18], ['R12', 22], ['R7', 26], ['R10', 30], ['R8', 34], ['R11', 38]];
+bank.forEach(([ref, y]) => R0603(ref, [99, y], 0, [-2.7, 0], ref === 'R7' ? { gt: 'kicad-r7', refGt: 'kicad-r7-ref' } : {}));
+R0603('R6', [86, 58], 0, [0, -1.5]);
+LED('D3', [86, 62], 0, [0, 1.6]);
+LED('D4', [92, 62], 0, [0, 1.6]);
+// headers
+function header(ref, x0, y, n, refOff) {
+  const pads = [];
+  for (let i = 0; i < n; i++) pads.push({ n: i + 1, x: i * 2.54, y: 0, w: 1.7, h: 1.7, shape: i === 0 ? 'rect' : 'circle', tht: 1, drill: 1.0, label: String(i + 1) });
+  const len = (n - 1) * 2.54;
+  return place(ref, [x0, y], 0, pads, [[-1.33, -1.33, len + 1.33, -1.33], [-1.33, 1.33, len + 1.33, 1.33], [-1.33, -1.33, -1.33, 1.33], [len + 1.33, -1.33, len + 1.33, 1.33]], refOff, { fs: 8.5 });
+}
+header('J2', 42, 4.5, 15, [-3.4, 0]);
+header('J3', 42, 73.5, 15, [-3.4, 0]);
+(() => {
+  const pads = [];
+  [[0, 0], [2.54, 0], [0, 2.54], [2.54, 2.54], [0, 5.08], [2.54, 5.08]].forEach(([x, y], i) => pads.push({ n: i + 1, x, y, w: 1.7, h: 1.7, shape: i === 0 ? 'rect' : 'circle', tht: 1, drill: 1.0, label: String(i + 1) }));
+  place('J4', [109, 46], 0, pads, [[-1.33, -1.33, 3.87, -1.33], [-1.33, 6.41, 3.87, 6.41], [-1.33, -1.33, -1.33, 6.41], [3.87, -1.33, 3.87, 6.41]], [1.27, -2.7], { fs: 8.5 });
+})();
+
+// ---------- tracks ----------
+const P = (ref, n) => FP[ref].pads[n];
+function path45(pts) { // insert 45-degree bends: straight then diagonal
+  const out = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = out[out.length - 1], [bx, by] = pts[i];
+    const dx = bx - ax, dy = by - ay, adx = Math.abs(dx), ady = Math.abs(dy);
+    if (adx > 0.01 && ady > 0.01 && Math.abs(adx - ady) > 0.01) {
+      if (adx > ady) out.push([ax + Math.sign(dx) * (adx - ady), ay]);
+      else out.push([ax, ay + Math.sign(dy) * (ady - adx)]);
+    }
+    out.push([bx, by]);
+  }
+  return out;
+}
+function trk(layer, w, pts) {
+  const p = path45(pts).map(([x, y]) => `${X(x).toFixed(1)},${Y(y).toFixed(1)}`).join(' ');
+  G[layer] += `<polyline points="${p}" fill="none" stroke="${layer === 'fcu' ? C.fcu : C.bcu}" stroke-width="${w * S}" stroke-linejoin="round" stroke-linecap="round"/>`;
+}
+function via(x, y) { G.vias += `<circle cx="${X(x)}" cy="${Y(y)}" r="${0.4 * S}" fill="${C.via}"/><circle cx="${X(x)}" cy="${Y(y)}" r="${0.2 * S}" fill="${C.hole}"/>`; }
+const F = (w, ...pts) => trk('fcu', w, pts), B = (w, ...pts) => trk('bcu', w, pts);
+const s = 0.25, pw = 0.5;
+// power in: USB VBUS -> D1 -> U2
+F(pw, P('J1', 'A4'), [9, 36.6], [9, 26], [11, 23], P('D1', 1));
+F(pw, P('J1', 'B4'), [9.5, 41.4], [9.5, 44.5]);
+F(pw, P('D1', 2), [18, 23], P('U2', 3).map((v, i) => i ? v + 0.6 : v));
+F(pw, P('D1', 2), [17.5, 20], P('C1', 1));
+F(pw, P('U2', 4), [27, 7], [36, 7], P('C2', 1));
+F(pw, [36, 7], [48, 7], [52, 3], [80, 3], [83, 6], P('SW1', 1));
+F(pw, [80, 3], [94, 3], [97, 6], [97, 14], [101, 16], [101.5, 18]);
+// GND tab to C1/C2 bottom
+F(pw, P('C1', 2), [17.5, 13.5], [24.7, 13.5], P('U2', 1));
+F(pw, P('C2', 2), [36, 15], [30, 15], P('U2', 2).map((v, i) => i ? v - 0.6 : v));
+// USB data to U3
+F(s, P('J1', 'A6'), [11, 38.75], [18, 38.75], [21, 41.75], P('U3', 5).map((v, i) => i ? v : v - 0.3));
+F(s, P('J1', 'A7'), [11.4, 39.25], [17.8, 39.25], [20.5, 42], [25, 46.5], [26, 46.5]);
+F(s, P('J1', 'A5'), [9.2, 38.25], [9.2, 34.5], [10.5, 33.5], P('R1', 1));
+F(s, P('J1', 'B5'), [9.2, 40.25], [9.2, 43.5], [10.5, 44.5], P('R2', 1));
+F(s, P('R1', 2), [16, 33.5], [17, 34.5]); via(17, 34.5);
+F(s, P('R2', 2), [16, 44.5], [17, 43.5]); via(17, 43.5);
+F(s, P('U3', 1), [24.6, 40.5], [23.6, 39.5], P('C3', 2));
+F(s, P('U3', 8), [24.6, 53.5], [22.5, 55.5], P('C4', 2));
+F(pw, P('C3', 1), [19, 38.5], [19, 30], [21, 28], [33, 28], [34.4, 26.6]); via(19, 30);
+// U3 TXD/RXD through R4/R5 to U1
+F(s, P('U3', 2), [33.5, 43.9], [34.8, 43], P('R4', 1));
+F(s, P('U3', 3), [33.5, 45.2], [36.2, 47], P('R5', 1));
+F(s, P('R4', 2), [46, 43], [50, 39], [60, 39], [61.5, 37.5], [62.75, 37.5]);
+F(s, P('R5', 2), [48, 47], [52, 43], [55, 43], [57, 41], [61, 41], [62.75, 39.8]);
+F(s, P('U3', 15), [33.8, 42.3], [36, 40], [36, 35], [41, 30]); via(41, 30);
+B(s, [41, 30], [46, 30], [51, 35], [62, 35], [63.2, 33.8]); via(63.2, 33.8);
+F(s, P('U3', 14), [34.5, 42.3]);
+// crystal
+F(s, P('Y1', 4), [55.9, 30.2], [64.6, 30.2], [66.6, 32.2], P('U1', 8).map((v, i) => i ? v + 0.7 : v));
+F(s, P('Y1', 2), [58.1, 29.3], [63.7, 29.3], [65.8, 31.5], P('U1', 7).map((v, i) => i ? v + 0.7 : v));
+F(s, P('Y1', 1), [52.5, 27.8], P('C5', 2));
+F(s, P('Y1', 3), [61.5, 26.2], P('C6', 2));
+F(s, P('C5', 1), [52.5, 20.5], [61.5, 20.5], P('C6', 1));
+// decoupling
+F(s, P('C7', 1), [59, 40], [61.5, 40.1]);
+F(pw, P('C7', 2), [59, 47], [62, 47], [63, 46]); via(63, 46);
+F(s, P('C8', 1), [71, 48], [69.6, 46.6], P('U1', 18));
+F(s, P('C8', 2), [77, 48], [78, 49]); via(78, 49);
+// U1 top pins to J2 header
+[[1, 13], [2, 12], [5, 9], [6, 8]].forEach(([pin, hp]) => { const a = P('U1', pin), b = P('J2', hp); F(s, a, [a[0], a[1] - 2 - (pin * 0.15)], [b[0], b[1] + 2.2 + pin * 0.6], b); });
+F(s, P('U1', 3), [P('U1', 3)[0], 28], [69.5, 26], [72, 26], [74, 24]); via(74, 24);
+B(s, [74, 24], [74, 10], [72.5, 8.5], [P('J2', 14)[0], 6.5], P('J2', 14));
+// U1 right pins to resistor bank
+const bankPins = { R9: 32, R12: 31, R7: 30, R10: 29, R8: 28 };
+Object.entries(bankPins).forEach(([ref, pin]) => { const a = P('U1', pin), b = P(ref, 1); F(s, a, [a[0] + 2.4, a[1]], [b[0] - 5 - 0.5 * (32 - pin), a[1]], [b[0] - 5 - 0.5 * (32 - pin), b[1]], b); });
+bank.forEach(([ref]) => { const b = P(ref, 2); F(s, b, [b[0] + 1.6, b[1]]); });
+F(s, P('R9', 2), [102.5, 18], [102.5, 40], [104, 41.5]);
+F(pw, [102.5, 40], [104, 41.5], [107, 44.5], P('J4', 2).map((v, i) => i ? v - 1 : v));
+// U1 bottom pins to J3 and SW1 / LEDs
+[[19, 9], [20, 10], [21, 11], [22, 12], [23, 13]].forEach(([pin, hp]) => { const a = P('U1', pin), b = P('J3', hp); F(s, a, [a[0], a[1] + 3 + (pin - 19) * 0.6], [b[0], b[1] - 4.5 - (23 - pin) * 0.9], b); });
+[[17, 6], [16, 5], [15, 4]].forEach(([pin, hp]) => { const a = P('U1', pin), b = P('J3', hp); F(s, a, [a[0] - 2.4 - (17 - pin) * 0.6, a[1]], [b[0], b[1] - 9 - (17 - pin) * 1.4], b); });
+F(s, P('U1', 24), [73, 46.6], [80, 53.6], [80, 58], P('R6', 1));
+F(s, P('R6', 2), [88.5, 60], [87.6, 61], P('D3', 2).map((v, i) => i ? v - 0.2 : v));
+F(s, P('D4', 2), [95, 62], [95, 52], [104, 43], [107, 43], [109, 45], P('J4', 1));
+F(pw, P('D3', 1), [83.5, 66], [92, 66], [90.4, 64.4], P('D4', 1)); via(83.5, 66);
+F(s, P('SW1', 2), [89.1, 19], [89.1, 22], [88.4, 22.8]); via(88.4, 22.8);
+B(s, [88.4, 22.8], [80, 31.2], [72, 31.2], [70, 33.2]); via(70, 33.2);
+F(s, P('U1', 29), [72.5, 39.6]);
+// bottom-side GND returns and spare signals
+B(pw, [17, 34.5], [17, 43.5]);
+B(pw, [17, 43.5], [17, 62], [23, 68], [60, 68], [63, 65]);
+B(pw, [63, 46], [63, 65], [78, 65], [83.5, 66]);
+B(pw, [78, 49], [78, 65]);
+B(pw, [19, 30], [19, 26], [24, 21], [24, 18]); via(24, 18);
+B(s, P('J3', 1), [42, 69], [44, 67]);
+B(s, P('J3', 2), [44.54, 70], [47, 67.5], [56, 67.5]);
+B(s, P('J2', 3), [47.08, 8], [49, 10], [49, 22], [51, 24]); via(51, 24);
+B(s, P('J2', 4), [49.62, 8.4], [51, 9.8], [51, 17], [54, 20], [57, 20]); via(57, 20);
+B(s, P('J4', 3), [109, 54], [105, 58], [96, 58], [94, 56]); via(94, 56);
+B(s, P('J4', 6), [111.54, 55], [110, 59], [110, 69], [104, 72], P('J3', 15));
+F(s, [94, 56], [91.5, 56], [89, 58.5]);
+F(s, P('J4', 5), [109, 54.3], [107.5, 55.8]);
+// unrouted connection: a single ratsnest airwire
+const ua = P('R11', 1), ub = P('U1', 27);
+G.top += `<g data-gt="kicad-unrouted"><line x1="${X(ua[0])}" y1="${Y(ua[1])}" x2="${X(ub[0])}" y2="${Y(ub[1])}" stroke="#ffffff" stroke-width="1.3"/></g>`;
+
+// board outline, page frame and title block
+const edge = `<rect x="${X(0)}" y="${Y(0)}" width="${120 * S}" height="${78 * S}" rx="${2 * S}" fill="none" stroke="${C.edge}" stroke-width="${0.1 * S + 0.6}"/>`;
+const frame = `<rect x="-40" y="-60" width="1480" height="1150" fill="none" stroke="#7a1f22" stroke-width="1"/><rect x="-28" y="-48" width="1456" height="1126" fill="none" stroke="#7a1f22" stroke-width="1"/>
+<g font-size="12" fill="#7a1f22" text-anchor="middle">${[1,2,3,4,5,6].map((n,i)=>`<text x="${80+i*240}" y="1090">${n}</text>`).join('')}${['A','B','C','D'].map((n,i)=>`<text x="-34" y="${120+i*260}">${n}</text><text x="1434" y="${120+i*260}">${n}</text>`).join('')}</g>`;
+const tbk = `<g transform="translate(1028 950)" font-size="10.5" fill="#7a1f22"><rect width="400" height="128" fill="none" stroke="#7a1f22"/><path d="M0 34h400M0 62h400M0 90h400M220 90v38M300 62v28" stroke="#7a1f22"/>
+<text x="6" y="14">Sheet: /</text><text x="6" y="28">File: nano-dev-board.kicad_pcb</text><text x="6" y="54" font-size="12.5" font-weight="700">Title: nano-dev-board (ATmega328P + CH340)</text>
+<text x="6" y="80">Size: A4</text><text x="120" y="80">Date: 2026-10-28</text><text x="306" y="80">Rev: 1.2</text>
+<text x="6" y="106">KiCad E.D.A. 8.0.6</text><text x="226" y="106">Id: 1/1</text><text x="6" y="121">ECE 371 · Alex Rivera</text></g>`;
+// silkscreen board text
+const btxt = `<text x="${X(26)}" y="${Y(66)}" font-size="13" fill="${C.silk}">nano-dev v1.2</text><text x="${X(26)}" y="${Y(68.4)}" font-size="9" fill="${C.silk}">2026-10 · ECE 371</text>
+<text x="${X(106)}" y="${Y(13)}" font-size="8" fill="${C.silk}" text-anchor="middle">RST</text><text x="${X(37.5)}" y="${Y(4.5) + 3}" font-size="8" fill="${C.silk}" text-anchor="end">D</text><text x="${X(37.5)}" y="${Y(73.5) + 3}" font-size="8" fill="${C.silk}" text-anchor="end">A</text>`;
+svg.innerHTML = G.grid + frame + tbk + G.bcu + G.fcu + G.vias + G.pads + G.silk + btxt + edge + G.top;
+</script>
+</body>
+</html>

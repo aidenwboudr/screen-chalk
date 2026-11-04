@@ -1,0 +1,714 @@
+#!/usr/bin/env python3
+"""chalk: let an agent draw on your screen (Sway) to explain what's on it.
+
+  chalk look                 screenshot + OCR'd text elements with ids (t1, t2, ...)
+  chalk draw '<shapes json>' circle / arrow / underline / highlight / box / label / card / point / spotlight
+  chalk say "words"          speak them (CHALK_VOICE_CMD; queued behind earlier ones; a toast without a voice)
+  chalk hush                 stop speaking now
+  chalk watch [--timeout S] [--settle S]   wait until the user changes something on screen, then look
+  chalk route teach <slug> "<title>" | off  send Super+/ questions to a Teach lesson instead
+  chalk route <name> ...     other routes come from CHALK_HOOKS (route_cmd)
+  chalk peek                 bring back cards/diagrams that moved out of the way, or tuck them all away
+  chalk panel '<spec json>' [--wait] [--timeout S]   a card the user can answer or copy from (panel.py); --wait prints the answer
+  chalk focus                give the newest panel the keyboard, or hand it back (Super+;)
+  chalk copy [N]             copy the newest panel's code (again: the next block) (Super+Ctrl+C)
+  chalk toast "words" [--color C]   a tiny state toast at the top of the screen
+  chalk remove <tag>...      take these shapes/panels away
+  chalk clear [--marks] | status | stop   (--marks: leave questions still waiting on the user)
+
+Runs in a Sway session. On a machine without one it can forward to a machine that has one
+over ssh (CHALK_HOST) and bring the screenshot back. Coordinates are Sway layout pixels.
+Settings: environment or ~/.config/chalk/env (README.md).
+"""
+import base64, fcntl, glob, io, json, os, select, shlex, signal, socket, subprocess, sys, time
+
+HERE = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0, HERE)
+import chalkconf  # noqa: E402
+chalkconf.load()
+import ground  # noqa: E402
+import layout  # noqa: E402
+try:
+    import track  # noqa: E402  (needs numpy; only used where the screen is)
+except ImportError:  # a machine that only forwards to the screen's machine needs no numpy
+    track = None
+
+REMOTE = os.environ.get("CHALK_HOST", "")              # ssh host with the Sway session, when this machine has none
+VOICE_HOST = os.environ.get("CHALK_VOICE_HOST", "")    # ssh host that synthesizes speech for this one (optional)
+STATE = chalkconf.state_dir()
+RBIN = os.environ.get("CHALK_REMOTE_BIN", "~/.local/bin/chalk")   # chalk on the other machine (tests point it at a dev copy)
+PYTHON = os.environ.get("CHALK_PYTHON") or ("/usr/bin/python3" if os.path.exists("/usr/bin/python3") else sys.executable)
+# windows whose content changing doesn't count as the user doing something (Teach's lesson text keeps moving)
+WATCH_IGNORE = os.environ.get("CHALK_WATCH_IGNORE_TITLE", r"Teach$")
+
+
+def die(msg, code=1):
+    print(f"chalk: {msg}", file=sys.stderr)
+    sys.exit(code)
+
+
+# ---------- session ----------
+
+def runtime_dir():
+    return os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+
+def find_session():
+    env = dict(os.environ)
+    sock = env.get("SWAYSOCK")
+    if not (sock and os.path.exists(sock)):
+        socks = sorted(glob.glob(f"{runtime_dir()}/sway-ipc.{os.getuid()}.*.sock"), key=os.path.getmtime, reverse=True)
+        socks = [s for s in socks if os.path.exists(f"/proc/{s.rsplit('.', 2)[-2]}")]
+        if not socks:
+            return None
+        env["SWAYSOCK"] = socks[0]
+    if not env.get("WAYLAND_DISPLAY"):
+        env["WAYLAND_DISPLAY"] = display_of(env["SWAYSOCK"])
+    env.setdefault("XDG_RUNTIME_DIR", runtime_dir())
+    return env
+
+def display_of(swaysock):
+    """The Wayland display this Sway serves: the wayland-N.lock its process holds open. (The newest
+    wayland-* socket can belong to another compositor, e.g. the bench's headless Sway.)"""
+    try:
+        pid = os.path.basename(swaysock).rsplit(".", 2)[-2]
+        for fd in os.listdir(f"/proc/{pid}/fd"):
+            target = os.readlink(f"/proc/{pid}/fd/{fd}")
+            if target.startswith(runtime_dir() + "/wayland-") and target.endswith(".lock"):
+                return os.path.basename(target)[:-len(".lock")]
+    except (OSError, IndexError):
+        pass
+    cands = sorted((p for p in glob.glob(f"{runtime_dir()}/wayland-*") if not p.endswith(".lock")),
+                   key=os.path.getmtime)
+    return os.path.basename(cands[0]) if cands else "wayland-1"
+
+ENV = None
+
+def sock_path():
+    return ENV.get("CHALK_SOCK") or os.path.join(ENV["XDG_RUNTIME_DIR"], "chalk.sock")
+
+
+# ---------- overlay daemon ----------
+
+def send(msg, start=True, timeout=6):
+    for attempt in range(2):
+        try:
+            s = socket.socket(socket.AF_UNIX)
+            s.settimeout(timeout)
+            s.connect(sock_path())
+            f = s.makefile("rwb")
+            f.write((json.dumps(msg) + "\n").encode()); f.flush()
+            r = json.loads(f.readline() or "{}")
+            s.close()
+            return r
+        except (FileNotFoundError, ConnectionRefusedError):
+            if not start or attempt:
+                return None
+            start_overlay()
+
+def start_overlay():
+    try:  # a socket file left by an overlay that died uncleanly would look like a live one
+        os.unlink(sock_path())
+    except FileNotFoundError:
+        pass
+    log = open(os.path.join(STATE, "overlay.log"), "ab")
+    # the overlay needs the system python's GTK bindings (gi, GtkLayerShell), not a venv's
+    subprocess.Popen([PYTHON, os.path.join(HERE, "overlay.py")], env=ENV,
+                     stdout=log, stderr=log, stdin=subprocess.DEVNULL, start_new_session=True)
+    for _ in range(80):
+        try:
+            with socket.socket(socket.AF_UNIX) as s:
+                s.connect(sock_path())
+            return
+        except OSError:
+            time.sleep(0.05)
+    die(f"overlay didn't start; see {STATE}/overlay.log")
+
+
+# ---------- look ----------
+
+def outputs():
+    r = subprocess.run(["swaymsg", "-r", "-t", "get_outputs"], env=ENV, capture_output=True, text=True)
+    return [o for o in json.loads(r.stdout or "[]") if o.get("active")]
+
+def layout_rect():
+    outs = outputs()
+    x0 = min(o["rect"]["x"] for o in outs); y0 = min(o["rect"]["y"] for o in outs)
+    x1 = max(o["rect"]["x"] + o["rect"]["width"] for o in outs)
+    y1 = max(o["rect"]["y"] + o["rect"]["height"] for o in outs)
+    return x0, y0, x1 - x0, y1 - y0
+
+def png_size(path):
+    with open(path, "rb") as f:
+        head = f.read(24)
+    return int.from_bytes(head[16:20], "big"), int.from_bytes(head[20:24], "big")
+
+def look(ocr=True, psm="11"):
+    """Screenshot (overlay hidden), optionally + OCR -> saves look.json and shot.png in STATE.
+
+    Everything in a look is in image px (1 image px = 1 layout px, origin at the image's top-left);
+    draw adds the origin back, so multi-monitor layouts with negative offsets work too."""
+    os.makedirs(STATE, exist_ok=True)
+    x, y, w, h = layout_rect()
+    geom = f"{x},{y} {w}x{h}"
+    shot, hires = os.path.join(STATE, "shot.png"), os.path.join(STATE, "hires.png")
+    had = send({"op": "hide"}, start=False)
+    if had:
+        time.sleep(0.06)
+    t0 = time.monotonic()
+    small = None
+    try:
+        try:
+            from PIL import Image
+            # one raw native-resolution grab (~90 ms) and a quick resize beat grim's own scale + PNG
+            # encode (~650 ms on a 1.5x laptop screen)
+            raw = subprocess.run(["grim", "-g", geom, "-t", "ppm", "-"], env=ENV, capture_output=True, check=True).stdout
+        except ImportError:
+            raw = None
+    finally:
+        if had:
+            send({"op": "show"}, start=False)
+    if raw:
+        big = Image.open(io.BytesIO(raw))
+        small = big if big.size == (w, h) else big.resize((w, h), Image.BILINEAR)
+        small.save(shot, compress_level=1)
+        save_gray(big, w, h)
+        if ocr:  # OCR reads the sharper native-resolution grab
+            big.save(hires, compress_level=1)
+    else:
+        subprocess.run(["grim", "-g", geom, "-s", "1", shot], env=ENV, check=True)
+        if ocr:
+            subprocess.run(["grim", "-g", geom, hires], env=ENV, check=True)
+    elements = []
+    if ocr:
+        k = w / png_size(hires)[0]
+        tsv = subprocess.run(["tesseract", hires, "stdout", "--psm", psm, "tsv"], capture_output=True, text=True).stdout
+        elements = ground.parse_tsv(tsv, scale=k)
+    try:  # where the screen is busy, so labels can be put over empty space
+        occ = layout.occupancy(small or shot)
+    except ImportError:
+        occ = None
+    data = {"time": time.time(), "origin": [x, y], "size": [w, h], "shot": shot, "elements": elements,
+            "occupancy": occ, "ms": round((time.monotonic() - t0) * 1000)}
+    json.dump(data, open(os.path.join(STATE, "look.json"), "w"))
+    return data
+
+def save_gray(big, w, h):
+    """The look as the overlay's Follower sees the screen: gray (green channel), one byte per layout px, each
+    the mean of the physical px it covers, exactly like chalk-cap. Marks drawn for this look follow what they
+    point at from this picture (it has no ink on it; ~25 ms)."""
+    try:
+        import numpy as np
+    except ImportError:
+        return
+    g = np.asarray(big.getchannel("G"), np.uint32)
+    H, W = g.shape
+
+    def edges(n, N):
+        a = np.floor(np.arange(n + 1) * N / n).astype(int)
+        b = np.maximum(a[1:], a[:-1] + 1).clip(max=N)
+        return a[:-1], b
+    y0, y1 = edges(h, H)
+    x0, x1 = edges(w, W)
+    cs = np.zeros((H + 1, W + 1), np.uint32)
+    cs[1:, 1:] = g.cumsum(0).cumsum(1)
+    tot = cs[y1][:, x1] - cs[y0][:, x1] - cs[y1][:, x0] + cs[y0][:, x0]
+    n = (y1 - y0)[:, None] * (x1 - x0)[None, :]
+    np.save(os.path.join(STATE, "look-gray.npy"), (tot // n).astype(np.uint8))
+
+
+def last_look():
+    try:
+        return json.load(open(os.path.join(STATE, "look.json")))
+    except (OSError, ValueError):
+        return None
+
+
+# ---------- commands ----------
+
+def cmd_look(args):
+    # OCR is opt-in: on the bench, raw boxes from the screenshot did as well as OCR ids (Opus 90% vs
+    # 90% on the hard set), and skipping it saves ~1.5 s per look. Text targets still work: draw
+    # runs OCR on demand (see draw).
+    data = look(ocr="--ocr" in args)
+    data_out = {k: v for k, v in data.items() if k != "occupancy"}
+    if "--bundle" in args:  # used by the ssh forwarder
+        data = data_out
+        data["png"] = base64.b64encode(open(data["shot"], "rb").read()).decode()
+        print(json.dumps(data))
+        return
+    if "--json" in args:
+        print(json.dumps(data_out))
+        return
+    print_look(data)
+
+def print_look(data):
+    w, h = data["size"]
+    print(f"screenshot: {data['shot']}  ({w}x{h}; 1 image px = 1 screen px, origin {data['origin'][0]},{data['origin'][1]})")
+    if data["elements"]:
+        print(f"text on screen ({len(data['elements'])} elements, id [x,y,w,h] \"text\"):")
+        print(ground.element_listing(data["elements"]))
+
+def parse_shapes(arg):
+    raw = sys.stdin.read() if arg in (None, "-") else arg
+    try:
+        v = json.loads(raw)
+    except ValueError as e:
+        die(f"shapes must be JSON: {e}")
+    if isinstance(v, dict):
+        v = v.get("shapes", [v])
+    return v
+
+def to_layout(shapes, origin):
+    """Image px (what the model saw) -> Sway layout px."""
+    ox, oy = origin
+    if not (ox or oy):
+        return shapes
+    for s in shapes:
+        for key in ("box", "at", "from"):
+            if isinstance(s.get(key), list) and len(s[key]) >= 2:
+                s[key] = [s[key][0] + ox, s[key][1] + oy, *s[key][2:]]
+        if s.get("points"):
+            s["points"] = [[p[0] + ox, p[1] + oy] for p in s["points"]]
+    return shapes
+
+def needs_text(shapes):
+    own = ("label", "card", "panel", "toast")
+    return any("id" in s or "span" in s or ("text" in s and s.get("kind") not in own)
+               or isinstance(s.get("target"), dict) and ("id" in s["target"] or "text" in s["target"])
+               for s in shapes)
+
+def ocr_last(lk):
+    """OCR the last look's screenshot now, for a draw that names on-screen text."""
+    tsv = subprocess.run(["tesseract", lk["shot"], "stdout", "--psm", "11", "tsv"], capture_output=True, text=True).stdout
+    lk["elements"] = ground.parse_tsv(tsv)
+    json.dump(lk, open(os.path.join(STATE, "look.json"), "w"))
+    return lk
+
+def draw(shapes, keep=False, seed=None):
+    lk = last_look() or {"elements": [], "size": None, "origin": [0, 0]}
+    if needs_text(shapes) and not lk["elements"] and lk.get("shot") and os.path.exists(lk["shot"]):
+        lk = ocr_last(lk)
+    resolved = to_layout(ground.resolve_shapes(shapes, lk["elements"], lk.get("size")), lk.get("origin", [0, 0]))
+    msg = {"op": "draw", "shapes": resolved, "replace": not keep}
+    if seed is not None:
+        msg["seed"] = seed
+    if lk.get("occupancy"):
+        msg["busy"] = {"grid": lk["occupancy"], "origin": lk.get("origin", [0, 0])}
+    r = send(msg)
+    if not r or not r.get("ok"):
+        die(f"overlay: {r}")
+    return resolved
+
+def cmd_draw(args):
+    keep = "--keep" in args
+    rest = [a for a in args if a != "--keep"]
+    try:
+        resolved = draw(parse_shapes(rest[0] if rest else None), keep)
+    except ground.GroundError as e:
+        die(str(e), 2)
+    for s in resolved:
+        where = s.get("box") or s.get("points")
+        print(f"{s.get('kind', 'circle')}: {where}" + (f"  \"{s['text']}\"" if s.get("text") else ""))
+
+
+def cmd_ask(args):
+    import ask
+    if "--replay" in args:  # one saved answer per turn, in order
+        return ask.replay([a for a in args[args.index("--replay") + 1:] if not a.startswith("--")],
+                          look, draw, ground, send, STATE)
+    ask.run(args, ENV, send, look, draw, ground, STATE, die, route=get_route())
+
+# ---------- voice ----------
+
+PCM = ["--raw", "--rate=24000", "--channels=1", "--format=s16le"]
+# plays 24 kHz mono s16le PCM from stdin
+PLAYER = chalkconf.words("CHALK_PLAYER") or ["pacat", *PCM, "--client-name=chalk", "--stream-name=narration"]
+
+def cmd_play(args):
+    """Play raw PCM from stdin (what `chalk say` sends here). Players queue on a lock, so sentences
+    from consecutive says never talk over each other; `chalk hush` kills the playing and the queued."""
+    d = os.path.join(STATE, "voice")
+    os.makedirs(d, exist_ok=True)
+    me = os.path.join(d, str(os.getpid()))
+    open(me, "w").close()
+    try:
+        with open(os.path.join(d, "lock"), "w") as lk:
+            fcntl.flock(lk, fcntl.LOCK_EX)
+            if not os.path.exists(me):  # hushed while waiting its turn
+                return
+            p = subprocess.Popen(PLAYER, env=ENV)
+            open(me, "w").write(str(p.pid))
+            p.wait()
+    finally:
+        try:
+            os.unlink(me)
+        except FileNotFoundError:
+            pass
+
+def cmd_hush(args):
+    d = os.path.join(STATE, "voice")
+    for name in os.listdir(d) if os.path.isdir(d) else []:
+        if not name.isdigit():
+            continue
+        f = os.path.join(d, name)
+        try:
+            child = open(f).read().strip()
+            os.unlink(f)
+        except OSError:
+            child = ""
+        for pid in (child, name):
+            try:
+                if pid:
+                    os.kill(int(pid), signal.SIGTERM)
+            except (ProcessLookupError, ValueError):
+                pass
+
+def cmd_say(args):
+    """Speak here: synthesize with CHALK_VOICE_CMD (or on CHALK_VOICE_HOST over ssh) and play it. Without a voice the
+    line shows as a toast instead, so nothing said is lost."""
+    text = " ".join(a for a in args if not a.startswith("--")) or sys.stdin.read()
+    if not text.strip():
+        return
+    if "--pcm" in args:   # another machine asking this one for audio
+        sys.exit(say_here([text], None))
+    if VOICE_HOST:
+        synth = subprocess.Popen(["ssh", "-o", "ConnectTimeout=8", VOICE_HOST, f"{RBIN} say --pcm " + shlex.quote(text)],
+                                 stdout=subprocess.PIPE, stdin=subprocess.DEVNULL)
+    elif chalkconf.words("CHALK_VOICE_CMD"):
+        synth = subprocess.Popen(chalkconf.words("CHALK_VOICE_CMD"), stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        synth.stdin.write(text.encode()); synth.stdin.close()
+    else:
+        cmd_toast([text, "--color", "blue"])
+        return
+    play = subprocess.run([sys.executable, os.path.realpath(__file__), "play"], stdin=synth.stdout)
+    synth.stdout.close()
+    synth.wait()
+    sys.exit(play.returncode)
+
+def say_here(args, to):
+    """Synthesize with CHALK_VOICE_CMD (text on stdin, 24 kHz mono s16le PCM on stdout) and stream it to `to` (a
+    command reading PCM), or to stdout when `to` is None (a machine asking for the audio with `say --pcm`)."""
+    text = " ".join(a for a in args if not a.startswith("--")) or sys.stdin.read()
+    if not text.strip():
+        return 0
+    voice = chalkconf.words("CHALK_VOICE_CMD")
+    if not voice:
+        die("no voice on this machine (set CHALK_VOICE_CMD; examples/kokoro_voice.py is one)")
+    synth = subprocess.Popen(voice, stdin=subprocess.PIPE, stdout=subprocess.PIPE if to else None)
+    synth.stdin.write(text.encode()); synth.stdin.close()
+    if not to:
+        return synth.wait()
+    play = subprocess.run(to, stdin=synth.stdout)
+    synth.stdout.close()
+    synth.wait()
+    return play.returncode
+
+
+# ---------- watch ----------
+
+def visible_windows():
+    """Rects (layout px) of the windows on screen, minus the ones CHALK_WATCH_IGNORE_TITLE matches (the Teach app's
+    window by default: its lesson text keeps changing while the tutor talks, which isn't the user doing anything).
+    Bars, notifications and chalk's own overlay are layer surfaces, not windows, so they're never in here."""
+    import re
+    ignore = re.compile(WATCH_IGNORE) if WATCH_IGNORE else None
+    r = subprocess.run(["swaymsg", "-r", "-t", "get_tree"], env=ENV, capture_output=True, text=True)
+    out = []
+    def walk(n):
+        if n.get("pid") and n.get("visible") and not (ignore and ignore.search(str(n.get("name") or ""))):
+            out.append(n["rect"])
+        for c in n.get("nodes", []) + n.get("floating_nodes", []):
+            walk(c)
+    try:
+        walk(json.loads(r.stdout))
+    except ValueError:
+        pass
+    return out
+
+CELL = track.CELL if track else 8  # layout px per comparison cell
+
+def frame(rect):
+    """The screen sampled in cells. (PIL's resize took ~400 ms of CPU a frame; track.grab ~85 ms.)"""
+    return track.grab(ENV, rect)
+
+def window_mask(shape, origin):
+    import numpy as np
+    m = np.zeros(shape, dtype=bool)
+    ox, oy = origin
+    for r in visible_windows():
+        x0, y0 = max(0, (r["x"] - ox) // CELL), max(0, (r["y"] - oy) // CELL)
+        m[y0:(r["y"] - oy + r["height"]) // CELL, x0:(r["x"] - ox + r["width"]) // CELL] = True
+    return m
+
+def cmd_watch(args):
+    """Block until the user changes something on screen and then holds still, or until the timeout; then look.
+
+    Compares small grayscale frames (8 px cells, ~2.5 a second) inside the visible windows. A change has to
+    differ from the starting frame in DIFF_CELLS+ cells and stay put for --settle seconds, so a blinking
+    caret or a hover tooltip flashing by doesn't count, and a menu they opened and are reading does."""
+    import numpy as np
+    opt = lambda k, d: float(args[args.index(k) + 1]) if k in args else d
+    timeout, settle = opt("--timeout", 120), opt("--settle", 1.2)
+    guard = "--guard" in args   # run by the ssh forwarder: stdin closing means the caller gave up
+    if "--route" in args:
+        set_route(json.loads(args[args.index("--route") + 1]))
+    # let chalk's own strokes finish animating first, so they're part of the starting frame
+    t_end = time.monotonic() + 15
+    while time.monotonic() < t_end:
+        st = send({"op": "stats"}, start=False) or {}
+        if "animating" not in st:
+            time.sleep(1.2 if st else 0)
+            break
+        if not st["animating"]:
+            break
+        time.sleep(0.15)
+    x, y, w, h = layout_rect()
+    base = frame((x, y, w, h))
+    t0 = time.monotonic()
+    prev, still_since, reason, cells = base, None, "timeout", None
+    seen = {tuple(b) for b in (send({"op": "stats"}, start=False) or {}).get("boxes", [])}
+    while time.monotonic() - t0 < timeout:
+        if guard and select.select([sys.stdin], [], [], 0)[0] and not sys.stdin.buffer.read1(1):
+            return
+        time.sleep(0.4)
+        cur = frame((x, y, w, h))
+        mask = window_mask(track.mean(cur).shape, (x, y))
+        # answering a panel (or a toast coming and going) isn't working on the screen: leave out everywhere a panel
+        # has been during this watch
+        seen.update(tuple(b) for b in (send({"op": "stats"}, start=False) or {}).get("boxes", []))
+        for b in seen:
+            sl = track.cells(b, mask.shape, (x, y), pad=6)
+            if sl:
+                mask[sl] = False
+        changed = track.changed(cur, base) & mask
+        moving = int((track.changed(cur, prev) & mask).sum())
+        prev = cur
+        if changed.sum() < DIFF_CELLS or moving >= DIFF_CELLS:
+            still_since = None
+            continue
+        still_since = still_since or time.monotonic()
+        if time.monotonic() - still_since >= settle:
+            reason, cells = "screen", changed
+            break
+    waited = round(time.monotonic() - t0, 1)
+    out = {"changed": reason == "screen", "reason": reason, "waited": waited}
+    if cells is not None:
+        ys, xs = np.nonzero(cells)
+        out["where"] = [int(xs.min()) * CELL, int(ys.min()) * CELL, int(xs.max() - xs.min() + 1) * CELL,
+                        int(ys.max() - ys.min() + 1) * CELL]
+        out["cells"] = int(cells.sum())
+    data = {k: v for k, v in look(ocr=False).items() if k != "occupancy"}
+    out.update(data)
+    if "--bundle" in args:
+        out["png"] = base64.b64encode(open(data["shot"], "rb").read()).decode()
+    print(json.dumps(out))
+
+DIFF_CELLS = 4    # cells that have to change (a 16 px checkbox is ~4)
+
+
+# ---------- route: where Super+/ questions go ----------
+
+def route_file():
+    return os.environ.get("CHALK_ROUTE") or os.path.join(runtime_dir(), "chalk-route.json")
+
+def set_route(r):
+    """{"to": "teach", "slug": ..., "title": ..., "ttl": s}; while it's fresh, Super+/ asks the tutor."""
+    if not r:
+        try:
+            os.unlink(route_file())
+        except FileNotFoundError:
+            pass
+        return
+    ttl = float(r.pop("ttl", 1800))
+    r = {**r, "until": time.time() + ttl}
+    tmp = route_file() + ".tmp"
+    json.dump(r, open(tmp, "w"))
+    os.replace(tmp, route_file())
+
+def get_route():
+    try:
+        r = json.load(open(route_file()))
+        return r if r.get("until", 0) > time.time() else None
+    except (OSError, ValueError):
+        return None
+
+def cmd_route(args):
+    if args and args[0] == "off":
+        set_route(None)
+    elif len(args) >= 2 and args[0] == "teach":
+        set_route({"to": "teach", "slug": args[1], "title": args[2] if len(args) > 2 else args[1]})
+    elif args and chalkconf.hook("route_cmd"):   # routes the core doesn't know (CHALK_HOOKS)
+        r = chalkconf.hook("route_cmd")(list(args))
+        if r is None:
+            die(f"unknown route: {' '.join(args)}", 2)
+        set_route(r)
+    elif args:
+        die(f"unknown route: {' '.join(args)} (chalk route teach <slug> <title> | off)", 2)
+    print(json.dumps(get_route()))
+
+
+def cmd_peek(args):
+    print(json.dumps(send({"op": "peek"}, start=False)))
+
+
+# ---------- panels: cards the user answers ----------
+
+def cmd_panel(args):
+    """Put up a panel (spec: panel.py). With --wait, block until the user answers it, dismisses it, or it goes, and
+    print that as JSON. Run over ssh it holds ssh's stdin open (--guard): when the caller stops waiting,
+    the panel is taken down too, so nobody answers a question that nothing will read."""
+    opt = lambda k, d: float(args[args.index(k) + 1]) if k in args else d
+    timeout = opt("--timeout", 0)
+    rest = [a for i, a in enumerate(args) if not a.startswith("--") and not (i and args[i - 1] == "--timeout")]
+    spec = parse_shapes(rest[0] if rest else None)
+    spec = dict(spec[0] if isinstance(spec, list) else spec, kind="panel")
+    spec.setdefault("tag", f"panel-{int(time.time() * 1000)}")
+    tag = spec["tag"]
+    draw([spec], keep=True)
+    if "--wait" not in args:
+        print(json.dumps({"tag": tag}))
+        return
+    guard = "--guard" in args
+    t0 = time.monotonic()
+    while True:
+        if guard and select.select([sys.stdin], [], [], 0)[0] and not sys.stdin.buffer.read1(1):
+            send({"op": "remove", "tags": [tag]}, start=False)
+            return
+        r = send({"op": "wait", "tag": tag, "timeout": 1.0}, start=False, timeout=10)
+        if r is None:
+            r = {"tag": tag, "status": "gone"}   # the overlay went away
+        if r.get("status") != "waiting":
+            r.pop("ok", None)
+            print(json.dumps(r))
+            return
+        if timeout and time.monotonic() - t0 > timeout:
+            send({"op": "remove", "tags": [tag]}, start=False)
+            print(json.dumps({"tag": tag, "status": "timeout"}))
+            return
+
+def cmd_focus(args):
+    print(json.dumps(send({"op": "focus"})))
+
+def cmd_copy(args):
+    print(json.dumps(send({"op": "copy", "n": int(args[0]) if args and args[0].isdigit() else None})))
+
+def cmd_toast(args):
+    color = args[args.index("--color") + 1] if "--color" in args else "green"
+    words = " ".join(a for i, a in enumerate(args) if a != "--color" and not (i and args[i - 1] == "--color"))
+    send({"op": "toast", "text": words, "color": color})
+
+def cmd_remove(args):
+    send({"op": "remove", "tags": args}, start=False)
+
+def cmd_clear(args):
+    # --marks: only the marks and notes, not questions still waiting on the user (the tutor's screen_clear)
+    send({"op": "clear", "all": "--marks" not in args}, start=False)
+    if "--hush" in args:  # the Super+Shift+/ hotkey wipes the voice too
+        cmd_hush(args)
+    try:  # Super+Shift+/ also ends the hotkey's conversation: the next question starts fresh
+        os.unlink(os.path.join(STATE, "convo.json"))
+    except FileNotFoundError:
+        pass
+
+def cmd_start(args):
+    """Start the overlay now (it also starts on the first draw); used at Sway login."""
+    send({"op": "ping"})
+
+def cmd_status(args):
+    r = send({"op": "stats"}, start=False)
+    print(json.dumps(r) if r else "overlay not running")
+
+def cmd_stop(args):
+    send({"op": "quit"}, start=False)
+
+COMMANDS = {"look": cmd_look, "draw": cmd_draw, "ask": cmd_ask, "clear": cmd_clear, "start": cmd_start,
+            "status": cmd_status, "stop": cmd_stop, "say": cmd_say, "play": cmd_play, "hush": cmd_hush,
+            "watch": cmd_watch, "route": cmd_route, "peek": cmd_peek, "panel": cmd_panel, "focus": cmd_focus,
+            "copy": cmd_copy, "toast": cmd_toast, "remove": cmd_remove}
+
+
+def bring_back(out, argv):
+    """A bundle from the screen's machine (look or watch) -> the screenshot saved here + look.json, like a local look."""
+    data = json.loads(out)
+    os.makedirs(STATE, exist_ok=True)
+    data["shot"] = os.path.join(STATE, "shot.png")
+    open(data["shot"], "wb").write(base64.b64decode(data.pop("png")))
+    json.dump({k: data[k] for k in ("time", "origin", "size", "shot", "elements", "ms") if k in data},
+              open(os.path.join(STATE, "look.json"), "w"))
+    if "--json" in argv:
+        print(json.dumps(data))
+    else:
+        if "reason" in data:
+            print(f"{data['reason']} after {data['waited']} s" + (f", around {data['where']}" if data.get("where") else ""))
+        print_look(data)
+
+
+def forward(argv):
+    remote = ["ssh", "-o", "ConnectTimeout=10", REMOTE]
+    cmd = argv[0] if argv else ""
+    if cmd == "look":
+        flags = " --ocr" if "--ocr" in argv else ""
+        r = subprocess.run(remote + [f"{RBIN} look --bundle" + flags], capture_output=True)
+        sys.stderr.write(r.stderr.decode(errors="replace"))
+        if r.returncode:
+            sys.exit(r.returncode)
+        return bring_back(r.stdout, argv)
+    if cmd == "watch":
+        # stdin stays open: when this process is killed (the caller stopped waiting), ssh closes it and the
+        # screen side notices and quits instead of grabbing frames for minutes
+        rest = [a for a in argv[1:] if a not in ("--json", "--bundle", "--guard")]
+        # (not communicate(): it would close stdin at once, which reads as giving up)
+        p = subprocess.Popen(remote + [RBIN + " " + shlex.join(["watch", "--bundle", "--guard", *rest])],
+                             stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        out = p.stdout.read()
+        p.wait()
+        if p.returncode or not out.strip():
+            sys.exit(p.returncode or 1)
+        return bring_back(out, argv)
+    if cmd == "panel":
+        rest = [a for a in argv[1:] if a not in ("--guard", "-")]
+        if not any(not a.startswith("--") and not (i and rest[i - 1] == "--timeout") for i, a in enumerate(rest)):
+            rest.insert(0, sys.stdin.read())          # the spec came on stdin: ssh's stdin is the guard
+        if "--wait" not in rest:
+            sys.exit(subprocess.run(remote + [RBIN + " " + shlex.join(["panel", *rest])]).returncode)
+        p = subprocess.Popen(remote + [RBIN + " " + shlex.join(["panel", "--guard", *rest])],
+                             stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        out = p.stdout.read()
+        p.wait()
+        sys.stdout.write(out.decode(errors="replace"))
+        sys.exit(p.returncode)
+    if cmd == "say":
+        if "--pcm" in argv:  # the screen's machine asking for audio
+            sys.exit(say_here(argv[1:], None))
+        if not chalkconf.words("CHALK_VOICE_CMD"):   # no voice here: the screen's machine speaks (or toasts) itself
+            sys.exit(subprocess.run(remote + [RBIN + " " + shlex.join(argv)]).returncode)
+        sys.exit(say_here(argv[1:], remote + [f"{RBIN} play"]))
+    if cmd == "draw":
+        rest = [a for a in argv[1:] if a != "--keep"]
+        payload = sys.stdin.read() if not rest or rest[0] == "-" else rest[0]
+        flags = ["--keep"] if "--keep" in argv else []
+        r = subprocess.run(remote + [RBIN + " " + shlex.join(["draw", "-", *flags])], input=payload.encode())
+        sys.exit(r.returncode)
+    sys.exit(subprocess.run(remote + [RBIN + " " + shlex.join(argv)]).returncode)
+
+
+def main():
+    global ENV
+    argv = sys.argv[1:]
+    if not argv or argv[0] in ("-h", "--help", "help") or argv[0] not in COMMANDS:
+        print(__doc__.strip()); sys.exit(0 if argv and argv[0] in ("-h", "--help", "help") else 1)
+    os.umask(0o077)   # screenshots, the look and ask.log are this user's alone
+    ENV = find_session()
+    if ENV is None:
+        if argv[0] == "say" and "--pcm" in argv:   # serving speech to another machine needs no screen
+            sys.exit(say_here(argv[1:], None))
+        if os.environ.get("CHALK_NO_FORWARD") or not REMOTE:
+            die("no Sway session found on this machine" + ("" if os.environ.get("CHALK_NO_FORWARD") else
+                " (to draw on another machine's screen over ssh, set CHALK_HOST)"))
+        return forward(argv)
+    os.makedirs(STATE, exist_ok=True)
+    COMMANDS[argv[0]](argv[1:])
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>cargo build — Ptyxis</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1280px; overflow: hidden; }
+  body { font-family: Inter, 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 13px; color: #deddda; background: #1e1e1e; }
+  .head { height: 46px; background: #2a2a2a; display: flex; align-items: center; padding: 0 8px; gap: 6px; border-bottom: 1px solid #111; }
+  .ib { width: 34px; height: 34px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+  .ib svg { width: 16px; height: 16px; stroke: #deddda; fill: none; stroke-width: 1.8; }
+  .ib.f { background: #3a3a3a; }
+  .title { flex: 1; text-align: center; font-weight: 700; font-size: 13.5px; }
+  .title div { font-weight: 400; font-size: 11.5px; color: #9a9996; }
+  .wc { display: flex; gap: 10px; padding: 0 6px; }
+  .wc span { width: 24px; height: 24px; border-radius: 50%; background: #3a3a3a; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+  .tabs { height: 40px; background: #242424; display: flex; align-items: center; padding: 0 6px; gap: 4px; border-bottom: 1px solid #111; }
+  .tab { flex: 1; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; color: #c0bfbc; position: relative; font-size: 13px; }
+  .tab.on { background: #3a3a3a; color: #fff; }
+  .tab .x { position: absolute; right: 8px; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #9a9996; }
+  .tab .ind { width: 8px; height: 8px; border-radius: 50%; background: #62a0ea; }
+  .term { position: absolute; top: 86px; left: 0; right: 0; bottom: 0; background: #1d1d20; padding: 8px 14px; font-family: 'JetBrains Mono','DejaVu Sans Mono',monospace; font-size: 14.5px; line-height: 20px; white-space: pre; overflow: hidden; }
+  .term div { height: 20px; }
+  .term div span.line { display: inline-block; }
+  .g { color: #8ff0a4; font-weight: 700; } .gr { color: #57e389; }
+  .r { color: #f66151; font-weight: 700; } .y { color: #f9f06b; font-weight: 700; }
+  .b { color: #62a0ea; font-weight: 700; } .c { color: #5bc8af; } .m { color: #c061cb; } .w { color: #fff; font-weight: 700; } .d { color: #77767b; }
+  .pr1 { color: #62a0ea; font-weight: 700; } .pr2 { color: #c061cb; } .pr3 { color: #57e389; font-weight: 700; }
+  .cursor { background: #deddda; color: #1d1d20; }
+  .scroll { position: absolute; right: 3px; top: 92px; width: 6px; height: 140px; border-radius: 3px; background: #ffffff30; }
+</style>
+</head>
+<body>
+<div class="head">
+  <div class="ib f" title="New Tab" data-gt="term-newtab-btn"><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg></div>
+  <div class="ib"><svg viewBox="0 0 16 16"><path d="M5 6l3 3 3-3"/></svg></div>
+  <div class="ib"><svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M4.5 6.5l2 1.5-2 1.5M8 10h3"/></svg></div>
+  <div class="title">cargo build<div>~/projects/dmm-logger</div></div>
+  <div class="ib"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5l3.5 3.5"/></svg></div>
+  <div class="ib"><svg viewBox="0 0 16 16"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg></div>
+  <div class="ib"><svg viewBox="0 0 16 16"><path d="M2 4h12M2 8h12M2 12h12"/></svg></div>
+  <div class="wc"><span>—</span><span>✕</span></div>
+</div>
+<div class="tabs">
+  <div class="tab"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#c0bfbc" stroke-width="1.6"><path d="M3 13V3l10 10V3"/></svg>nvim src/parse.rs<span class="x">✕</span></div>
+  <div class="tab on"><span class="ind"></span>cargo build<span class="x">✕</span></div>
+  <div class="tab">alex@atlas: ~<span class="x">✕</span></div>
+  <div class="tab">picocom /dev/ttyUSB0<span class="x">✕</span></div>
+</div>
+<div class="term" id="t"></div>
+<div class="scroll"></div>
+<script>
+const P = '<span class="pr1">~/projects/dmm-logger</span> <span class="pr2">main</span> <span class="pr3">❯</span> ';
+const lines = [
+  [P + 'ls'],
+  ['<span class="b">data</span>  <span class="b">src</span>  <span class="b">target</span>  Cargo.lock  Cargo.toml  README.md  ut61e-protocol.pdf'],
+  [P + 'git log --oneline -3'],
+  ['<span class="y">4c1e9a2</span> (<span class="c">HEAD -&gt; </span><span class="gr">main</span>, <span class="r">origin/main</span>) log readings to csv with timestamps'],
+  ['<span class="y">9e03b77</span> add --port and --baud flags'],
+  ['<span class="y">1f2a5c0</span> initial serial reader for UT61E+'],
+  [P + 'ls /dev/ttyUSB*'],
+  ['/dev/ttyUSB0'],
+  [P + 'git pull'],
+  ['Updating 4c1e9a2..b07d3f1'],
+  ['Fast-forward'],
+  [' src/main.rs  | 14 <span class="gr">++++++++</span><span class="r">------</span>'],
+  [' src/parse.rs | 31 <span class="gr">+++++++++++++++++++++</span><span class="r">----------</span>'],
+  [' 2 files changed, 28 insertions(+), 17 deletions(-)'],
+  [P + 'cargo build'],
+  ['   <span class="g">Compiling</span> libc v0.2.161'],
+  ['   <span class="g">Compiling</span> cfg-if v1.0.0'],
+  ['   <span class="g">Compiling</span> bitflags v2.6.0'],
+  ['   <span class="g">Compiling</span> memchr v2.7.4'],
+  ['   <span class="g">Compiling</span> log v0.4.22'],
+  ['   <span class="g">Compiling</span> pkg-config v0.3.31'],
+  ['   <span class="g">Compiling</span> libudev-sys v0.1.4'],
+  ['   <span class="g">Compiling</span> serde v1.0.214'],
+  ['   <span class="g">Compiling</span> nix v0.26.4'],
+  ['   <span class="g">Compiling</span> libudev v0.3.0'],
+  ['   <span class="g">Compiling</span> csv-core v0.1.11'],
+  ['   <span class="g">Compiling</span> clap v4.5.20'],
+  ['   <span class="g">Compiling</span> serialport v4.6.0'],
+  ['   <span class="g">Compiling</span> csv v1.3.1'],
+  ['   <span class="g">Compiling</span> dmm-logger v0.3.0 (/home/alex/projects/dmm-logger)'],
+  ['<span class="y">warning</span><span class="w">: unused variable: `baud`</span>', 'term-warning'],
+  ['  <span class="b">--&gt;</span> src/main.rs:18:9'],
+  ['   <span class="b">|</span>'],
+  ['<span class="b">18</span> <span class="b">|</span>     let baud = args.baud.unwrap_or(9600);'],
+  ['   <span class="b">|</span>         <span class="y">^^^^</span> <span class="y">help: if this is intentional, prefix it with an underscore: `_baud`</span>'],
+  ['   <span class="b">|</span>'],
+  ['   <span class="b">=</span> <span class="w">note</span>: `#[warn(unused_variables)]` on by default'],
+  [''],
+  ['<span class="r">error[E0308]</span><span class="w">: mismatched types</span>', 'term-error-header'],
+  ['  <span class="b">--&gt;</span> src/parse.rs:42:22', 'term-error-line'],
+  ['   <span class="b">|</span>'],
+  ['<span class="b">40</span> <span class="b">|</span> pub fn parse_reading(frame: &amp;[u8]) -&gt; Option&lt;f64&gt; {'],
+  ['   <span class="b">|</span>                                       <span class="b">-----------</span> <span class="b">expected `Option&lt;f64&gt;` because of return type</span>'],
+  ['<span class="b">41</span> <span class="b">|</span>     let digits = std::str::from_utf8(&amp;frame[1..6]).ok()?;'],
+  ['<span class="b">42</span> <span class="b">|</span>     let value: f64 = digits.trim();', 'term-error-src'],
+  ['   <span class="b">|</span>                <span class="b">---</span>   <span class="r">^^^^^^^^^^^^^</span> <span class="r">expected `f64`, found `&amp;str`</span>'],
+  ['   <span class="b">|</span>                <span class="b">|</span>'],
+  ['   <span class="b">|</span>                <span class="b">expected due to this</span>'],
+  ['   <span class="b">|</span>'],
+  ['<span class="c">help</span><span class="w">: try parsing the string with `parse`</span>'],
+  ['   <span class="b">|</span>'],
+  ['<span class="b">42</span> <span class="b">|</span>     let value: f64 = digits.trim()<span class="gr" data-gt="term-fix-parse">.parse().ok()?</span>;'],
+  ['   <span class="b">|</span>                                   <span class="gr">++++++++++++++</span>'],
+  [''],
+  ['<span class="w">For more information about this error, try `rustc --explain E0308`.</span>'],
+  ['<span class="y">warning</span><span class="w">:</span> `dmm-logger` (bin "dmm-logger") generated 1 warning'],
+  ['<span class="r">error</span><span class="w">:</span> could not compile `dmm-logger` (bin "dmm-logger") due to 1 previous error; 1 warning emitted'],
+  [P + '<span class="cursor"> </span>', 'term-prompt'],
+];
+document.getElementById('t').innerHTML = lines.map(([h, gt]) => `<div>${gt ? `<span class="line" data-gt="${gt}">${h}</span>` : (h || ' ')}</div>`).join('');
+</script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>#lab-help | ECE 371 - Microcontrollers - Discord</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1280px; overflow: hidden; }
+  body { font-family: 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 15px; color: #dbdee1; background: #1e1f22; position: relative; }
+  .mono { font-family: 'DejaVu Sans Mono', monospace; }
+  .titlebar { height: 24px; background: #1e1f22; display: flex; align-items: center; padding: 0 10px; font-size: 13px; color: #949ba4; font-weight: 700; }
+  .titlebar .wc { margin-left: auto; display: flex; gap: 22px; font-weight: 400; }
+  .rail { position: absolute; left: 0; top: 24px; width: 72px; bottom: 0; background: #1e1f22; display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 8px; }
+  .srv { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; color: #fff; position: relative; flex: none; }
+  .srv.cur { border-radius: 16px; }
+  .pill { position: absolute; left: -16px; width: 8px; border-radius: 0 4px 4px 0; background: #f2f3f5; }
+  .badge { position: absolute; right: -4px; bottom: -4px; min-width: 16px; height: 16px; border-radius: 8px; background: #f23f43; border: 3px solid #1e1f22; color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; box-sizing: content-box; line-height: 1; }
+  .sep { width: 32px; height: 2px; background: #35363c; border-radius: 1px; flex: none; }
+  .chans { position: absolute; left: 72px; top: 24px; width: 260px; bottom: 0; background: #2b2d31; display: flex; flex-direction: column; }
+  .shdr { height: 48px; display: flex; align-items: center; padding: 0 16px; font-weight: 700; font-size: 15px; color: #f2f3f5; border-bottom: 1px solid #1f2023; box-shadow: 0 1px 2px #0003; }
+  .clist { flex: 1; padding: 8px 8px 0; overflow: hidden; }
+  .cat { font-size: 12px; font-weight: 700; color: #949ba4; letter-spacing: .02em; padding: 16px 0 4px 8px; display: flex; align-items: center; gap: 2px; }
+  .ch { height: 32px; display: flex; align-items: center; gap: 6px; padding: 0 8px; border-radius: 4px; color: #80848e; font-size: 15px; position: relative; }
+  .ch .hash { font-size: 20px; width: 20px; text-align: center; color: #80848e; font-weight: 400; }
+  .ch.unread { color: #f2f3f5; font-weight: 600; }
+  .ch.unread::before { content: ''; position: absolute; left: -8px; width: 4px; height: 8px; border-radius: 0 4px 4px 0; background: #f2f3f5; }
+  .ch.sel { background: #404249; color: #fff; }
+  .ch .mb { margin-left: auto; background: #f23f43; color: #fff; font-size: 11px; font-weight: 700; border-radius: 8px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
+  .vu { display: flex; align-items: center; gap: 8px; padding: 3px 0 3px 36px; font-size: 13px; color: #b5bac1; }
+  .av { border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; flex: none; position: relative; }
+  .vc { background: #232428; border-bottom: 1px solid #1f2023; padding: 8px 10px; }
+  .user { height: 56px; background: #232428; display: flex; align-items: center; padding: 0 8px; gap: 8px; }
+  .uic { width: 32px; height: 32px; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .uic svg { width: 20px; height: 20px; }
+  .main { position: absolute; left: 332px; top: 24px; right: 260px; bottom: 0; background: #313338; display: flex; flex-direction: column; }
+  .mhdr { height: 48px; display: flex; align-items: center; padding: 0 16px; gap: 8px; border-bottom: 1px solid #26272b; box-shadow: 0 1px 2px #0003; flex: none; }
+  .mhdr .topic { color: #b5bac1; font-size: 14px; border-left: 1px solid #4e5058; padding-left: 12px; margin-left: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 560px; }
+  .hic { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .hic svg { width: 22px; height: 22px; }
+  .search { width: 160px; height: 26px; background: #1e1f22; border-radius: 4px; color: #949ba4; font-size: 13px; display: flex; align-items: center; padding: 0 8px; flex: none; }
+  .msgs { flex: 1; overflow: hidden; padding: 0 0 8px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .msg { display: flex; gap: 16px; padding: 2px 48px 2px 16px; margin-top: 17px; position: relative; }
+  .msg.cont { margin-top: 0; }
+  .msg .body { flex: 1; min-width: 0; }
+  .msg .nm { font-weight: 600; font-size: 15px; }
+  .msg .ts { font-size: 12px; color: #949ba4; margin-left: 6px; }
+  .msg .tx { line-height: 22px; color: #dbdee1; }
+  .mention { background: #5865f24d; color: #c9cdfb; border-radius: 3px; padding: 0 2px; font-weight: 500; }
+  .msg.me { background: #f0b2320f; }
+  .msg.me::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #f0b232; }
+  code.inline { background: #2b2d31; border-radius: 3px; padding: 1px 4px; font-size: 13.5px; font-family: 'DejaVu Sans Mono', monospace; }
+  pre.blk { background: #2b2d31; border: 1px solid #1e1f22; border-radius: 4px; padding: 8px 10px; font-size: 13.5px; font-family: 'DejaVu Sans Mono', monospace; margin-top: 4px; max-width: 620px; color: #dbdee1; }
+  .rx { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+  .r { height: 24px; border-radius: 8px; background: #2b2d31; border: 1px solid transparent; display: flex; align-items: center; gap: 5px; padding: 0 7px; font-size: 13px; color: #b5bac1; font-weight: 600; }
+  .r.mine { background: #373a6e; border-color: #5865f2; color: #dee0fc; }
+  .r .e { font-size: 15px; font-family: 'Noto Color Emoji', 'Noto Sans', sans-serif; }
+  .div { display: flex; align-items: center; margin: 22px 16px 6px; font-size: 12px; color: #949ba4; font-weight: 600; gap: 8px; }
+  .div::before, .div::after { content: ''; flex: 1; height: 1px; background: #3f4147; }
+  .reply { font-size: 13px; color: #b5bac1; display: flex; align-items: center; gap: 4px; margin-left: 56px; margin-top: 14px; padding-left: 16px; position: relative; }
+  .reply::before { content: ''; position: absolute; left: -24px; top: 9px; width: 30px; height: 10px; border-left: 2px solid #4e5058; border-top: 2px solid #4e5058; border-top-left-radius: 6px; }
+  .compose { margin: 0 16px 14px; height: 44px; background: #383a40; border-radius: 8px; display: flex; align-items: center; padding: 0 14px; gap: 14px; color: #6d6f78; font-size: 15px; flex: none; }
+  .typing { height: 20px; margin: 0 16px 2px; font-size: 13px; color: #dbdee1; flex: none; }
+  .members { position: absolute; right: 0; top: 72px; width: 260px; bottom: 0; background: #2b2d31; padding: 8px 8px 0 8px; overflow: hidden; }
+  .mcat { font-size: 12px; font-weight: 700; color: #949ba4; padding: 20px 8px 4px; letter-spacing: .02em; }
+  .mem { height: 42px; display: flex; align-items: center; gap: 12px; padding: 0 8px; border-radius: 4px; font-size: 15px; }
+  .mem.off { opacity: .35; }
+  .st { position: absolute; right: -3px; bottom: -3px; width: 14px; height: 14px; border-radius: 7px; border: 3px solid #2b2d31; box-sizing: border-box; }
+  .mem .sub { font-size: 12px; color: #949ba4; font-weight: 400; }
+  .emo { font-family: 'Noto Color Emoji', sans-serif; }
+</style>
+</head>
+<body>
+<div class="titlebar">Discord<span class="wc"><span>—</span><span>☐</span><span>✕</span></span></div>
+<div class="rail" id="rail"></div>
+<div class="chans">
+  <div class="shdr">ECE 371 - Microcontrollers<span style="margin-left:auto;font-size:13px">⌄</span></div>
+  <div class="clist" id="clist"></div>
+  <div class="vc">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div><div style="color:#23a55a;font-size:14px;font-weight:700">Voice Connected</div><div style="color:#b5bac1;font-size:13px">Study Room 1 / ECE 371 - Mi…</div></div>
+      <div class="uic" style="margin-left:auto"><svg viewBox="0 0 24 24" fill="#b5bac1"><path d="M3 12h3l3-7 4 14 3-7h5" fill="none" stroke="#b5bac1" stroke-width="2"/></svg></div>
+      <div class="uic"><svg viewBox="0 0 24 24"><path d="M21.6 15.6l-3-1.3a1.5 1.5 0 0 0-1.7.4l-1.3 1.6a12 12 0 0 1-6.3-6.3l1.6-1.3a1.5 1.5 0 0 0 .4-1.7L10 4a1.5 1.5 0 0 0-1.7-.9L5.5 3.8A1.5 1.5 0 0 0 4.3 5.3 16.5 16.5 0 0 0 20.7 21.7a1.5 1.5 0 0 0 1.5-1.2l.6-2.8a1.5 1.5 0 0 0-.9-1.7z" fill="#b5bac1" transform="rotate(135 12 12)"/></svg></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <div style="flex:1;height:32px;background:#2b2d31;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#dbdee1;font-size:13px">📷 Video</div>
+      <div style="flex:1;height:32px;background:#2b2d31;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#dbdee1;font-size:13px">🖥 Screen</div>
+    </div>
+  </div>
+  <div class="user">
+    <div class="av" style="width:32px;height:32px;background:#3a7bd5;font-size:13px">A<span class="st" style="background:#23a55a;border-color:#232428"></span></div>
+    <div style="line-height:16px"><div style="font-size:14px;font-weight:600;color:#f2f3f5">alex</div><div style="font-size:12px;color:#b5bac1">Online</div></div>
+    <div style="margin-left:auto;display:flex">
+      <div class="uic" title="Mute" data-gt="dc-mic-btn"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3" fill="#b5bac1"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6" fill="none" stroke="#b5bac1" stroke-width="2"/></svg></div>
+      <div class="uic" title="Deafen"><svg viewBox="0 0 24 24"><path d="M4 15v-3a8 8 0 0 1 16 0v3" fill="none" stroke="#b5bac1" stroke-width="2"/><rect x="3" y="14" width="5" height="7" rx="2" fill="#b5bac1"/><rect x="16" y="14" width="5" height="7" rx="2" fill="#b5bac1"/></svg></div>
+      <div class="uic" title="User Settings"><svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm8.6 4.8l1.9 1.5-2 3.4-2.3-.9a7.6 7.6 0 0 1-2 1.2l-.4 2.5h-4l-.4-2.5a7.6 7.6 0 0 1-2-1.2l-2.3.9-2-3.4 1.9-1.5a7.7 7.7 0 0 1 0-2.6L1.6 9.2l2-3.4 2.3.9a7.6 7.6 0 0 1 2-1.2L8.3 3h4l.4 2.5a7.6 7.6 0 0 1 2 1.2l2.3-.9 2 3.4-1.9 1.5a7.7 7.7 0 0 1 0 2.6z" fill="#b5bac1" transform="translate(1.6 0)"/></svg></div>
+    </div>
+  </div>
+</div>
+<div class="main">
+  <div class="mhdr">
+    <span style="font-size:24px;color:#80848e;font-weight:300">#</span><span style="font-weight:700;color:#f2f3f5;font-size:16px">lab-help</span>
+    <span class="topic">Lab questions only. Post your code in a code block (```c). For grades email the professor, not here.</span>
+    <span style="margin-left:auto"></span>
+    <div class="hic" title="Threads"><svg viewBox="0 0 24 24"><path d="M5 5h8a3 3 0 0 1 3 3v4a3 3 0 0 1-3 3H9l-4 3v-3a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3z" fill="none" stroke="#b5bac1" stroke-width="1.8"/><path d="M18 9h1a3 3 0 0 1 3 3v3a3 3 0 0 1-2 2.8V21l-3-2.5h-4" fill="none" stroke="#b5bac1" stroke-width="1.8"/></svg></div>
+    <div class="hic" title="Notification Settings"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6zM10 19a2 2 0 0 0 4 0" fill="#b5bac1"/></svg></div>
+    <div class="hic" title="Pinned Messages" data-gt="dc-pin-btn"><svg viewBox="0 0 24 24"><path d="M15 3l6 6-2 1-3 3 .5 4.5L15 19l-4-4-6 6-1-1 6-6-4-4 1.5-1.5L12 9l3-3z" fill="#b5bac1"/></svg></div>
+    <div class="hic" title="Hide Member List"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.6" fill="#dbdee1"/><path d="M2 20c.5-4 3.5-6 7-6s6.5 2 7 6z" fill="#dbdee1"/><circle cx="17" cy="9" r="2.8" fill="#dbdee1"/><path d="M15.5 14c3 0 5.6 1.8 6.2 5h-4" fill="#dbdee1"/></svg></div>
+    <div class="search">Search<span style="margin-left:auto">⌕</span></div>
+    <div class="hic" title="Inbox"><svg viewBox="0 0 24 24"><path d="M3 13l3-8h12l3 8v6H3z" fill="none" stroke="#b5bac1" stroke-width="1.8"/><path d="M3 13h5l1 2h6l1-2h5" fill="none" stroke="#b5bac1" stroke-width="1.8"/></svg></div>
+    <div class="hic" title="Help"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#b5bac1"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.3 2.4c-.6.3-.8.8-.8 1.4v.7" fill="none" stroke="#313338" stroke-width="2"/><circle cx="12" cy="17" r="1.2" fill="#313338"/></svg></div>
+  </div>
+  <div class="msgs" id="msgs"></div>
+  <div class="typing"><b>Priya</b> is typing…</div>
+  <div class="compose"><span style="width:24px;height:24px;border-radius:12px;background:#b5bac1;color:#383a40;display:flex;align-items:center;justify-content:center;font-weight:700">+</span>Message #lab-help<span style="margin-left:auto;display:flex;gap:16px;color:#b5bac1;font-size:13px;font-weight:700"><span>🎁</span><span style="border:2px solid #b5bac1;border-radius:3px;padding:0 3px;font-size:10px">GIF</span><span>▣</span><span>☺</span></span></div>
+</div>
+<div style="position:absolute;right:0;top:24px;width:260px;height:48px;background:#313338;border-bottom:1px solid #26272b"></div>
+<div class="members" id="members"></div>
+<script>
+// ---------- server rail ----------
+const rail = [
+  { home: 1 },
+  { dm: 'Riley', c: '#c0587a', badge: 26 },
+  { dm: 'Mom', c: '#4a9d6e', badge: 3 },
+  { sep: 1 },
+  { n: 'E371', c: '#5865f2', cur: 1, badge: 2 },
+  { n: 'SU', c: '#2a5ca8', badge: 12, pill: 8 },
+  { n: 'BR', c: '#d6782b', badge: 4, pill: 8 },
+  { n: 'HL', c: '#3ba55c', badge: 21, pill: 8, gt: 'dc-srv-lab' },
+  { n: 'F5', c: '#8a5ad0', badge: 9, pill: 8 },
+  { n: 'EE', c: '#c9a227', pill: 8 },
+  { n: 'MC', c: '#5d8f3a' },
+  { n: 'VAL', c: '#e04650', badge: 1, pill: 8 },
+  { n: 'CS', c: '#4a90a4' },
+  { n: 'BZN', c: '#7a6a58' },
+  { n: 'T3', c: '#222', pill: 8 },
+  { sep: 1 },
+  { add: 1 }, { disc: 1 }
+];
+document.getElementById('rail').innerHTML = rail.map(s => {
+  if (s.sep) return '<div class="sep"></div>';
+  if (s.home) return `<div class="srv" style="background:#313338;border-radius:16px"><svg width="28" height="20" viewBox="0 0 28 20"><path d="M23.7 1.7A23 23 0 0 0 18 0l-.7 1.5a21 21 0 0 0-6.6 0L10 0a23 23 0 0 0-5.7 1.7C.7 7.1-.3 12.4.2 17.6A23 23 0 0 0 7.2 21l1.4-2.3a15 15 0 0 1-2.2-1l.5-.4a16.5 16.5 0 0 0 14.2 0l.5.4a15 15 0 0 1-2.2 1L20.8 21a23 23 0 0 0 7-3.4c.6-6-1-11.3-4.1-15.9zM9.4 14.4c-1.4 0-2.5-1.3-2.5-2.8s1.1-2.8 2.5-2.8 2.5 1.3 2.5 2.8-1.1 2.8-2.5 2.8zm9.2 0c-1.4 0-2.5-1.3-2.5-2.8s1.1-2.8 2.5-2.8 2.5 1.3 2.5 2.8-1.1 2.8-2.5 2.8z" fill="#dbdee1" transform="scale(1 .95)"/></svg></div>`;
+  if (s.add) return '<div class="srv" style="background:#313338;color:#23a55a;font-size:26px;font-weight:300">+</div>';
+  if (s.disc) return '<div class="srv" style="background:#313338"><svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="#23a55a" stroke-width="2"/><path d="M15.5 8.5l-2 5-5 2 2-5z" fill="#23a55a"/></svg></div>';
+  const inner = s.dm ? `<span style="font-size:18px">${s.dm[0]}</span>` : `<span style="font-size:${s.n.length > 3 ? 12 : s.n.length > 2 ? 14 : 16}px">${s.n}</span>`;
+  const pill = s.cur ? '<span class="pill" style="height:40px;top:4px"></span>' : s.pill ? `<span class="pill" style="height:${s.pill}px;top:20px"></span>` : '';
+  const badge = s.badge ? `<span class="badge"${s.gt ? ` data-gt="dc-badge-21"` : ''}>${s.badge}</span>` : '';
+  return `<div class="srv${s.cur ? ' cur' : ''}" style="background:${s.c}"${s.gt ? ` data-gt="${s.gt}"` : ''}>${pill}${inner}${badge}</div>`;
+}).join('');
+
+// ---------- channels ----------
+const H = '<span class="hash">#</span>';
+const SPK = '<span class="hash" style="font-size:16px">🔊</span>';
+let cl = `<div style="height:60px;border-radius:6px;background:linear-gradient(120deg,#3c4a8a,#5865f2 60%,#7a5af0);margin-bottom:6px;display:flex;align-items:flex-end;padding:8px;font-size:12px;color:#fff;font-weight:600">Fall 2026 · Section 001 & 002</div>`;
+cl += `<div class="ch">${'<span class="hash" style="font-size:15px">📅</span>'}Events<span style="margin-left:auto;font-size:12px;color:#949ba4">2</span></div>`;
+cl += '<div class="cat">⌄ INFORMATION</div>';
+cl += `<div class="ch">${H}announcements</div><div class="ch">${H}syllabus-and-schedule</div><div class="ch">${H}rules</div>`;
+cl += '<div class="cat">⌄ COURSE</div>';
+cl += `<div class="ch unread">${H}general</div>`;
+cl += `<div class="ch sel">${H}lab-help<span style="margin-left:auto;color:#b5bac1;font-size:14px">⚙</span></div>`;
+cl += `<div class="ch unread">${H}hw-help<span class="mb">2</span></div>`;
+cl += `<div class="ch">${H}exam-prep</div><div class="ch">${H}datasheets-and-refs</div><div class="ch unread">${H}off-topic</div>`;
+cl += '<div class="cat">⌄ LABS</div>';
+cl += `<div class="ch">${H}lab-6-timers</div><div class="ch">${H}lab-7-uart</div><div class="ch">${H}lab-8-adc</div>`;
+cl += '<div class="cat">⌄ VOICE</div>';
+cl += `<div class="ch" style="color:#dbdee1">${SPK}Study Room 1</div>`;
+const vu = (n, c, extra) => `<div class="vu"><div class="av" style="width:24px;height:24px;background:${c};font-size:11px">${n[0].toUpperCase()}</div>${n}${extra || ''}</div>`;
+cl += vu('alex', '#3a7bd5') + vu('Priya', '#c05a8a', ' <span style="margin-left:auto;padding-right:8px;font-size:12px">🔇</span>') + vu('Sam', '#4a8a6a');
+cl += `<div class="ch">${SPK}Study Room 2</div><div class="ch">${SPK}Office Hours</div>`;
+document.getElementById('clist').innerHTML = cl;
+
+// ---------- messages ----------
+const ROLE = { prof: '#f0a03c', ta: '#1abc9c', me: '#5aa6ff', st: '#f2f3f5' };
+const U = {
+  ethan: ['Ethan R.', '#d87a3a', 'st'], priya: ['Priya', '#c05a8a', 'st'], jordan: ['Jordan K (TA)', '#3aa88a', 'ta'], liam: ['Liam', '#7a5ad0', 'st'],
+  prof: ['Prof. Ramirez', '#b8662a', 'prof'], maya: ['Maya (TA)', '#2a9d8f', 'ta'], alex: ['alex', '#3a7bd5', 'me'], sam: ['Sam', '#4a8a6a', 'st'], noah: ['Noah', '#a05050', 'st']
+};
+const R = (list) => `<div class="rx">${list.map(([e, n, mine, gt]) => `<div class="r${mine ? ' mine' : ''}"${gt ? ` data-gt="${gt}"` : ''}><span class="e">${e}</span>${n}</div>`).join('')}</div>`;
+const M = [
+  ['div', 'November 2, 2026'],
+  ['ethan', '1:47 PM', 'anyone else getting garbage on the serial monitor for lab 7? I get stuff like <code class="inline">⸮⸮x⸮⸮</code> instead of "hello"'],
+  ['ethan', '', 'baud is 9600 on both sides, I checked like 5 times', 'cont'],
+  ['priya', '1:49 PM', 'yeah same. I swapped the TX/RX wires and then got nothing at all lol', '', R([['👀', 4]])],
+  ['ethan', '1:52 PM', 'this is my init:<pre class="blk">void uart_init(void) {\n    UBRR0  = 103;            // 9600 baud\n    UCSR0B = (1 &lt;&lt; TXEN0) | (1 &lt;&lt; RXEN0);\n    UCSR0C = (1 &lt;&lt; UCSZ01) | (1 &lt;&lt; UCSZ00);  // 8N1\n}</pre>'],
+  ['jordan', '2:06 PM', '<span class="mention">@Ethan R.</span> 103 is the value for a 16 MHz clock. The lab boards run off the internal 8 MHz oscillator, so for 9600 baud you want <code class="inline">UBRR0 = 51</code> (datasheet table 20-7). Same fix for everyone seeing junk characters.', '', R([['🙏', 11], ['✅', 6, 1]]), 'dc-ts-baud'],
+  ['liam', '2:09 PM', 'me after 3 hours of debugging a baud rate', '', '<div style="width:300px;height:120px;margin-top:6px;border-radius:8px;background:linear-gradient(135deg,#3a3d44,#4a4e57);display:flex;align-items:center;justify-content:center;color:#9aa0a8;font-size:13px">skeleton_waiting.gif</div>' + R([['💀', 23], ['😂', 9]])],
+  ['prof', '2:15 PM', '<b>Heads up:</b> Lab 7 checkoffs are moved to <b>Thursday 11/5</b> in Engineering Hall 627 because of the network outage in EPS. Bring your board and a USB cable. My office hours today are cancelled, Maya is covering them at 4.', '', R([['👍', 14], ['😭', 19, 0, 'dc-react-top'], ['🙏', 6], ['✅', 9, 1], ['🎉', 3]])],
+  ['maya', '2:21 PM', 'also for prelab Q3 you need the timer prescaler too, not just OCR1A. it\'s in the pinned message', '', R([['❤️', 5]])],
+  ['alex', '2:24 PM', 'does <code class="inline">UBRR0 = 51</code> still work if U2X0 is set?', 'me'],
+  ['maya', '2:26 PM', '<span class="mention">@alex</span> with U2X0 = 1 it\'s 103 again, the double-speed mode halves the divider', '', R([['😂', 7], ['🧠', 4, 1]])],
+  ['sam', '2:31 PM', 'is the thursday checkoff for both sections or just 001?'],
+  ['noah', '2:33 PM', 'both I think, it says "all sections" on canvas'],
+];
+let mh = '';
+M.forEach(([who, ts, tx, flag, extra, tsGt]) => {
+  if (who === 'div') { mh += `<div class="div">${ts}</div>`; return; }
+  const [name, col, role] = U[who];
+  if (flag === 'cont') { mh += `<div class="msg cont"><div style="width:40px;flex:none"></div><div class="body"><div class="tx">${tx}</div></div></div>`; return; }
+  mh += `<div class="msg${flag === 'me' ? ' me' : ''}"><div class="av" style="width:40px;height:40px;background:${col};font-size:16px">${name[0]}</div><div class="body">
+    <div><span class="nm" style="color:${ROLE[role]}">${name}</span>${role === 'prof' ? ' <span style="background:#5865f2;color:#fff;font-size:10px;font-weight:700;border-radius:3px;padding:1px 4px;vertical-align:2px">PROF</span>' : ''}<span class="ts"${tsGt ? ` data-gt="${tsGt}"` : ''}>Today at ${ts}</span></div>
+    <div class="tx">${tx}</div>${extra || ''}</div></div>`;
+});
+document.getElementById('msgs').innerHTML = mh;
+
+// ---------- members ----------
+const mem = (n, c, st, sub, nc, off) => `<div class="mem${off ? ' off' : ''}"><div class="av" style="width:32px;height:32px;background:${c};font-size:13px">${n[0]}<span class="st" style="background:${st}"></span></div><div style="line-height:17px"><div style="color:${nc || '#b5bac1'};font-weight:500">${n}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div></div>`;
+const G = '#23a55a', Y = '#f0b232', D = '#f23f43', O = '#80848e';
+let mm = '<div class="mcat">PROFESSOR — 1</div>' + mem('Prof. Ramirez', '#b8662a', Y, 'Grading lab reports', ROLE.prof);
+mm += '<div class="mcat">TAs — 2</div>' + mem('Jordan K (TA)', '#3aa88a', G, '', ROLE.ta) + mem('Maya (TA)', '#2a9d8f', D, 'office hrs 4-6 Engineering Hall 627', ROLE.ta);
+mm += '<div class="mcat">ONLINE — 11</div>' + [['alex', '#3a7bd5', G, '🎧 Study Room 1'], ['Ethan R.', '#d87a3a', G], ['Liam', '#7a5ad0', Y], ['Noah', '#a05050', G, 'Playing VALORANT'], ['Priya', '#c05a8a', G, '🎧 Study Room 1'], ['Sam', '#4a8a6a', G, '🎧 Study Room 1'], ['Hannah', '#7a7a3a', D], ['Ivy', '#5a7ac0', G], ['Marcus T', '#3a5a8a', Y], ['Owen', '#8a4a7a', G, 'Listening to Spotify'], ['Zoe', '#3a8a8a', G]].map(a => mem(a[0], a[1], a[2], a[3] || '')).join('');
+mm += '<div class="mcat">OFFLINE — 23</div>' + [['Ben', '#555'], ['Carlos', '#555'], ['Dana', '#555'], ['Eli', '#555']].map(a => mem(a[0], '#5c5f66', O, '', '', 1)).join('');
+document.getElementById('members').innerHTML = mm;
+</script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+# reference frames stay out of git (sources.txt says where each came from); only the montage the judges see is kept
+refs/*/*.png
+refs/*/anim/

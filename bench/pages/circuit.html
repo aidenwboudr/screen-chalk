@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>LTspice - lab5_rc_buffer.asc</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1280px; overflow: hidden; }
+  body { font-family: Inter, 'Noto Sans', 'DejaVu Sans', sans-serif; font-size: 12px; color: #1a1a1a; background: #f0f0f0; }
+  .mono { font-family: 'JetBrains Mono','DejaVu Sans Mono',monospace; }
+  .titlebar { height: 32px; background: #fff; display: flex; align-items: center; padding: 0 10px; gap: 8px; border-bottom: 1px solid #ddd; font-size: 12.5px; }
+  .titlebar .wc { margin-left: auto; display: flex; }
+  .titlebar .wc span { width: 46px; text-align: center; font-size: 14px; color: #333; }
+  .menubar { height: 24px; display: flex; align-items: center; padding: 0 4px; background: #fff; font-size: 12.5px; }
+  .menubar span { padding: 2px 8px; }
+  .toolbar { height: 38px; background: #f5f5f5; border-top: 1px solid #ddd; border-bottom: 1px solid #c9c9c9; display: flex; align-items: center; padding: 0 6px; gap: 1px; }
+  .tb { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 2px; }
+  .tb.on { background: #cce4f7; border-color: #99c9ef; }
+  .tb svg { width: 24px; height: 24px; }
+  .vs { width: 1px; height: 26px; background: #c9c9c9; margin: 0 4px; }
+  .mdi { position: absolute; top: 94px; left: 0; right: 0; bottom: 22px; background: #a0a0a0; }
+  .win { position: absolute; background: #fff; border: 1px solid #7a7a7a; box-shadow: 0 2px 8px rgba(0,0,0,.25); display: flex; flex-direction: column; }
+  .win .wt { height: 26px; background: #e9eef6; border-bottom: 1px solid #b5bdc9; display: flex; align-items: center; padding: 0 8px; font-size: 12px; gap: 6px; }
+  .win .wt .wc { margin-left: auto; display: flex; gap: 14px; color: #444; }
+  .win.inactive .wt { background: #f1f1f1; color: #666; }
+  .status { position: absolute; left: 0; right: 0; bottom: 0; height: 22px; background: #f0f0f0; border-top: 1px solid #c9c9c9; display: flex; align-items: center; padding: 0 8px; gap: 30px; font-size: 12px; color: #333; }
+</style>
+</head>
+<body>
+<div class="titlebar">
+  <svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" rx="2" fill="#1c4f9c"/><path d="M3 11l3-6 3 6 3-6" stroke="#fff" stroke-width="1.5" fill="none"/></svg>
+  LTspice 24.1.6 — [lab5_rc_buffer.asc]
+  <div class="wc"><span>—</span><span>☐</span><span>✕</span></div>
+</div>
+<div class="menubar"><span>File</span><span>Edit</span><span>Hierarchy</span><span>View</span><span>Simulate</span><span>Tools</span><span>Window</span><span>Help</span></div>
+<div class="toolbar" id="tbar"></div>
+<div class="mdi">
+  <div class="win" style="left:6px;top:6px;right:6px;height:640px">
+    <div class="wt"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 7h3l1-3 2 6 1-3h3" stroke="#1c4f9c" fill="none" stroke-width="1.4"/></svg>lab5_rc_buffer.asc<span class="wc"><span>—</span><span>❐</span><span>✕</span></span></div>
+    <svg id="sch" width="1906" height="612" viewBox="0 0 1906 612" style="display:block;background:#fbfbf6" font-family="DejaVu Sans, sans-serif"></svg>
+  </div>
+  <div class="win" style="left:6px;top:654px;right:6px;bottom:6px">
+    <div class="wt"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M1 7c2-6 4-6 6 0s4 6 6 0" stroke="#0a8a0a" fill="none" stroke-width="1.4"/></svg>lab5_rc_buffer.raw<span class="wc"><span>—</span><span>❐</span><span>✕</span></span></div>
+    <svg id="wave" width="1906" height="476" style="display:block;background:#000" font-family="DejaVu Sans, sans-serif"></svg>
+  </div>
+</div>
+<div class="status"><span>x = 2.371ms   y = 482.6mV</span><span>Interval: 3.000ms</span><span style="margin-left:auto">Simulation complete · 0.42 s · 5,012 timesteps</span></div>
+<script>
+  // toolbar icons (24x24)
+  const I = {
+    newsch: '<path d="M5 2h10l4 4v16H5z" fill="#fff" stroke="#444"/><path d="M8 13h3l1-3 2 6 1-3h2" stroke="#1c4f9c" fill="none"/>',
+    open: '<path d="M2 6h7l2 2h11v12H2z" fill="#f5c84c" stroke="#a07d22"/>',
+    save: '<rect x="3" y="3" width="18" height="18" rx="1" fill="#2f6db5"/><rect x="7" y="3" width="10" height="6" fill="#fff"/><rect x="7" y="13" width="10" height="8" fill="#e3ecf8"/>',
+    run: '<circle cx="15" cy="4" r="2.2" fill="#1a1a1a"/><path d="M13.5 7.5l-3 5 4 3-1.5 6M10.5 12.5l-4 1M13.5 7.5l4 3 3-1M14.5 15.5l4.5 1.5" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>',
+    halt: '<path d="M12 3a9 9 0 1 0 .01 0z" fill="#c62828"/><rect x="7" y="10.5" width="10" height="3" fill="#fff"/>',
+    zin: '<circle cx="10" cy="10" r="6.5" fill="#fff" stroke="#333" stroke-width="1.6"/><path d="M15 15l6 6M7 10h6M10 7v6" stroke="#333" stroke-width="1.6"/>',
+    zout: '<circle cx="10" cy="10" r="6.5" fill="#fff" stroke="#333" stroke-width="1.6"/><path d="M15 15l6 6M7 10h6" stroke="#333" stroke-width="1.6"/>',
+    fit: '<rect x="3" y="5" width="18" height="14" fill="none" stroke="#333" stroke-width="1.4"/><path d="M7 9h10v6H7z" fill="#9cc3ec"/>',
+    pan: '<path d="M12 2v20M2 12h20M12 2l-3 3M12 2l3 3M12 22l-3-3M12 22l3-3M2 12l3-3M2 12l3 3M22 12l-3-3M22 12l-3 3" stroke="#333" stroke-width="1.5" fill="none"/>',
+    autoscale: '<path d="M3 20h18M3 20V4" stroke="#333" stroke-width="1.4"/><path d="M4 16c3-8 6-8 8 0s5 8 8 0" stroke="#0a8a0a" stroke-width="1.6" fill="none"/>',
+    cut: '<path d="M7 3l10 14M17 3L7 17" stroke="#333" stroke-width="1.6"/><circle cx="6" cy="19" r="3" fill="none" stroke="#333" stroke-width="1.6"/><circle cx="18" cy="19" r="3" fill="none" stroke="#333" stroke-width="1.6"/>',
+    copy: '<rect x="3" y="3" width="12" height="14" fill="#fff" stroke="#333"/><rect x="9" y="7" width="12" height="14" fill="#fff" stroke="#333"/>',
+    move: '<path d="M12 4l3 3h-2v4h4V9l3 3-3 3v-2h-4v4h2l-3 3-3-3h2v-4H7v2l-3-3 3-3v2h4V7H9z" fill="#333"/>',
+    drag: '<path d="M6 3v13l3-3 3 6 2-1-3-6h4z" fill="#fff" stroke="#333" stroke-width="1.3"/>',
+    undo: '<path d="M9 6L4 11l5 5M4 11h11a5 5 0 0 1 0 10h-3" stroke="#2f6db5" stroke-width="2" fill="none"/>',
+    redo: '<path d="M15 6l5 5-5 5M20 11H9a5 5 0 0 0 0 10h3" stroke="#2f6db5" stroke-width="2" fill="none"/>',
+    rotate: '<path d="M18 12a6 6 0 1 1-2-4.5M18 3v5h-5" stroke="#333" stroke-width="1.8" fill="none"/>',
+    mirror: '<path d="M12 2v20" stroke="#333" stroke-dasharray="2 2"/><path d="M10 6L3 18h7zM14 6l7 12h-7z" fill="#9cc3ec" stroke="#333"/>',
+    wire: '<path d="M3 20l6-12 8 0 4-5" stroke="#1c4f9c" stroke-width="2" fill="none"/><path d="M15 17l6 0" stroke="#333"/><path d="M18 14v6" stroke="#333"/>',
+    ground: '<path d="M12 3v9M4 12h16M7 16h10M10 20h4" stroke="#333" stroke-width="1.8"/>',
+    label: '<path d="M3 8h12l5 4-5 4H3z" fill="#fff" stroke="#333" stroke-width="1.5"/><path d="M6 12h6" stroke="#333"/>',
+    res: '<path d="M2 12h3l2-5 3 10 3-10 3 10 2-5h4" stroke="#333" stroke-width="1.8" fill="none" stroke-linejoin="round"/>',
+    cap: '<path d="M2 12h8M14 12h8M10 5v14M14 5v14" stroke="#333" stroke-width="2" fill="none"/>',
+    ind: '<path d="M2 14h3a3 3 0 0 1 6 0a3 3 0 0 1 6 0a3 3 0 0 1 6 0" stroke="#333" stroke-width="1.8" fill="none"/>',
+    diode: '<path d="M2 12h20M8 6v12l9-6z" stroke="#333" stroke-width="1.6" fill="#fff"/><path d="M17 6v12" stroke="#333" stroke-width="2"/>',
+    comp: '<path d="M6 4v16l14-8z" fill="#fff" stroke="#333" stroke-width="1.6"/><path d="M2 8h4M2 16h4M20 12h3" stroke="#333" stroke-width="1.6"/>',
+    text: '<text x="6" y="19" font-size="18" font-family="DejaVu Serif" font-weight="700" fill="#333">A</text>',
+    op: '<text x="2" y="16" font-size="11" font-family="DejaVu Sans Mono" font-weight="700" fill="#333">.op</text>',
+  };
+  const order = ['newsch','open','save','|','run','halt','|','zin','zout','fit','pan','autoscale','|','cut','copy','move','drag','undo','redo','rotate','mirror','|','wire','ground','label','res','cap','ind','diode','comp','text','op'];
+  const tb = document.getElementById('tbar');
+  order.forEach(k => {
+    if (k === '|') { tb.insertAdjacentHTML('beforeend', '<span class="vs"></span>'); return; }
+    const gt = k === 'run' ? ' data-gt="circuit-run-btn"' : k === 'res' ? ' data-gt="circuit-resistor-tool"' : '';
+    tb.insertAdjacentHTML('beforeend', `<div class="tb${k === 'wire' ? ' on' : ''}"${gt}><svg viewBox="0 0 24 24">${I[k]}</svg></div>`);
+  });
+
+  // schematic
+  const W = '#1c4f9c', C = '#7a1f1f', T = '#1a1a1a';
+  let s = '';
+  // dot grid
+  for (let x = 16; x < 1906; x += 16) for (let y = 16; y < 612; y += 16) s += `<rect x="${x}" y="${y}" width="1" height="1" fill="#c9c9bf"/>`;
+  const wire = d => `<path d="${d}" stroke="${W}" stroke-width="2" fill="none"/>`;
+  const gnd = (x, y) => `<g><path d="M${x} ${y}v8M${x - 16} ${y + 8}h32l-16 14z" stroke="${C}" stroke-width="2" fill="none" stroke-linejoin="round"/></g>`;
+  const dot = (x, y) => `<circle cx="${x}" cy="${y}" r="5" fill="${W}"/>`;
+  const lbl = (x, y, t, a = 'start', sz = 15, col = T, extra = '') => `<text x="${x}" y="${y}" font-size="${sz}" text-anchor="${a}" fill="${col}" ${extra}>${t}</text>`;
+  // V1 source
+  s += `<g><circle cx="240" cy="352" r="40" fill="none" stroke="${C}" stroke-width="2"/><path d="M216 352c8-20 16-20 24 0s16 20 24 0" stroke="${C}" stroke-width="2" fill="none"/><path d="M240 296v16M240 392v16" stroke="${C}" stroke-width="2"/><text x="252" y="324" font-size="13" fill="${C}">+</text></g>`;
+  s += lbl(296, 340, 'V1') + lbl(296, 360, 'SINE(0 1 1k)', 'start', 14, T, 'font-family="DejaVu Sans Mono"');
+  s += wire('M240 296V224H416') + gnd(240, 408);
+  // R1
+  s += `<g><path d="M416 224h16l8 -14 16 28 16 -28 16 28 16 -28 16 28 8 -14h16" stroke="${C}" stroke-width="2" fill="none" stroke-linejoin="round"/></g>`;
+  s += lbl(470, 192, 'R1', 'middle') + lbl(470, 264, '1.6k', 'middle');
+  s += wire('M544 224H880');
+  // C1
+  s += `<g data-gt="circuit-c1"><rect x="668" y="224" width="126" height="190" fill="transparent"/><path d="M704 224v84M704 330v84" stroke="${C}" stroke-width="2" fill="none"/><path d="M672 308h64M672 330h64" stroke="${C}" stroke-width="4"/><text x="748" y="314" font-size="15" fill="${T}">C1</text><text x="748" y="336" font-size="15" fill="${T}">100n</text></g>`;
+  s += gnd(704, 414) + dot(704, 224);
+  // net labels
+  s += `<path d="M300 224v-24h40" stroke="${W}" stroke-width="2" fill="none"/>` + lbl(346, 205, 'in', 'start', 14, W);
+  s += `<path d="M620 224v-24h40" stroke="${W}" stroke-width="2" fill="none"/>` + lbl(666, 205, 'filt', 'start', 14, W);
+  s += dot(300, 224) + dot(620, 224);
+  // U1 op-amp
+  s += `<g data-gt="circuit-u1"><path d="M880 176v176l160-88z" fill="#fff" stroke="${C}" stroke-width="2"/><path d="M880 224h-0M880 304h0" stroke="${C}"/><text x="890" y="230" font-size="20" fill="${C}">+</text><text x="892" y="312" font-size="22" fill="${C}">−</text><path d="M960 196v-36M960 332v36" stroke="${C}" stroke-width="2"/><text x="980" y="200" font-size="15" fill="${T}">U1</text><text x="980" y="342" font-size="15" fill="${T}">TL072</text></g>`;
+  s += wire('M960 160V128') + lbl(960, 118, 'VCC', 'middle', 14, W);
+  s += wire('M960 368V400') + lbl(960, 420, 'VEE', 'middle', 14, W);
+  // output and feedback
+  s += wire('M1040 264H1328') + dot(1120, 264);
+  s += wire('M1120 264V480H848V304H880');
+  s += `<path d="M1328 264v-24h40" stroke="${W}" stroke-width="2" fill="none"/>` + lbl(1374, 245, 'out', 'start', 14, W) + dot(1328, 264);
+  // R2 load
+  s += wire('M1328 264H1424V304');
+  s += `<g><path d="M1424 304v12l-14 8 28 16-28 16 28 16-28 16 14 8v12" stroke="${C}" stroke-width="2" fill="none" stroke-linejoin="round"/></g>` + lbl(1452, 350, 'R2') + lbl(1452, 372, '10k');
+  s += wire('M1424 408V432') + gnd(1424, 432);
+  // supplies
+  const sup = (x, name, val, top) => `<g><circle cx="${x}" cy="200" r="32" fill="none" stroke="${C}" stroke-width="2"/><text x="${x}" y="190" font-size="18" text-anchor="middle" fill="${C}">+</text><text x="${x}" y="218" font-size="18" text-anchor="middle" fill="${C}">−</text><path d="M${x} 168v-24M${x} 232v24" stroke="${C}" stroke-width="2"/></g>` + wire(`M${x} 144V120`) + lbl(x, 110, top, 'middle', 14, W) + lbl(x + 44, 196, name) + lbl(x + 44, 216, val);
+  s += sup(1600, 'V2', '15', 'VCC') + gnd(1600, 256);
+  s += `<g><circle cx="1780" cy="200" r="32" fill="none" stroke="${C}" stroke-width="2"/><text x="1780" y="190" font-size="18" text-anchor="middle" fill="${C}">+</text><text x="1780" y="218" font-size="18" text-anchor="middle" fill="${C}">−</text><path d="M1780 168v-24M1780 232v24" stroke="${C}" stroke-width="2"/></g>` + lbl(1824, 196, 'V3') + lbl(1824, 216, '15');
+  s += wire('M1780 144V128H1730V144') + gnd(1730, 144);
+  s += wire('M1780 256V272') + lbl(1780, 292, 'VEE', 'middle', 14, W);
+  // directives
+  s += lbl(200, 540, '.tran 0 5m 0 1u', 'start', 15, '#0b0b0b', 'font-family="DejaVu Sans Mono"');
+  s += lbl(200, 562, '.meas TRAN gain PARAM max(V(out))/max(V(in))', 'start', 15, '#0b0b0b', 'font-family="DejaVu Sans Mono"');
+  s += lbl(200, 584, '.lib opamp.sub', 'start', 15, '#0b0b0b', 'font-family="DejaVu Sans Mono"');
+  s += lbl(1180, 548, 'ECE 317 lab 5: RC low-pass (fc = 995 Hz) + unity-gain buffer', 'start', 14, '#555', 'font-style="italic"');
+  document.getElementById('sch').innerHTML = s;
+
+  // waveform
+  const wv = document.getElementById('wave');
+  const L = 90, R = 1860, Tt = 40, B = 430;
+  const tmax = 5e-3, vmax = 1.2;
+  const X = t => L + t / tmax * (R - L);
+  const Y = v => (Tt + B) / 2 - v / vmax * (B - Tt) / 2;
+  let w = '';
+  w += `<rect x="${L}" y="${Tt}" width="${R - L}" height="${B - Tt}" fill="none" stroke="#808080"/>`;
+  for (let i = 0; i <= 10; i++) { const x = L + i * (R - L) / 10; w += `<line x1="${x}" x2="${x}" y1="${Tt}" y2="${B}" stroke="#3a3a3a" stroke-dasharray="2 4"/><text x="${x}" y="${B + 20}" fill="#c0c0c0" font-size="13" text-anchor="middle">${(i * 0.5).toFixed(1)}ms</text>`; }
+  for (let v = -1.2; v <= 1.21; v += 0.3) { const y = Y(v); w += `<line x1="${L}" x2="${R}" y1="${y}" y2="${y}" stroke="#3a3a3a" stroke-dasharray="2 4"/><text x="${L - 8}" y="${y + 4}" fill="#c0c0c0" font-size="13" text-anchor="end">${(v * 1000).toFixed(0)}mV</text>`; }
+  const f = 1000, fc = 1 / (2 * Math.PI * 1600 * 100e-9);
+  const g = 1 / Math.sqrt(1 + (f / fc) ** 2), ph = Math.atan(f / fc), tau = 1600 * 100e-9;
+  let pin = '', pout = '', outMax = [-9, 0];
+  for (let i = 0; i <= 1200; i++) {
+    const t = i / 1200 * tmax;
+    const vin = Math.sin(2 * Math.PI * f * t);
+    // steady-state + transient term from zero initial condition
+    const vout = g * Math.sin(2 * Math.PI * f * t - ph) + g * Math.sin(ph) * Math.exp(-t / tau);
+    if (vout > outMax[0]) outMax = [vout, t];
+    pin += (i ? 'L' : 'M') + X(t).toFixed(1) + ' ' + Y(vin).toFixed(1);
+    pout += (i ? 'L' : 'M') + X(t).toFixed(1) + ' ' + Y(vout).toFixed(1);
+  }
+  w += `<path d="${pin}" stroke="#00c000" stroke-width="2" fill="none"/>`;
+  w += `<g data-gt="circuit-vout-trace"><path d="${pout}" stroke="#3f7fff" stroke-width="2" fill="none"/></g>`;
+  w += `<text x="${(L + R) / 2 - 80}" y="26" fill="#00c000" font-size="15" text-anchor="middle">V(in)</text><text data-gt="circuit-vout-legend" x="${(L + R) / 2 + 80}" y="26" fill="#3f7fff" font-size="15" text-anchor="middle">V(out)</text>`;
+  // cursor
+  const ct = 2.371e-3; w += `<line x1="${X(ct)}" x2="${X(ct)}" y1="${Tt}" y2="${B}" stroke="#bdbdbd" stroke-dasharray="6 3"/><text x="${X(ct) + 6}" y="${Tt + 16}" fill="#bdbdbd" font-size="12">1</text>`;
+  // hard-set target: the output's highest point (the first peak, lifted by the start-up transient)
+  w += `<rect data-gt="circuit-vout-max" x="${(X(outMax[1]) - 14).toFixed(1)}" y="${(Y(outMax[0]) - 14).toFixed(1)}" width="28" height="28" fill="none" stroke="none"/>`;
+  wv.innerHTML = w;
+  // transparent hit box over the output trace's own extent (for hit-testing only)
+  const vg = wv.querySelector('[data-gt="circuit-vout-trace"]'); const bb = vg.getBBox();
+  vg.insertAdjacentHTML('beforeend', `<rect x="${bb.x}" y="${bb.y}" width="${bb.width}" height="${bb.height}" fill="transparent"/>`);
+</script>
+</body>
+</html>

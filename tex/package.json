@@ -1,0 +1,8 @@
+{
+  "name": "chalk-tex",
+  "private": true,
+  "description": "TeX -> glyph outlines for chalk's scene boards (texd.js)",
+  "dependencies": {
+    "mathjax-full": "3.2.1"
+  }
+}

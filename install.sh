@@ -75,7 +75,7 @@ EOF
 main=${SWAY_CONFIG:-~/.config/sway/config}
 if [[ ! -f $main ]]; then
   echo "sway: no $main yet (Sway is using /etc/sway/config): copy that there and add  include ~/.config/sway/config.d/*" >&2
-elif ! grep -qE '^\s*include\s+.*(~|\$HOME|/home/[^/]+)/\.config/sway/config\.d' "$main"; then
+elif ! grep -qE '^\s*include\s+.*sway/config\.d/' "$main"; then   # ~, $HOME, ${XDG_CONFIG_HOME:-…}: any form
   echo "sway: add this line to $main so it loads chalk's hotkeys:  include ~/.config/sway/config.d/*" >&2
 fi
 # check before reloading: a bad line would put an error bar on the live session. Only errors in chalk.conf count
@@ -94,8 +94,14 @@ export SWAYSOCK="${SWAYSOCK:-$(ls -t "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"/sw
 if [[ -n $SWAYSOCK ]] && swaymsg reload >/dev/null 2>&1; then
   echo "sway: Super+/ asks, Super+Shift+/ clears, Super+. peeks, Super+; answers, Super+Ctrl+C copies"
   ~/.local/bin/chalk stop >/dev/null 2>&1 || true   # a running overlay keeps its old code until restarted
-  sleep 0.4
-  ~/.local/bin/chalk start || true
+  # wait until the old one has really gone: a ping that reaches it while it exits counts as "started", and then
+  # it takes its socket with it and nothing is left running
+  for _ in $(seq 50); do [[ $(~/.local/bin/chalk status 2>/dev/null) == "overlay not running" ]] && break; sleep 0.1; done
+  if ~/.local/bin/chalk start && [[ $(~/.local/bin/chalk status 2>/dev/null) != "overlay not running" ]]; then
+    echo "chalk: overlay restarted"
+  else
+    echo "chalk: the overlay didn't come back up; see \$CHALK_STATE/overlay.log, then run chalk start" >&2
+  fi
 else
   echo "sway: the hotkeys apply at the next Sway start or reload"
 fi

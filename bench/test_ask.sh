@@ -25,7 +25,24 @@ echo "2. a follow-up keeps the first answer and says so in the prompt"
 grep -q "This is a follow-up question" "$FAKE_LOG" || fail "the follow-up had no conversation context"
 echo "   ok"
 
-echo "3. route teach: Super+/ goes to the tutor (CHALK_TEACH) instead"
+echo "3. a board the user closed: the next follow-up is told it's gone (not that it's on screen) and puts it back"
+op() { python3 -c 'import json, socket, sys; s = socket.socket(socket.AF_UNIX); s.connect(sys.argv[1]); s.sendall(sys.argv[2].encode() + b"\n"); print(s.makefile().readline())' "$CHALK_SOCK" "$1"; }
+board='{"draw": true, "at": [1100, 200], "scene": {"title": "emf peak", "size": [420, 260], "objects": [{"id": "t", "text": "sin peaks at 1", "at": [40, 120]}], "steps": [{"show": ["t"], "say": "the peak"}]}}'
+out=$(CHALK_SCENE_CHECK=0 FAKE_SKETCH="$board" ./chalk ask --json "why is that the max?")
+tag=$(op '{"op": "tags"}' | jq -r '.tags | to_entries[] | select(.key | startswith("b")) | .key')
+[[ -n $tag ]] || fail "no board drawn: $(op '{"op": "tags"}')"
+op "{\"op\": \"panel_act\", \"tag\": \"$tag\", \"action\": \"close\"}" >/dev/null   # its red dot
+sleep 1
+op '{"op": "tags"}' | jq -e --arg t "$tag" '.tags[$t] == null' >/dev/null || fail "the board didn't close"
+: > "$FAKE_LOG"
+CHALK_SCENE_CHECK=0 FAKE_SKETCH="{\"draw\": false, \"restore\": [\"$tag\"]}" ./chalk ask --json "help" > "$CHALK_STATE/out.json"
+grep -q "$tag: board \\\\\"emf peak\\\\\".*the user closed it" "$FAKE_LOG" || fail "the follow-up wasn't told the board was closed: $(head -c 1500 "$FAKE_LOG")"
+grep -q "NOT in front of the user" "$FAKE_LOG" || fail "no off-screen section in the prompt"
+jq -e --arg t "$tag" '.restored == [$t]' "$CHALK_STATE/out.json" >/dev/null || fail "not restored: $(cat "$CHALK_STATE/out.json")"
+op '{"op": "panel_info"}' | jq -e --arg t "$tag" '.panels[] | select(.tag == $t) | .objects == 1' >/dev/null || fail "the board isn't back: $(op '{"op": "panel_info"}')"
+echo "   ok ($tag closed, then put back)"
+
+echo "4. route teach: Super+/ goes to the tutor (CHALK_TEACH) instead"
 printf '#!/bin/sh\necho "$@" >> %s/teach.log\n' "$CHALK_STATE" > "$CHALK_STATE/teach"; chmod +x "$CHALK_STATE/teach"
 export CHALK_ROUTE="$CHALK_STATE/route.json"
 ./chalk route teach demo "Demo lesson" | jq -e '.to == "teach" and .slug == "demo"' >/dev/null || fail "route teach"

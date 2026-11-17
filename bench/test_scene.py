@@ -67,6 +67,39 @@ sc.act("next")
 check("Replay from the last step starts over", sc.step == 0)
 e = sc.env(clock[0] + 0.5)
 check("step and st in expressions", e["step"] == 1 and 0.4 < e["st"] < 0.6 and scene.compile_expr("lerp(0, 10, ease(st))")[0](e) > 0)
+
+# symbols MathJax's text font lacks (θ in a plain label goes through \text{}) still get outlines, even far along
+for src in (r"\text{L sin θ}", r"\text{%s θ}" % ("x" * 30)):
+    with_sym, ascii_ = scene.TEX.get(src), scene.TEX.get(src.replace("θ", "q"))
+    check(f"TeX keeps the θ in {src[:16]}", bool(with_sym and ascii_ and len(with_sym["glyphs"]) == len(ascii_["glyphs"])
+                                             and with_sym["glyphs"][-1][2] > 0), with_sym and len(with_sym["glyphs"]))
+
+
+def board(params=(), objects=(), size=(520, 320)):
+    b = scene.Scene({"size": list(size), "params": list(params), "objects": list(objects),
+                     "steps": [{"show": [o["id"] for o in objects]}]})
+    clock[0] += 60   # everything has come in
+    return b, b.snapshot()
+
+
+lb, _ = board(objects=[{"id": "l", "line": [480, 150, 480, 250], "dash": True, "label": "L sin θ"}])
+r = lb.placed[0] if lb.placed else None
+check("a line's label near the right edge steps to the line's left", bool(r and r[0] + r[2] <= 480), r)
+lb, _ = board(objects=[{"id": "l", "line": [100, 150, 100, 250], "label": "L sin θ"}])
+r = lb.placed[0] if lb.placed else None
+check("...and stays right of it when there's room", bool(r and r[0] >= 100), r)
+
+long_label = "angle θ between the wire and the magnetic field lines, measured from the vertical"
+for label, stacked in (("angle θ between wire and field", False), (long_label, True)):
+    sb, (_, _, h_, hits_) = board(params=[{"name": "a", "label": label, "min": 0, "max": 1, "value": 0.5}])
+    lay, lw, above = sb.slider_label(sb.params[0], scene.panel.measure_ctx())
+    sl = next(a for _, a in hits_ if isinstance(a, tuple) and a[0] == "slider")
+    check(f"slider label shown whole ({'own line' if stacked else 'beside the track'})",
+          not lay.is_ellipsized() and bool(above) == stacked and abs(sl[2] - (scene.PAD + lw)) < 1e-6
+          and (not stacked or lay.get_pixel_extents()[1].width <= sb.w - 2 * scene.PAD), (lw, above, sl))
+_, (_, _, h_short, _) = board(params=[{"name": "a", "label": "a", "min": 0, "max": 1}])
+check("a label on its own line makes the card taller by that line", h_ > h_short + 10, (h_, h_short))
+
 bad = scene.Scene({"scene": {"objects": [{"plot": "1/(x", "on": "nope"}, {"tex": "\\frac{", "at": [0, 0]},
                                          {"circle": ["a", "b", "c"]}, {"bogus": 1}], "params": [{"name": "p", "min": 5, "max": 1}]}})
 bad.snapshot()

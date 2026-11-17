@@ -15,6 +15,7 @@
   chalk toast "words" [--color C]   a tiny state toast at the top of the screen
   chalk remove <tag>...      take these shapes/panels away
   chalk clear [--marks] | status | stop   (--marks: leave questions still waiting on the user)
+  chalk ready                is the screen there for the user now: {"ready", "locked", "awake"} (exit 0 either way)
 
 Runs in a Sway session. On a machine without one it can forward to a machine that has one
 over ssh (CHALK_HOST) and bring the screenshot back. Coordinates are Sway layout pixels.
@@ -614,6 +615,32 @@ def cmd_start(args):
     """Start the overlay now (it also starts on the first draw); used at Sway login."""
     send({"op": "ping"})
 
+# screen lockers: while one runs, the user can't see or reach what chalk draws (CHALK_LOCKERS, space-separated)
+LOCKERS = (os.environ.get("CHALK_LOCKERS") or "swaylock gtklock waylock hyprlock").split()
+
+def locker_running():
+    """A screen locker of this user's running (not a zombie nobody has reaped yet)."""
+    for d in glob.glob("/proc/[0-9]*"):
+        try:
+            if os.stat(d).st_uid != os.getuid():
+                continue
+            stat = open(f"{d}/stat").read()
+            name, state = stat[stat.index("(") + 1:stat.rindex(")")], stat[stat.rindex(")") + 2]
+        except (OSError, ValueError, IndexError):
+            continue
+        if name in LOCKERS and state != "Z":
+            return True
+    return False
+
+def cmd_ready(args):
+    """Can the user see the screen right now: not locked, and at least one display powered on. A caller (a tutor
+    deciding to teach a step on the screen) asks first, so it doesn't talk to a locked or sleeping laptop."""
+    locked = locker_running()
+    outs = outputs()
+    # Sway 1.10+ reports "power"; older ones "dpms"
+    awake = any(o.get("power", o.get("dpms", True)) for o in outs)
+    print(json.dumps({"ready": awake and not locked, "locked": locked, "awake": awake}))
+
 def cmd_status(args):
     r = send({"op": "stats"}, start=False)
     print(json.dumps(r) if r else "overlay not running")
@@ -622,7 +649,7 @@ def cmd_stop(args):
     send({"op": "quit"}, start=False)
 
 COMMANDS = {"look": cmd_look, "draw": cmd_draw, "ask": cmd_ask, "clear": cmd_clear, "start": cmd_start,
-            "status": cmd_status, "stop": cmd_stop, "say": cmd_say, "play": cmd_play, "hush": cmd_hush,
+            "status": cmd_status, "ready": cmd_ready, "stop": cmd_stop, "say": cmd_say, "play": cmd_play, "hush": cmd_hush,
             "watch": cmd_watch, "route": cmd_route, "peek": cmd_peek, "panel": cmd_panel, "focus": cmd_focus,
             "copy": cmd_copy, "toast": cmd_toast, "remove": cmd_remove}
 

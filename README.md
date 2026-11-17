@@ -160,6 +160,7 @@ fills in whatever the environment doesn't set, so the hotkey, Claude Code's MCP 
 | `CHALK_REMOTE_BIN` | `~/.local/bin/chalk` | chalk on the other machine |
 | `CHALK_PYTHON` | `/usr/bin/python3` | the python with the GTK bindings, for the overlay |
 | `CHALK_WATCH_IGNORE_TITLE` | `Teach$` | windows whose changes `chalk watch` ignores (regex on the title) |
+| `CHALK_LOCKERS` | `swaylock gtklock waylock hyprlock` | screen lockers `chalk ready` looks for (while one runs, the screen counts as locked) |
 | `CHALK_KEY_PEEK`, `CHALK_KEY_FOCUS`, `CHALK_KEY_COPY` | `Super+.`, `Super+;`, `Super+Ctrl+C` | the keys named in hints, if you bound others |
 | `CHALK_TEACH` | `teach` | Teach's CLI, for `chalk route teach` |
 | `CHALK_HOOKS` | none | a Python file with extra behaviour for the hotkey (API in `chalkconf.py`) |

@@ -46,7 +46,7 @@ jobs:
           # GTK apps (zenity) otherwise wait seconds for an accessibility bus the runner doesn't have, and paint late
           export XDG_RUNTIME_DIR=$(mktemp -d) PATH=$PWD/cap:$PATH NO_AT_BRIDGE=1 GTK_A11Y=none
           chmod 700 "$XDG_RUNTIME_DIR"
-          for t in test_watch test_adapt test_panel test_scene test_ask; do
+          for t in test_watch test_adapt test_panel test_fit test_scene test_ask; do
             echo "::group::$t"
             dbus-run-session -- timeout 400 bash bench/$t.sh || { echo "::endgroup::"; bench/headless-sway.sh stop; tail -40 "$XDG_RUNTIME_DIR/chalk-headless/log" || true; exit 1; }
             bench/headless-sway.sh stop; sleep 1

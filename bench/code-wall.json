@@ -1,0 +1,11 @@
+[
+ {
+  "kind": "card",
+  "title": "8b. src/main.c (replace all of it)",
+  "text": "```c\n#include <zephyr/kernel.h>\n#include <zephyr/audio/dmic.h>\n#include <zephyr/sys/printk.h>\n#include <string.h>\n\n#define RATE          16000\n#define BLOCK_SAMPLES (RATE / 10)          /* 100 ms = 1600 samples */\n#define BLOCK_BYTES   (BLOCK_SAMPLES * 2)  /* 16-bit = 3200 bytes   */\n#define SECONDS       5\n#define TOTAL_SAMPLES (RATE * SECONDS)     /* 80000 samples         */\n\nK_MEM_SLAB_DEFINE_STATIC(mem_slab, BLOCK_BYTES, 4, 4);\nstatic int16_t recording[TOTAL_SAMPLES];   /* 160 KB of RAM */\n\nint main(void)\n{\n\tconst struct device *dmic = DEVICE_DT_GET(DT_NODELABEL(dmic_dev));\n\n\tk_sleep(K_SECONDS(5));\n\tif (!device_is_ready(dmic)) {\n\t\tprintk(\"mic not ready\\n\");\n\t\treturn 0;\n\t}\n\n\tstruct pcm_stream_cfg stream = {\n\t\t.pcm_rate = RATE,\n\t\t.pcm_width = 16,\n\t\t.block_size = BLOCK_BYTES,\n\t\t.mem_slab = &mem_slab,\n\t};\n\tstruct dmic_cfg cfg = {\n\t\t.io = {\n\t\t\t.min_pdm_clk_freq = 1000000,\n\t\t\t.max_pdm_clk_freq = 3500000,\n\t\t\t.min_pdm_clk_dc = 40,\n\t\t\t.max_pdm_clk_dc = 60,\n\t\t},\n\t\t.streams = &stream,\n\t\t.channel = {\n\t\t\t.req_num_streams = 1,\n\t\t\t.req_num_chan = 1,\n\t\t\t.req_chan_map_lo = dmic_build_channel_map(0, 0, PDM_CHAN_LEFT),\n\t\t},\n\t};\n\n\tif (dmic_configure(dmic, &cfg) < 0) {\n\t\tprintk(\"configure failed\\n\");\n\t\treturn 0;\n\t}\n\n\tprintk(\"Recording 5 s... talk now\\n\");\n\tdmic_trigger(dmic, DMIC_TRIGGER_START);\n\n\tsize_t n = 0;\n\twhile (n < TOTAL_SAMPLES) {\n\t\tvoid *buf;\n\t\tuint32_t size;\n\n\t\tif (dmic_read(dmic, 0, &buf, &size, 1000) < 0) {\n\t\t\tprintk(\"read failed\\n\");\n\t\t\treturn 0;\n\t\t}\n\t\tsize_t count = MIN(size / 2, TOTAL_SAMPLES - n);\n\t\tmemcpy(&recording[n], buf, count * 2);\n\t\tn += count;\n\t\tk_mem_slab_free(&mem_slab, buf);\n\t}\n\tdmic_trigger(dmic, DMIC_TRIGGER_STOP);\n\n\tprintk(\"BEGIN\\n\");\n\tfor (size_t i = 0; i < TOTAL_SAMPLES; i += 16) {\n\t\tfor (size_t j = 0; j < 16; j++) {\n\t\t\tprintk(\"%04x\", (uint16_t)recording[i + j]);\n\t\t}\n\t\tprintk(\"\\n\");\n\t}\n\tprintk(\"END\\n\");\n\treturn 0;\n}\n```\nEasiest: ```bash\nnano src/main.c\n``` then Ctrl+K repeatedly to clear it, paste, Ctrl+O, Enter, Ctrl+X.",
+  "at": [
+   1000,
+   60
+  ]
+ }
+]

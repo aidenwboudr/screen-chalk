@@ -750,6 +750,9 @@ class Panel:
             return ["redraw"]
         if ctrl and name.lower() == "w":
             return self.act("close")
+        dy = self.scroll_key(name)
+        if dy is not None:
+            return ["redraw"] if self.scroll_by(dy) else []
         q = self.questions[self.page] if self.questions else None
         i = self.page
         kind = q.get("kind", "choice") if q else None
@@ -807,11 +810,117 @@ class Panel:
             self.touch()
 
     def hit(self, x, y):
-        _, _, _, hits = self.snapshot()
+        _, _, _, hits = self.view()
         for (hx, hy, hw, hh), action in reversed(hits):
             if hx <= x <= hx + hw and hy <= y <= hy + hh:
                 return action
         return None
+
+    # --- never bigger than the screen: what doesn't fit scrolls inside the panel ---
+
+    def fit(self, max_w, max_h):
+        """The most room the screen it's on has for it. A panel wider than that wraps to it (a scene keeps its
+        own scale); taller than that, it shows a window onto itself with the header fixed and the rest scrolling."""
+        max_w, max_h = max(240.0, float(max_w)), max(HEADER + 120.0, float(max_h))
+        if (max_w, max_h) == getattr(self, "room", None):
+            return
+        self.room = (max_w, max_h)
+        if self.w > max_w and type(self) is Panel:
+            self.w = max_w
+            self.cache = None
+            self.version += 1
+
+    def scrollable(self):
+        """How far the body can scroll (0: it fits)."""
+        room = getattr(self, "room", None)
+        if not room:
+            return 0.0
+        _, _, h, _ = self.snapshot()
+        return max(0.0, h - room[1])
+
+    def scroll_by(self, dy):
+        """Scroll the body (px, + = down). True when it moved."""
+        top = self.scrollable()
+        new = min(max(0.0, getattr(self, "scroll", 0.0) + dy), top)
+        if abs(new - getattr(self, "scroll", 0.0)) < 0.5:
+            return False
+        self.scroll = new
+        self.touched = time.monotonic()
+        return True
+
+    def scroll_key(self, name):
+        """Up/Down/Page Up/Page Down/Home/End while it has the keyboard and doesn't fit: px to scroll, or None."""
+        if not self.scrollable() or name not in ("Up", "Down", "Page_Up", "Page_Down", "Home", "End"):
+            return None
+        page = self.room[1] - HEADER - 60
+        return {"Up": -48, "Down": 48, "Page_Up": -page, "Page_Down": page, "Home": -1e9, "End": 1e9}[name]
+
+    def view(self):
+        """(surface, w, h, hits) as it shows on screen: snapshot() when it fits the screen, else a window of the
+        screen's height onto it: the header strip stays, the body scrolls (scroll), a scrollbar on the right edge
+        and a "more below" fade say there's more, and the click targets move with the body (hidden ones drop)."""
+        surf, w, h, hits = self.snapshot()
+        room = getattr(self, "room", None)
+        if not room or h <= room[1]:
+            self.scroll = 0.0
+            return surf, w, h, hits
+        vh = room[1]
+        top = h - vh
+        self.scroll = s = min(max(0.0, getattr(self, "scroll", 0.0)), top)
+        key = (w, h, vh, round(s, 1))
+        vc = getattr(self, "vcache", None)
+        if vc and vc[0] is surf and vc[1] == key:   # (holding surf keeps its id from being reused)
+            return vc[2]
+        M = MARGIN
+        out = cairo.ImageSurface(cairo.FORMAT_ARGB32, int(math.ceil((w + 2 * M) * SCALE)), int(math.ceil((vh + 2 * M) * SCALE)))
+        out.set_device_scale(SCALE, SCALE)
+        cr = cairo.Context(out)
+        cr.translate(M, M)
+        rounded(cr, 2, 5, w, vh, 10)
+        cr.set_source_rgba(0, 0, 0, 0.45); cr.fill()
+        cr.save()
+        rounded(cr, 0, 0, w, vh, 10); cr.clip()
+        cr.set_source_rgba(*GROUND, 1); cr.paint()
+        cr.save()   # the body, scrolled
+        cr.rectangle(0, HEADER - 1, w, vh - HEADER + 1); cr.clip()
+        cr.set_source_surface(surf, -M, -M - s); cr.paint()
+        cr.restore()
+        cr.save()   # the header strip, where it always is
+        cr.rectangle(0, 0, w, HEADER - 1); cr.clip()
+        cr.set_source_surface(surf, -M, -M); cr.paint()
+        cr.restore()
+        fade = 46   # more below: the last lines fade into the ground and a hint says so
+        if s < top - 1:
+            g = cairo.LinearGradient(0, vh - fade, 0, vh)
+            g.add_color_stop_rgba(0, *GROUND, 0); g.add_color_stop_rgba(0.75, *GROUND, 0.96); g.add_color_stop_rgba(1, *GROUND, 1)
+            cr.rectangle(0, vh - fade, w, fade); cr.set_source(g); cr.fill()
+            more = make_layout(cr, "▾ scroll for more", TITLE, 12, weight=Pango.Weight.MEDIUM, is_markup=False)
+            me = more.get_pixel_extents()[1]
+            cr.move_to((w - me.width) / 2 - me.x, vh - me.height - 6 - me.y)
+            cr.set_source_rgba(*BLUE, 0.95); PangoCairo.show_layout(cr, more)
+        if s > 1:   # and above: a thin shade under the header
+            g = cairo.LinearGradient(0, HEADER - 1, 0, HEADER + 14)
+            g.add_color_stop_rgba(0, 0, 0, 0, 0.35); g.add_color_stop_rgba(1, 0, 0, 0, 0)
+            cr.rectangle(0, HEADER - 1, w, 15); cr.set_source(g); cr.fill()
+        track_y, track_h = HEADER + 6, vh - HEADER - 12
+        thumb_h = max(28.0, track_h * vh / h)
+        ty = track_y + (track_h - thumb_h) * (s / top)
+        rounded(cr, w - 9, track_y, 4, track_h, 2); cr.set_source_rgba(*EDGE, 0.9); cr.fill()
+        rounded(cr, w - 10, ty, 6, thumb_h, 3); cr.set_source_rgba(*INK2, 0.85); cr.fill()
+        cr.restore()
+        rounded(cr, 0, 0, w, vh, 10)
+        cr.set_source_rgba(*(BLUE if self.focused else EDGE_STRONG), 1.0); cr.set_line_width(1.0); cr.stroke()
+        shown = []
+        for (hx, hy, hw, hh), action in hits:
+            if hy < HEADER:   # the header's dots
+                shown.append(((hx, hy, hw, hh), action))
+                continue
+            y0, y1 = max(hy - s, HEADER), min(hy - s + hh, vh)
+            if y1 - y0 >= 6:
+                shown.append(((hx, y0, hw, y1 - y0), action))
+        r = (out, w, vh, shown)
+        self.vcache = (surf, key, r)
+        return r
 
 
 MARGIN = 8   # room around the panel in its snapshot for the shadow

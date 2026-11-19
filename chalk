@@ -16,12 +16,15 @@
   chalk remove <tag>...      take these shapes/panels away
   chalk clear [--marks] | status | stop   (--marks: leave questions still waiting on the user)
   chalk ready                is the screen there for the user now: {"ready", "locked", "awake"} (exit 0 either way)
+  chalk open <file>[:line] | --text <name> [--line N] < listing   open a file in the user's editor (CHALK_EDITOR), at a
+                             line; --text saves a listing from stdin as <name> in chalk's state dir first. For a whole
+                             file or a long listing, instead of a card taller than the screen.
 
 Runs in a Sway session. On a machine without one it can forward to a machine that has one
 over ssh (CHALK_HOST) and bring the screenshot back. Coordinates are Sway layout pixels.
 Settings: environment or ~/.config/chalk/env (README.md).
 """
-import base64, fcntl, glob, io, json, os, select, shlex, signal, socket, subprocess, sys, time
+import base64, fcntl, glob, io, json, os, re, select, shlex, shutil, signal, socket, subprocess, sys, time
 
 HERE = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, HERE)
@@ -641,6 +644,50 @@ def cmd_ready(args):
     awake = any(o.get("power", o.get("dpms", True)) for o in outs)
     print(json.dumps({"ready": awake and not locked, "locked": locked, "awake": awake}))
 
+def editor_cmd(path, line):
+    """How to open `path` at `line` here: CHALK_EDITOR ({file} and {line} are filled in; without {file} the path goes
+    last), else VS Code when it's installed (`code --reuse-window --goto file:line`), else xdg-open."""
+    words = chalkconf.words("CHALK_EDITOR")
+    if words:
+        fill = lambda w: w.replace("{file}", path).replace("{line}", str(line or 1))
+        return [fill(w) for w in words] + ([] if any("{file}" in w for w in words) else [path])
+    for code in ("code", "codium", "code-oss"):
+        exe = shutil.which(code, path=(ENV or os.environ).get("PATH"))
+        if exe:
+            return [exe, "--reuse-window", "--goto", f"{path}:{line}" if line else path]
+    return ["xdg-open", path]
+
+def cmd_open(args):
+    """Open a file on this screen in the user's editor: for a whole file or a long listing, where a card would be a
+    wall of code. `--text NAME` takes the listing on stdin and saves it under chalk's state dir as NAME first (a
+    file that isn't on this machine yet). Prints {"opened", "line", "editor"}."""
+    opt = lambda k: args[args.index(k) + 1] if k in args and args.index(k) + 1 < len(args) else None
+    rest = [a for i, a in enumerate(args) if not a.startswith("--") and not (i and args[i - 1] in ("--text", "--line"))]
+    line = int(opt("--line")) if (opt("--line") or "").isdigit() else None
+    if "--text" in args:
+        name = os.path.basename(opt("--text") or "listing.txt") or "listing.txt"
+        folder = os.path.join(STATE, "open")
+        os.makedirs(folder, exist_ok=True)
+        path = os.path.join(folder, name)
+        with open(path, "w") as f:
+            f.write(sys.stdin.read())
+    else:
+        if not rest:
+            die("open: name a file (chalk open FILE[:LINE]) or pass a listing with --text NAME")
+        path = rest[0]
+        if line is None and re.search(r":\d+$", path) and not os.path.exists(os.path.expanduser(path)):
+            path, line = path.rsplit(":", 1)[0], int(path.rsplit(":", 1)[1])
+        path = os.path.abspath(os.path.expanduser(path))
+        if not os.path.exists(path):
+            die(f"open: no file {path} on this machine")
+    cmd = editor_cmd(path, line)
+    try:
+        subprocess.Popen(cmd, env=ENV or os.environ, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True)
+    except OSError as e:
+        die(f"open: couldn't start {cmd[0]}: {e}")
+    print(json.dumps({"opened": path, "line": line, "editor": os.path.basename(cmd[0])}))
+
 def cmd_status(args):
     r = send({"op": "stats"}, start=False)
     print(json.dumps(r) if r else "overlay not running")
@@ -651,7 +698,7 @@ def cmd_stop(args):
 COMMANDS = {"look": cmd_look, "draw": cmd_draw, "ask": cmd_ask, "clear": cmd_clear, "start": cmd_start,
             "status": cmd_status, "ready": cmd_ready, "stop": cmd_stop, "say": cmd_say, "play": cmd_play, "hush": cmd_hush,
             "watch": cmd_watch, "route": cmd_route, "peek": cmd_peek, "panel": cmd_panel, "focus": cmd_focus,
-            "copy": cmd_copy, "toast": cmd_toast, "remove": cmd_remove}
+            "copy": cmd_copy, "toast": cmd_toast, "remove": cmd_remove, "open": cmd_open}
 
 
 def bring_back(out, argv):

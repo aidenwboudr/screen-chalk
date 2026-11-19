@@ -4,7 +4,7 @@ Issues and pull requests are welcome: bugs, other compositors, better marks, new
 
 - **Run the checks** before a PR: `./test.sh` (no screen needed), and for anything touching the overlay, panels,
   watch or the hotkey, the headless-Sway tests (`bench/test_watch.sh`, `test_adapt.sh`, `test_panel.sh`,
-  `test_scene.sh`, `test_ask.sh`). They start their own private Sway, so they never draw on your session. CI runs
+  `test_fit.sh`, `test_scene.sh`, `test_ask.sh`). They start their own private Sway, so they never draw on your session. CI runs
   both.
 - **Measure what you change.** chalk was tuned with benches (`bench/README.md`): if a change is meant to make
   marks land better, follow scrolling better, or answer faster, include the bench numbers before and after.

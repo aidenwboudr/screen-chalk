@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """chalk-mcp: MCP server (stdio) that gives Claude Code eyes and a marker on the user's screen.
 
-Tools: screen_look (screenshot + OCR'd text ids), screen_draw (shapes), screen_clear.
+Tools: screen_look (screenshot + OCR'd text ids), screen_draw (shapes), screen_clear, screen_open (a file in their editor).
 It shells out to the `chalk` CLI next to it (which can forward to another machine's screen, CHALK_HOST).
 Register: claude mcp add -s user chalk -- ~/.local/bin/chalk-mcp
 """
@@ -50,7 +50,8 @@ TOOLS = [
     {"name": "screen_draw",
      "description": ("Draw hand-drawn marks on the user's screen to show them something: circle/box around a thing, "
                      "underline/highlight text, arrow or point at a small thing, label (words), card (a short "
-                     "explanation panel with optional image), sketch (a diagram it draws stroke by stroke on a paper card "
+                     "explanation panel with optional image; code in a ``` fence gets a Copy button: a few lines at a "
+                     "time with a note on what the key lines do, never a whole file, which goes to screen_open), sketch (a diagram it draws stroke by stroke on a paper card "
                      "next to the thing, or straight over it: plots, block diagrams, current flow) or spotlight (dim "
                      "everything else). Place each shape by "
                      "OCR id (best), exact on-screen text, or a box in screen px for icons and graphics. Replaces "
@@ -59,6 +60,17 @@ TOOLS = [
          "shapes": {"type": "array", "items": SHAPE},
          "keep": {"type": "boolean", "description": "add to what's already drawn instead of replacing it"}},
          "required": ["shapes"]}},
+    {"name": "screen_open",
+     "description": ("Open a file in the user's editor on their screen (VS Code by default, at a line): for a whole "
+                     "file or anything longer than a short card, instead of a wall of code on the screen. `path` is a "
+                     "file on the machine with the screen (~ works); or give `text` and `name` for a listing that isn't "
+                     "there yet (saved to a scratch file and opened). Then screen_look and mark the lines that matter "
+                     "in the editor window (a few labels or a short card beside them)."),
+     "inputSchema": {"type": "object", "properties": {
+         "path": {"type": "string", "description": "the file on the screen's machine"},
+         "line": {"type": "integer", "description": "line to open it at"},
+         "text": {"type": "string", "description": "a listing to open instead of a file that exists (with name)"},
+         "name": {"type": "string", "description": "with text: its file name, e.g. main.c (sets the highlighting)"}}}},
     {"name": "screen_clear", "description": "Erase what chalk drew (a question card still waiting on them stays until the user answers or closes it).", "inputSchema": {"type": "object", "properties": {}}},
 ]
 
@@ -86,6 +98,15 @@ def call(name, args):
         flags = ["--keep"] if args.get("keep") else []
         code, out, err = chalk("draw", "-", *flags, stdin=json.dumps(args.get("shapes", [])))
         return [{"type": "text", "text": (out + err).strip() or "drawn"}], bool(code)
+    if name == "screen_open":
+        line = ["--line", str(int(args["line"]))] if args.get("line") else []
+        if args.get("text") is not None:
+            code, out, err = chalk("open", "--text", str(args.get("name") or "listing.txt"), *line, stdin=str(args["text"]))
+        elif args.get("path"):
+            code, out, err = chalk("open", str(args["path"]), *line)
+        else:
+            return [{"type": "text", "text": "screen_open needs path, or text and name"}], True
+        return [{"type": "text", "text": (out + err).strip() or "opened"}], bool(code)
     if name == "screen_clear":
         code, out, err = chalk("clear", "--marks")
         return [{"type": "text", "text": (out + err).strip() or "cleared"}], bool(code)

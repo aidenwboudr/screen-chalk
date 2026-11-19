@@ -97,7 +97,7 @@ bench/headless-sway.sh stop
 | Super+/ | ask about the screen |
 | Super+Shift+/ | wipe the drawing (and stop any voice); the next question starts fresh |
 | Super+. | cards and diagrams that tucked themselves away (as tabs at the right edge) come back; again tucks them all |
-| Super+; | give the newest panel the keyboard (1-9 pick, Enter next, typing fills its field; Esc gives it back) |
+| Super+; | give the newest panel the keyboard (1-9 pick, Enter next, typing fills its field; ↑↓, Page Up/Down, Home/End scroll one taller than the screen; Esc gives it back) |
 | Super+Ctrl+C | copy the newest panel's code (again: the next block) |
 
 **From Claude Code**, just ask in a session: "where do I turn on dark mode in this app? show me". Claude calls
@@ -115,6 +115,8 @@ chalk panel '<spec>' --wait          a card the user answers (choices, typed ans
 chalk watch [--timeout S]            wait until the screen changes and holds still, then look
 chalk say "words" | hush             speak (or show as a toast without a voice) | stop speaking
 chalk toast "words" | clear | peek | focus | copy | remove TAG | status | start | stop
+chalk open FILE[:LINE] | --text NAME [--line N] < listing   open it in the user's editor (CHALK_EDITOR, else VS Code
+                                     at the line, else xdg-open): a whole file, instead of a card taller than the screen
 chalk route teach <slug> "<title>" | off     send Super+/ questions to a Teach lesson's tutor
 ```
 
@@ -161,6 +163,7 @@ fills in whatever the environment doesn't set, so the hotkey, Claude Code's MCP 
 | `CHALK_PYTHON` | `/usr/bin/python3` | the python with the GTK bindings, for the overlay |
 | `CHALK_WATCH_IGNORE_TITLE` | `Teach$` | windows whose changes `chalk watch` ignores (regex on the title) |
 | `CHALK_LOCKERS` | `swaylock gtklock waylock hyprlock` | screen lockers `chalk ready` looks for (while one runs, the screen counts as locked) |
+| `CHALK_EDITOR` | VS Code (`code --reuse-window --goto`), else `xdg-open` | what `chalk open` / `screen_open` runs; `{file}` and `{line}` are filled in (without `{file}` the path goes last) |
 | `CHALK_KEY_PEEK`, `CHALK_KEY_FOCUS`, `CHALK_KEY_COPY` | `Super+.`, `Super+;`, `Super+Ctrl+C` | the keys named in hints, if you bound others |
 | `CHALK_TEACH` | `teach` | Teach's CLI, for `chalk route teach` |
 | `CHALK_HOOKS` | none | a Python file with extra behaviour for the hotkey (API in `chalkconf.py`) |
@@ -199,7 +202,7 @@ its top). Without a voice command, `say` shows the line as a small toast instead
 ```bash
 ./test.sh                  # syntax + offline tests (no screen)
 bench/test_watch.sh        # these start a private headless Sway (sway, foot, grim, jq, wtype, zenity, gcc)
-bench/test_adapt.sh; bench/test_panel.sh; bench/test_scene.sh; bench/test_ask.sh
+bench/test_adapt.sh; bench/test_panel.sh; bench/test_fit.sh; bench/test_scene.sh; bench/test_ask.sh
 ```
 
 ## License

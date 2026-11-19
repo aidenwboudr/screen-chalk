@@ -71,6 +71,8 @@ GAP = 0.12            # seconds between shapes in one draw call
 FADE = 0.35
 BLINK = 0.12          # seconds a followed mark takes to hide when its target scrolls out of sight
 BLINK_IN = 0.08       # ... and to come back when it does
+PANEL_TOP = 36         # px a panel keeps clear of the top edge (a bar lives there) ...
+PANEL_BOTTOM = 8       # ... and of the bottom one: a panel taller than the room between scrolls inside (panel.view)
 POINT_PULSE = 4.2     # seconds a point keeps pulsing
 SKETCH_SPEED = 1100.0  # canvas px per second for diagrams (slower than marks: you watch it being drawn)
 SKETCH_MAX = 4.5
@@ -627,7 +629,9 @@ class Overlay:
         area.connect("draw", self.on_draw, win)
         # panels take the mouse (only where they are: the input region follows them, see on_draw)
         area.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.BUTTON_RELEASE_MASK
-                        | Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK)
+                        | Gdk.EventMask.POINTER_MOTION_MASK | Gdk.EventMask.LEAVE_NOTIFY_MASK
+                        | Gdk.EventMask.SCROLL_MASK | Gdk.EventMask.SMOOTH_SCROLL_MASK)
+        area.connect("scroll-event", self.on_scroll, win)
         area.connect("button-press-event", self.on_press, win)
         area.connect("button-release-event", self.on_release, win)
         area.connect("motion-notify-event", self.on_motion, win)
@@ -1414,7 +1418,7 @@ class Overlay:
 
     def paint_card(self, cr, sh, p, alpha):
         c = sh.card
-        cw = c["width"]
+        cw = min(c["width"], self.screen_for(sh.anchor)[2] - 12)   # never wider than its screen
         pad = 16
         T = THEME
         title = self.layout(cr, c["title"], T["title_font"], T["card_title_size"], cw - 2 * pad, Pango.Weight.SEMIBOLD) if c["title"] else None
@@ -1503,19 +1507,30 @@ class Overlay:
             x, y = layout.place_board(w, h, scr, None, taken, self.busy, clear)
         else:  # no picture of the screen: the right side, a bit above the middle
             x, y = sx + sw - w - 28, sy + max(60, (shh - h) / 2 - 80)
-        x = min(max(x, sx + 6), sx + sw - w - 6)
-        y = min(max(y, sy + 36), sy + shh - h - 8)
+        x = max(min(x, sx + sw - w - 6), sx + 6)   # (the left and top edges win: fit() keeps it smaller than this)
+        y = max(min(y, sy + shh - h - PANEL_BOTTOM), sy + PANEL_TOP)
         sh.placed["panel"] = (x, y, w, h)
+
+    def panel_room(self, sh):
+        """The most a panel may take on its screen: the width less a margin, the height between the top bar
+        allowance and the bottom edge (place_panel's limits). Nothing chalk shows is ever bigger than the screen."""
+        where = sh.placed.get("panel") or (box_of(sh.spec) if sh.spec.get("box") else None)
+        if where is None and sh.spec.get("at"):
+            where = tuple(sh.spec["at"][:2]) + (1, 1)
+        sx, sy, sw, shh = self.screen_for(where)
+        return sw - 12, shh - PANEL_TOP - PANEL_BOTTOM
 
     def paint_panel(self, cr, sh, p, alpha, now):
         pn = sh.panel
-        surf, w, h, _ = pn.snapshot()
+        pn.fit(*self.panel_room(sh))
+        surf, w, h, _ = pn.view()
         if "panel" not in sh.placed:
             self.place_panel(sh, w, h)
         x, y, ow, oh = sh.placed["panel"]
         if (w, h) != (ow, oh):  # it grew or shrank (the next question, feedback): keep the top, stay on screen
             sx, sy, sw, shh = self.screen_for((x, y, ow, oh))
-            y = max(sy + 36, min(y, sy + shh - h - 8))
+            y = max(sy + PANEL_TOP, min(y, sy + shh - h - PANEL_BOTTOM))
+            x = max(sx + 6, min(x, sx + sw - w - 6))
             sh.placed["panel"] = (x, y, w, h)
         if sh.docked:
             return self.paint_pill(cr, sh, alpha)
@@ -1668,6 +1683,20 @@ class Overlay:
             self.apply(sh, effects)
         return True
 
+    def on_scroll(self, area, ev, win):
+        """The wheel or touchpad over a panel taller than the screen scrolls its body."""
+        sh, _ = self.panel_at(ev.x + win.geom.x, ev.y + win.geom.y)
+        if sh is None or sh.docked:
+            return False
+        if ev.direction == Gdk.ScrollDirection.SMOOTH:
+            ok, _, dy = ev.get_scroll_deltas()
+            dy = dy * 48 if ok else 0
+        else:
+            dy = {Gdk.ScrollDirection.UP: -60, Gdk.ScrollDirection.DOWN: 60}.get(ev.direction, 0)
+        if dy and sh.panel.scroll_by(dy):
+            self.redraw()
+        return True
+
     def on_release(self, area, ev, win):
         if self.dragging:
             sh = self.dragging[0]
@@ -1730,7 +1759,7 @@ class Overlay:
         targets = sh.panel.targets
         label = f"Copied {targets.index(target) + 1} of {len(targets)}" if len(targets) > 1 else "Copied"
         r = self.panel_rect(sh)
-        btn = next((b for b, act in sh.panel.snapshot()[3] if act == ("copy", target)), None)
+        btn = next((b for b, act in sh.panel.view()[3] if act == ("copy", target)), None)
         at = (r[0] + btn[0] + btn[2] / 2, r[1] + btn[1] - 4) if r and btn and not sh.docked else None
         self.toast(label, at=at)
         self.redraw()
@@ -2448,12 +2477,13 @@ def serve(ov):
                         for s in ov.live_panels():
                             r = ov.panel_rect(s)
                             hits = [] if s.docked else [[[round(r[0] + b[0]), round(r[1] + b[1]), round(b[2]), round(b[3])], a]
-                                                         for b, a in s.panel.snapshot()[3]]
+                                                         for b, a in s.panel.view()[3]]
                             out.append({"tag": s.spec.get("tag"), "rect": [round(v) for v in r] if r else None, "docked": s.docked,
                                         "page": s.panel.page, "inputs": s.panel.inputs, "answers": s.panel.answers,
                                         "status": s.panel.status, "focused": s.panel.focused, "hits": hits,
                                         "values": getattr(s.panel, "values", None), "step": getattr(s.panel, "step", None),
-                                        "objects": len(getattr(s.panel, "objects", None) or [])})
+                                        "objects": len(getattr(s.panel, "objects", None) or []),
+                                        "scroll": round(getattr(s.panel, "scroll", 0.0)), "scrollable": round(s.panel.scrollable())})
                         box["r"] = {"ok": True, "panels": out, "keys": ov.keys_for is not None}
                     elif op == "ping":
                         box["r"] = {"ok": True, "pid": os.getpid()}

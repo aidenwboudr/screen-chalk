@@ -43,7 +43,7 @@ moving the diagram into a second call that runs in parallel.
 
 ## Keeping up with the screen
 
-- `test_watch.sh`, `test_adapt.sh`, `test_panel.sh`, `test_scene.sh`, `test_ask.sh`: the real overlay in a
+- `test_watch.sh`, `test_adapt.sh`, `test_panel.sh`, `test_fit.sh`, `test_scene.sh`, `test_ask.sh`: the real overlay in a
   private headless Sway (`headless-sway.sh`; never your session), driven with a virtual pointer (`vpointer/`)
   and wtype. CI runs them.
 - `scroll/`: marks following scrolled content. `run.sh` builds a container with its own headless Sway (on the

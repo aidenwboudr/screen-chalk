@@ -64,8 +64,12 @@ else
 fi
 
 echo "3. keys: End to the bottom, Home to the top"
-./chalk focus >/dev/null; sleep 0.4
-wtype -k Shift_L -k End; sleep 0.5; shot 3   # (a headless Sway drops the first key)
+./chalk focus >/dev/null; sleep 1   # (the compositor hands the panel the keyboard a moment after the overlay asks)
+for _ in 1 2 3; do   # (a headless Sway drops the first key; a slower one can drop the first press too)
+  wtype -k Shift_L -k End; sleep 0.5
+  [[ $(field scroll) -eq $(field scrollable) ]] && break
+done
+shot 3
 [[ $(field scroll) -eq $(field scrollable) ]] || fail "End didn't reach the bottom ($(field scroll) of $(field scrollable))"
 wtype -k Shift_L -k Home; sleep 0.5
 [[ $(field scroll) -eq 0 ]] || fail "Home didn't go back to the top"

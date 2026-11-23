@@ -1,8 +1,12 @@
 // texd: TeX -> glyph outlines for chalk's scene boards (scene.py), through MathJax's SVG output.
 // One JSON request per stdin line: {"tex": "...", "display": true}. One JSON reply per line:
 // {"w", "h", "y0"} (viewBox: x 0..w, y y0..y0+h, baseline at y=0, y down, 1000 units = 1 em) and
-// "items": [{"d": path data, "m": [a,b,c,d,e,f], "color": "#rrggbb"|null} | {"rect": [x,y,w,h], "m", "color"}]
+// "items": [{"d": path data, "m": [a,b,c,d,e,f], "color": "#rrggbb"|null} | {"rect": [x,y,w,h], "m", "color"}
+//            | {"text": "θ", "size", "italic", "bold", "m", "color"}]
 // with every transform already composed, so the caller only applies m. Errors: {"error": "..."}.
+// "text" items are characters MathJax's TeX fonts don't have (θ inside \text{}, CJK, emoji): MathJax leaves them
+// as SVG <text> for a browser to draw, so the caller sets them in a real font at the baseline m puts at (0, 0),
+// in a slot "w" wide (MathJax's own guess at their width, which it laid the rest out around).
 const {mathjax} = require('mathjax-full/js/mathjax.js');
 const {TeX} = require('mathjax-full/js/input/tex.js');
 const {SVG} = require('mathjax-full/js/output/svg.js');
@@ -41,6 +45,15 @@ function walk(node, m, color, out) {
   if (node.kind === 'path' && attr('d')) out.push({d: attr('d'), m, color});
   else if (node.kind === 'rect') {
     out.push({rect: ['x', 'y', 'width', 'height'].map(k => Number(attr(k) || 0)), m, color});
+  } else if (node.kind === 'text') {
+    const text = adaptor.textContent(node);
+    if (text.trim()) {
+      const v = attr('data-variant') || '';
+      out.push({text, size: parseFloat(attr('font-size')) || 1000, w: adaptor.nodeSize(node)[0] * 1000, m, color,
+        italic: v.includes('italic') || attr('font-style') === 'italic',
+        bold: v.includes('bold') || attr('font-weight') === 'bold'});
+    }
+    return;
   }
   for (const c of adaptor.childNodes(node)) walk(c, m, color, out);
 }

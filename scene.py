@@ -316,6 +316,8 @@ def parse_tex(r):
         if "rect" in it:
             x, y, w, h = it["rect"]
             cr.rectangle(x, y, w, h)
+        elif "text" in it:
+            tex_text_path(cr, it)
         else:
             svg_path(cr, it["d"])
         cr.restore()
@@ -324,6 +326,40 @@ def parse_tex(r):
         glyphs.append((path, it.get("color"), flat_len(cr)))
     cr.new_path()
     return {"w": r["w"], "h": r["h"], "y0": r["y0"], "glyphs": glyphs}
+
+
+def tex_text_path(cr, it):
+    """Outline a character MathJax's fonts lack (θ in \\text{}, CJK, emoji: texd sends those as "text") in
+    TEXT_FONT, baseline at the origin, squeezed into the slot MathJax left for it so it never runs into
+    what follows. Without this they vanished: MathJax hands them to a browser as SVG <text>.
+    The outline is made at the device origin and replayed under cr's matrix: PangoCairo leaves out glyphs
+    placed thousands of units out (past ~8192), where the end of a long label sits."""
+    cr.save()
+    cr.identity_matrix()
+    lay = text_layout(cr, it["text"], TEXT_FONT, float(it.get("size") or 1000), bold=it.get("bold"))
+    if it.get("italic"):
+        fd = lay.get_font_description()
+        fd.set_style(Pango.Style.ITALIC)
+        lay.set_font_description(fd)
+    logical = lay.get_pixel_extents()[1]
+    slot = float(it.get("w") or logical.width)
+    cr.scale(min(1.0, slot / max(1.0, logical.width)), 1.0)
+    cr.new_path()
+    cr.move_to(0, -lay.get_baseline() / Pango.SCALE)
+    PangoCairo.layout_path(cr, lay)
+    cr.identity_matrix()
+    outline = list(cr.copy_path())
+    cr.new_path()
+    cr.restore()
+    for kind, pts in outline:
+        if kind == cairo.PATH_MOVE_TO:
+            cr.move_to(*pts)
+        elif kind == cairo.PATH_LINE_TO:
+            cr.line_to(*pts)
+        elif kind == cairo.PATH_CURVE_TO:
+            cr.curve_to(*pts)
+        else:
+            cr.close_path()
 
 
 # --- geometry helpers ---
@@ -741,7 +777,7 @@ class Scene(panel.Panel):
         cap = interpolate(self.steps[self.step].get("say") or "", self.env(now)).replace("$", "")
         cap_lay = text_layout(mc, cap, TEXT_FONT, 15, w - 2 * PAD) if cap else None
         cap_h = cap_lay.get_pixel_extents()[1].height + 12 if cap_lay else 0
-        ctl_h = len(self.params) * 34 + (40 if len(self.steps) > 1 else 0) + (8 if self.params else 0)
+        ctl_h = sum(self.param_h(p, mc) for p in self.params) + (40 if len(self.steps) > 1 else 0) + (8 if self.params else 0)
         canvas_y = y + 10 + title_h
         h = canvas_y + self.ch * self.k + 10 + cap_h + ctl_h + 12
         if cr is not None:
@@ -781,7 +817,7 @@ class Scene(panel.Panel):
             y += cap_h
         for p in self.params:
             hits += self.paint_param(cr, p, y, now)
-            y += 34
+            y += self.param_h(p, mc)
         if len(self.steps) > 1:
             hits += self.paint_steps(cr, y + 6)
         return h, hits
@@ -810,11 +846,8 @@ class Scene(panel.Panel):
                 PangoCairo.show_layout(cr, lay)
             hits.append(((PAD, y + 4, bw, bh), ("toggle", name)))
             return hits
-        lab = text_layout(cr or panel.measure_ctx(), label, UI_FONT, 14)
-        if lab.get_pixel_extents()[1].width > 158:  # a long label is cut short, not run into the track
-            lab.set_width(158 * Pango.SCALE)
-            lab.set_ellipsize(Pango.EllipsizeMode.END)
-        lw = min(170, lab.get_pixel_extents()[1].width + 12)
+        lab, lw, above = self.slider_label(p, cr or panel.measure_ctx())
+        y += above
         val = text_layout(cr or panel.measure_ctx(), with_unit(v, unit), UI_FONT, 14, bold=True)
         vw = 78
         x0, x1 = PAD + lw, w - PAD - vw
@@ -823,7 +856,7 @@ class Scene(panel.Panel):
         ty = y + 16
         if cr is not None:
             col = self.rgb(p.get("color") or "yellow")
-            cr.move_to(PAD, ty - lab.get_pixel_extents()[1].height / 2 - 1)
+            cr.move_to(PAD, y - above + 2 if above else ty - lab.get_pixel_extents()[1].height / 2 - 1)
             cr.set_source_rgb(*T["dim"]); PangoCairo.show_layout(cr, lab)
             cr.set_line_cap(cairo.LINE_CAP_ROUND)
             cr.set_line_width(4); cr.set_source_rgb(*T["track"])
@@ -841,6 +874,22 @@ class Scene(panel.Panel):
             cr.set_source_rgb(*col); PangoCairo.show_layout(cr, val)
         hits.append(((x0 - 12, ty - 14, x1 - x0 + 24, 28), ("slider", name, x0, x1)))
         return hits
+
+    def slider_label(self, p, mc):
+        """A slider's label layout, the room it takes left of the track, and the height it adds above it: beside
+        the track when it fits in 45% of the card's width, else on its own line(s) over a full-width track
+        (starting 8 px in, room for the knob)."""
+        lab = text_layout(mc, p.get("label") or p["name"], UI_FONT, 14)
+        lw = lab.get_pixel_extents()[1].width + 12
+        if lw <= max(170, 0.45 * (self.w - 2 * PAD)):
+            return lab, lw, 0
+        lab.set_width(int((self.w - 2 * PAD) * Pango.SCALE))
+        lab.set_wrap(Pango.WrapMode.WORD_CHAR)
+        return lab, 8, lab.get_pixel_extents()[1].height + 2
+
+    def param_h(self, p, mc):
+        """A control row's height: 34, plus a long slider label's own line(s)."""
+        return 34 + (0 if p.get("toggle") else self.slider_label(p, mc)[2])
 
     def paint_steps(self, cr, y):
         T, w = self.T, self.w
@@ -1056,7 +1105,8 @@ class Scene(panel.Panel):
             cr.new_sub_path(); cr.arc(x, y, r, 0, 2 * math.pi)
             cr.set_source_rgba(*col, alpha); cr.fill()
             if o.get("label"):
-                self.paint_label(cr, o["label"], env, x + r + 6, y - r - 4, col, alpha, o.get("label_size", 15), "left")
+                self.paint_label(cr, o["label"], env, x + r + 6, y - r - 4, col, alpha, o.get("label_size", 15), "left",
+                                 flip=x - r - 6)
         elif k in ("line", "arrow"):
             v = o[k]
             a = self.pt(o, env, axes, v[0:2]); b = self.pt(o, env, axes, v[2:4])
@@ -1074,7 +1124,8 @@ class Scene(panel.Panel):
                 cr.set_source_rgba(*col, alpha * min(1, (p_draw - 0.6) / 0.3)); cr.fill()
             if o.get("label"):
                 mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2
-                self.paint_label(cr, o["label"], env, mx + 6, my - 8, col, alpha * p, o.get("label_size", 15), "left")
+                self.paint_label(cr, o["label"], env, mx + 6, my - 8, col, alpha * p, o.get("label_size", 15), "left",
+                                 flip=mx - 6)
         elif k in ("rect", "bar"):
             v = o[k]
             if k == "bar":  # [x, base_y, width, height] growing up from the base
@@ -1485,11 +1536,14 @@ class Scene(panel.Panel):
                 cr.set_source_rgba(*rgb, alpha); cr.fill()
         cr.restore()
 
-    def paint_label(self, cr, s, env, x, y, col, alpha, size=15, align="left", tex=None, wrap=None, place=False):
+    def paint_label(self, cr, s, env, x, y, col, alpha, size=15, align="left", tex=None, wrap=None, flip=None,
+                    place=False):
         """A label at (x, baseline y): TeX for $...$ parts (or all of it when TEX_LABELS), else the serif font.
-        Labels of shapes wait until every shape is down (place=True), then step off labels already placed."""
+        Labels of shapes wait until every shape is down (place=True), then step off labels already placed.
+        flip: for a left-aligned label beside something (a line), the x to right-align it at instead when it
+        doesn't fit before the canvas's right edge, rather than being pushed back over what it labels."""
         if self.deferred is not None and not place and tex is not False:
-            self.deferred.append((s, env, x, y, col, alpha, size, align, tex, wrap))
+            self.deferred.append((s, env, x, y, col, alpha, size, align, tex, wrap, flip))
             return
         raw, s = s, interpolate(s, env)
         if tex is None:
@@ -1500,12 +1554,12 @@ class Scene(panel.Panel):
             if r:
                 k = size * 1.05 / 1000.0
                 w, h, top = r["w"] * k, r["h"] * k, r["y0"] * k
-                x, y = self.free_spot(x, y, w, h, top, align, place)
+                x, y, align = self.free_spot(x, y, w, h, top, align, place, flip)
                 return self.paint_tex(cr, r"\color{%s}{%s}" % (rgb_hex(col), src), x, y, size * 1.05, align, col, alpha, 1.0, s)
         lay = text_layout(cr, s.replace("$", ""), TEXT_FONT, size, float(wrap) if wrap else None)
         ext = lay.get_pixel_extents()[1]
         base = lay.get_baseline() / Pango.SCALE
-        x, y = self.free_spot(x, y, ext.width, ext.height, -base, align, place)
+        x, y, align = self.free_spot(x, y, ext.width, ext.height, -base, align, place, flip)
         dx = -ext.width / 2 if align == "center" else -ext.width if align == "right" else 0
         x0 = max(2.0, min(x + dx, self.cw - ext.width - 2))   # never past the canvas edge
         cr.move_to(x0 - ext.x, y - base)
@@ -1529,9 +1583,12 @@ class Scene(panel.Panel):
             size = max(10.0, size * max(0.6, width / max(w, 1)) * 0.98)
         return size
 
-    def free_spot(self, x, y, w, h, top, align, place):
-        """(x, baseline y) for a w x h label (top = its top relative to the baseline), moved the least it takes
-        to clear the labels already placed; remembers where it went."""
+    def free_spot(self, x, y, w, h, top, align, place, flip=None):
+        """(x, baseline y, align) for a w x h label (top = its top relative to the baseline), moved the least it
+        takes to clear the labels already placed; remembers where it went. A left label with a flip x that would
+        run past the right edge goes right-aligned at flip (the other side of its line) instead."""
+        if align == "left" and flip is not None and x + w > self.cw - 2:
+            x, align = flip, "right"
         dx = -w / 2 if align == "center" else -w if align == "right" else 0
         def rect(xx, yy):
             x0 = max(2.0, min(xx + dx, self.cw - w - 2))
@@ -1548,7 +1605,7 @@ class Scene(panel.Panel):
                     break
         if self.placed is not None:
             self.placed.append(rect(*best))
-        return best
+        return best + (align,)
 
     # --- input ---
 

@@ -100,6 +100,26 @@ for label, stacked in (("angle θ between wire and field", False), (long_label, 
 _, (_, _, h_short, _) = board(params=[{"name": "a", "label": "a", "min": 0, "max": 1}])
 check("a label on its own line makes the card taller by that line", h_ > h_short + 10, (h_, h_short))
 
+# a phone shows the card at its own width (set_fit): the canvas shrinks, its text doesn't go under FIT_TEXT px
+spec = json.load(open(os.path.join(HERE, "visual2", "examples", "rc-lowpass.json")))
+fb = scene.Scene(spec)
+w0, k0, (_, _, h0, _) = fb.w, fb.k, fb.snapshot()
+fb.set_fit(364)
+_, _, h1, hits1 = fb.snapshot()
+check("fit narrows the card", fb.w <= 364 and fb.k < k0, (fb.w, fb.k, k0))
+check("...its controls stay inside it", all(x >= 0 and x + w <= fb.w + 13 for (x, _, w, _), _ in hits1), [r for r, _ in hits1])
+check("...and canvas text keeps at least FIT_TEXT px", abs(fb.tsize(12) * fb.k - scene.FIT_TEXT) < 1e-6 and fb.tsize(30) == 30, (fb.tsize(12), fb.k))
+fb.replace(spec)
+check("a replaced scene keeps its fit", fb.w <= 364, fb.w)
+fb.set_fit(0)
+check("fit 0 is chalk's own layout again", fb.w == w0 and fb.k == k0 and fb.snapshot()[2] == h0 and fb.tsize(12) == 12, (fb.w, w0))
+fb.set_fit(2000)
+check("a fit wider than the card changes nothing", fb.w == w0 and fb.k == k0, fb.w)
+lb, _ = board(objects=[{"id": "l", "line": [100, 150, 100, 250], "label": "tiny", "label_size": 12}], size=(600, 300))
+lb.set_fit(330); clock[0] += 60; lb.snapshot()
+r = lb.placed[0] if lb.placed else None
+check("a fitted label is drawn at least FIT_TEXT px tall", bool(r and r[3] * lb.k >= scene.FIT_TEXT), (r, lb.k))
+
 bad = scene.Scene({"scene": {"objects": [{"plot": "1/(x", "on": "nope"}, {"tex": "\\frac{", "at": [0, 0]},
                                          {"circle": ["a", "b", "c"]}, {"bogus": 1}], "params": [{"name": "p", "min": 5, "max": 1}]}})
 bad.snapshot()

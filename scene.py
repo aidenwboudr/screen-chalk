@@ -44,6 +44,7 @@ import panel
 HERE = os.path.dirname(os.path.realpath(__file__))
 clock = time.monotonic          # the bench swaps this for a virtual clock
 MAX_W, MAX_H = 600, 400         # the canvas is shown at most this big (layout px)
+FIT_TEXT = 11                   # px: the smallest text inside a canvas fitted narrower than its own size (a phone)
 PAD = 18
 ENTER = 0.75                    # seconds one object takes to come in
 LAG = 0.32                      # and the next one starts this much later
@@ -466,8 +467,8 @@ class Scene(panel.Panel):
         self.holding, self.page = False, 0
         self.T = THEMES.get(os.environ.get("CHALK_SCENE_THEME") or sc.get("theme") or "dark", THEMES["dark"])
         self.cw, self.ch = [float(v) for v in (sc.get("size") or [480, 300])[:2]]
-        self.k = min(1.5, MAX_W / self.cw, MAX_H / self.ch)
-        self.w = self.cw * self.k + 2 * PAD
+        self.fit_w = getattr(self, "fit_w", 0.0)   # (replace() runs __init__ again: a fit outlives it)
+        self.size_card()
         self.params = []
         self.values = {}
         for p in sc.get("params") or []:
@@ -679,6 +680,27 @@ class Scene(panel.Panel):
     def entry_end(self):
         ends = [self.shown_at(i) for i in self.steps[self.step]["show"] if i in self.byid]
         return max([e for e in ends if e is not None] + [self.step_t[self.step] or self.t0]) + ENTER
+
+    def size_card(self):
+        """The canvas scale k and the card's width w: chalk's own (the canvas at most MAX_W x MAX_H), or narrower to
+        fit fit_w (set_fit: a phone shows it at its own width), where the canvas shrinks with the card but the text
+        inside it doesn't go under FIT_TEXT px (tsize). Title, caption and controls keep their size and wrap."""
+        self.k0 = min(1.5, MAX_W / self.cw, MAX_H / self.ch)
+        self.k = self.k0
+        if self.fit_w and self.fit_w < self.cw * self.k0 + 2 * PAD:
+            self.k = min(self.k0, max(160.0, self.fit_w - 2 * PAD) / self.cw)
+        self.w = self.cw * self.k + 2 * PAD
+
+    def set_fit(self, w):
+        """Lay the card out to be at most w layout px wide (0: its own width). The page showing it calls this."""
+        self.fit_w = max(0.0, float(w or 0))
+        self.size_card()
+        self.cache = None
+        self.version += 1
+
+    def tsize(self, size):
+        """A text size inside the canvas (canvas units), raised so it shows at least FIT_TEXT px on a fitted card."""
+        return max(size, FIT_TEXT / self.k) if self.k < self.k0 - 1e-9 else size
 
     def replace(self, spec):
         """A corrected version of this board (the check pass) takes its place without starting over: same step,
@@ -1364,7 +1386,7 @@ class Scene(panel.Panel):
         if not rows:
             return
         x, y = (self.num(v, env) for v in (o.get("at") or [0, 0])[:2])
-        size = self.num(o.get("size", 15), env, 15)
+        size = self.tsize(self.num(o.get("size", 15), env, 15))
         rh = size + 9
         ncol = max(len(r) for r in rows)
         widths = [max(text_layout(panel.measure_ctx(), str(r[c]) if c < len(r) else "", TEXT_FONT, size)
@@ -1499,6 +1521,7 @@ class Scene(panel.Panel):
 
     def paint_tex(self, cr, src, x, y, size, align, col, alpha, p, fallback):
         """TeX at (x, baseline y), `size` = font px. p < 1: written in glyph by glyph (outline, then fill)."""
+        size = self.tsize(size)
         r = TEX.get(src)
         if not r:
             return self.paint_label(cr, fallback, {}, x, y, col, alpha * p, size, align, tex=False)
@@ -1546,6 +1569,7 @@ class Scene(panel.Panel):
             self.deferred.append((s, env, x, y, col, alpha, size, align, tex, wrap, flip))
             return
         raw, s = s, interpolate(s, env)
+        size = self.tsize(size)
         if tex is None:
             tex = TEX_LABELS or "$" in s
         if tex and not wrap:

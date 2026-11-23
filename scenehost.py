@@ -5,11 +5,14 @@ The Teach app shows chalk's scenes in its workspace (a stage the user drags slid
 second renderer: this process runs scene.Scene exactly as the overlay does and streams its frames, and the
 app sends back their pointer. One process serves many scenes. JSON lines on stdin:
 
-  {"op": "open", "id": "s1", "spec": {...scene...}, "gates": [2]}   gates: steps Next can't enter until
-                                                                    the host app calls "release" (predict-then-
-                                                                    reveal: the user commits a prediction first)
+  {"op": "open", "id": "s1", "spec": {...scene...}, "gates": [2], "fit": 380}
+                                                    gates: steps Next can't enter until the host app calls
+                                                    "release" (predict-then-reveal: the user commits a
+                                                    prediction first). fit (optional): as for "fit" below
+  {"op": "fit", "id": "s1", "w": 380}                 the widest the page can show it (a phone): the card is laid
+                                                    out to that width, text keeps its size (0: chalk's own width)
   {"op": "replace", "id": "s1", "spec": {...}}        the tutor changed the scene (scene.Scene.replace)
-  {"op": "pointer", "id": "s1", "t": "down|move|up|leave", "x": 120, "y": 80}   layout px on the card
+  {"op": "pointer", "id": "s1", "t": "down|move|up|leave", "x": 120, "y": 80}   layout px on the frame
   {"op": "key", "id": "s1", "name": "Right", "char": ""}
   {"op": "act", "id": "s1", "action": "next" | "back" | ["toggle", "on"]}
   {"op": "release", "id": "s1", "step": 2}            lift a gate (and go on to that step)
@@ -18,8 +21,12 @@ app sends back their pointer. One process serves many scenes. JSON lines on stdi
 
 and JSON lines on stdout:
 
-  {"t": "frame", "id": "s1", "seq": 7, "w": 636, "h": 584, "scale": 2, "png": "<base64>", "ack": 12}
-      w, h in layout px; the PNG is scale x that. ack = the last input seq the frame includes.
+  {"t": "frame", "id": "s1", "seq": 7, "w": 652, "h": 600, "scale": 2, "png": "<base64>", "ack": 12,
+   "zones": [[x, y, w, h], ...]}
+      w, h in layout px; the PNG is scale x that (the card plus its shadow's margin). ack = the last input seq
+      the frame includes. zones: what takes the pointer (sliders, toggles, Next/Back, the card's dots), in the
+      same layout px as pointer x/y: a touch page keeps those for the finger and treats the rest as its own
+      (a swipe for the next step, a scroll).
   {"t": "state", "id": "s1", "step": 1, "steps": 3, "values": {"f": 5000.0}, "caption": "..."}
   {"t": "gate", "id": "s1", "step": 2}                the user pressed Next into a gated step
   {"t": "closed", "id": "s1", "result": {...}}       the user closed the card
@@ -56,9 +63,11 @@ def emit(m):
 
 
 class Hosted:
-    def __init__(self, sid, spec, gates):
+    def __init__(self, sid, spec, gates, fit=0):
         self.id = sid
         self.sc = scene.Scene(spec)
+        if fit:
+            self.fit(fit)
         self.gates = set(int(g) for g in gates or [])
         self.dirty = True
         self.seq = 0
@@ -68,9 +77,17 @@ class Hosted:
         self.last_frame = 0.0
         self.closed = False
 
-    # the overlay's pointer handling (overlay.py on_press / on_motion / on_release), for one card
+    def fit(self, w):
+        """The page can show at most w layout px of frame: the card inside it is that minus its margins."""
+        w = float(w or 0)
+        self.sc.set_fit(w - 2 * scene.panel.MARGIN if w > 0 else 0)
+        self.dirty = True
+
+    # the overlay's pointer handling (overlay.py on_press / on_motion / on_release), for one card. x, y are on the
+    # frame, whose margin (the card's shadow) comes first.
     def pointer(self, t, x, y):
         sc = self.sc
+        x, y = x - scene.panel.MARGIN, y - scene.panel.MARGIN
         if t == "move":
             if self.dragging:
                 self.apply(sc.drag_to(self.dragging, x, y))
@@ -123,18 +140,20 @@ class Hosted:
     def grab(self):
         """The card's pixels now (under the lock: ~2 ms). encode() turns them into a frame without it, so their
         next pointer events go in while the last frame is still being compressed."""
-        surf, w, h, _ = self.sc.snapshot()
+        surf, w, h, hits = self.sc.snapshot()
         surf.flush()
         self.seq += 1
-        return (self.id, self.seq, self.ack, w, h, surf.get_width(), surf.get_height(), surf.get_stride(), bytes(surf.get_data()))
+        M = scene.panel.MARGIN
+        zones = [[round(x + M, 1), round(y + M, 1), round(zw, 1), round(zh, 1)] for (x, y, zw, zh), _ in hits]
+        return (self.id, self.seq, self.ack, w + 2 * M, h + 2 * M, zones, surf.get_width(), surf.get_height(), surf.get_stride(), bytes(surf.get_data()))
 
     @staticmethod
     def encode(grabbed):
-        sid, seq, ack, w, h, pw, ph, stride, data = grabbed
+        sid, seq, ack, w, h, zones, pw, ph, stride, data = grabbed
         buf = io.BytesIO()
         Image.frombuffer("RGBA", (pw, ph), data, "raw", "BGRA", stride, 1).save(buf, "PNG", compress_level=1)
         emit({"t": "frame", "id": sid, "seq": seq, "w": round(w, 2), "h": round(h, 2), "scale": scene.panel.SCALE,
-              "png": base64.b64encode(buf.getvalue()).decode(), "ack": ack})
+              "png": base64.b64encode(buf.getvalue()).decode(), "ack": ack, "zones": zones})
 
 
 scenes = {}
@@ -143,7 +162,7 @@ scenes = {}
 def handle(m):
     op, sid = m.get("op"), m.get("id")
     if op == "open":
-        scenes[sid] = Hosted(sid, m["spec"].get("scene", m["spec"]), m.get("gates"))
+        scenes[sid] = Hosted(sid, m["spec"].get("scene", m["spec"]), m.get("gates"), m.get("fit") or 0)
         return
     h = scenes.get(sid)
     if not h:
@@ -157,6 +176,8 @@ def handle(m):
     elif op == "replace":
         h.sc.replace(m["spec"].get("scene", m["spec"]))
         h.dirty = True
+    elif op == "fit":
+        h.fit(m.get("w") or 0)
     elif op == "pointer":
         h.pointer(m.get("t"), float(m.get("x", 0)), float(m.get("y", 0)))
         h.dirty = True   # (the ack moves even when nothing on the card changed)

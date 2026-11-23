@@ -113,10 +113,12 @@ echo "4. code gets Copy buttons"
 ./chalk draw '[{"kind":"card","tag":"code","title":"Add this to xor.py","text":"First the backward pass:\n```python\ndef backward(x, y, h, a, w2):\n    d_out = 2 * (a - y) * a * (1 - a)\n    return d_out\n```\nthen the check:\n```python\nprint(backward([0, 1], 1, *forward([0, 1], W1, b1, w2, b2)[::-1], w2))\n```"}]' >/dev/null
 sleep 1.2; shot 4a
 read -r X Y < <(hit code '["copy", 1]')
+# wl-copy starts on its own after the click: wait for the clipboard (up to 3 s) rather than a fixed beat
+clip_has() { for _ in $(seq 30); do wl-paste -n 2>/dev/null | grep -q "$1" && return 0; sleep 0.1; done; return 1; }
 click "$X" "$Y"; sleep 0.3; shot 4b
-wl-paste -n | grep -q "def backward" || fail "Copy didn't put block 1 on the clipboard: $(wl-paste -n | head -2)"
-./chalk copy >/dev/null; sleep 0.3
-wl-paste -n | grep -q "^print(backward" || fail "chalk copy didn't move on to block 2: $(wl-paste -n | head -2)"
+clip_has "def backward" || fail "Copy didn't put block 1 on the clipboard: $(wl-paste -n | head -2)"
+./chalk copy >/dev/null
+clip_has "^print(backward" || fail "chalk copy didn't move on to block 2: $(wl-paste -n | head -2)"
 echo "   ok"
 
 echo "5. a waiting question survives a redraw; tuck away, bring back, dismiss"
